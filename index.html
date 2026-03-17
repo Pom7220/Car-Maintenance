@@ -280,7 +280,7 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
 
 <!-- OVERLAY: EDIT LOG -->
 <div class="ov" id="ovEditLog">
-<div class="ovs">
+<div class="ovs" style="background:var(--bg);">
   <div class="ovh"></div><div class="ovt">✏️ แก้ไขรายการ</div>
   <input type="hidden" id="elId">
   <div class="fs"><label class="fl">รถ</label>
@@ -313,8 +313,10 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
     <div class="fs"><label class="fl">ค่าอะไหล่ (฿)</label><input class="fi" type="number" id="elPart"></div>
     <div class="fs"><label class="fl">ค่าแรง (฿)</label><input class="fi" type="number" id="elLabor"></div>
   </div>
-  <div class="fs"><label class="fl">ผลิตภัณฑ์</label><input class="fi" id="elProduct"></div>
-  <div class="fs"><label class="fl">หมายเหตุ</label><textarea class="fi" id="elNote"></textarea></div>
+  <div class="fs"><label class="fl">ยี่ห้อ/เกรดน้ำมัน</label>
+    <textarea class="fi" id="elProduct" style="min-height:72px;line-height:1.5;"></textarea></div>
+  <div class="fs"><label class="fl">หมายเหตุ</label>
+    <textarea class="fi" id="elNote" style="min-height:80px;line-height:1.5;"></textarea></div>
   <button class="fbtn" onclick="saveEditLog()">💾 บันทึกการแก้ไข</button>
   <button class="cancelbtn" onclick="closeOv('ovEditLog')">ยกเลิก</button>
 </div>
@@ -642,24 +644,29 @@ async function startApp(){
 }
 
 function startAutoSync(){
-  // Auto refresh every 30 seconds
   if(syncTimer) clearInterval(syncTimer);
   syncTimer=setInterval(async()=>{
     await loadAll();
-    render();
+    // Don't reset the log form if user is actively on it
+    if(curTab!=='log') render();
+    else {
+      // Only refresh data silently — update other tabs' data but don't re-render
+      if(curTab==='dashboard') render();
+    }
   }, 30000);
 
-  // Also refresh when user comes back to the tab/app
   document.addEventListener('visibilitychange',async()=>{
     if(document.visibilityState==='visible' && sess){
       await loadAll();
-      render();
+      if(curTab!=='log') render();
     }
   });
 
-  // Refresh when iPhone wakes from background (focus event)
   window.addEventListener('focus',async()=>{
-    if(sess){ await loadAll(); render(); }
+    if(sess){
+      await loadAll();
+      if(curTab!=='log') render();
+    }
   });
 }
 
@@ -794,19 +801,34 @@ function rTodo(el){
     const S=st(cid,item),P=pct(cid,item);
     const lk=LD[`${cid}_${item.id}`]||0,nk=lk+item.n,rem=ck?nk-ck:null;
     const canMark=ck>0&&item.n>0,ready=S==='urgent'||S==='soon';
+
+    // Find last log entry for this item type to show photos
+    const lastLog=LOGS.filter(l=>l.carId===cid&&l.type===item.l).sort((a,b)=>b.ts-a.ts)[0];
+    const photoPaths=lastLog?JSON.parse(lastLog.photos||'[]'):[];
+    const photoRow=photoPaths.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 2px;">
+      ${photoPaths.map((_,i)=>`<div id="tdph_${lastLog.id}_${i}" style="width:56px;height:56px;background:var(--gray-lt);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;flex-shrink:0;" onclick="loadTdPhoto('${lastLog.id}',${i},'${_}')">🖼️</div>`).join('')}
+    </div>`:'';
+
     if(item.n===0)return`<div class="tdi"><div class="tda info"></div><div class="tdin">
       <div class="tdr1"><div class="tdname">${item.l}</div><span class="badge bi">ไม่ต้องเปลี่ยน</span></div>
       <div class="tdn">${item.note}</div>
       ${item.cm>0?`<span class="tdc">฿${item.cm.toLocaleString()}–${item.cx.toLocaleString()}</span>`:''}
+      ${photoRow}
     </div></div>`;
+
     return`<div class="tdi"><div class="tda ${S}"></div><div class="tdin">
       <div class="tdr1"><div class="tdname">${item.l}</div><span class="badge ${SB[S]}">${SL[S]}</span></div>
       <div class="tdd">ทุก ${item.n.toLocaleString()} กม. · ${item.p}</div>
-      ${lk?`<div class="tdd">ล่าสุด: ${lk.toLocaleString()} → ครั้งถัดไป: ${nk.toLocaleString()} กม.</div>`:`<div class="tdd" style="color:var(--amber);">ยังไม่มีข้อมูลครั้งล่าสุด</div>`}
-      ${rem!==null?`<div style="font-size:11px;color:${rem<=0?'var(--red)':rem<item.n*.25?'var(--amber)':'var(--muted)'};margin-top:1px;">${rem<=0?'เกินกำหนด '+Math.abs(rem).toLocaleString()+' กม.':'เหลืออีก '+rem.toLocaleString()+' กม.'}</div>`:''}
-      ${P>0?`<div class="pw"><div class="pb" style="width:${P}%;background:${SC[S]};"></div></div><div style="font-size:10px;color:var(--hint);">${P}% ของรอบ</div>`:''}
+      ${lk
+        ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;">ล่าสุด: ${lk.toLocaleString()} กม.</div>
+           <div style="font-size:13px;font-weight:700;color:${rem!==null&&rem<=0?'var(--red)':rem!==null&&rem<item.n*.25?'var(--amber)':'var(--text)'};margin-top:2px;">
+             ครั้งถัดไป: <strong>${nk.toLocaleString()} กม.</strong>${rem!==null?` (${rem<=0?'เกินกำหนด '+Math.abs(rem).toLocaleString()+' กม.':'เหลืออีก '+rem.toLocaleString()+' กม.'})`:''}</div>`
+        : `<div style="font-size:12px;color:var(--amber);margin-top:2px;font-weight:600;">ยังไม่มีข้อมูลครั้งล่าสุด</div>`
+      }
+      ${P>0?`<div class="pw" style="margin-top:6px;"><div class="pb" style="width:${P}%;background:${SC[S]};"></div></div><div style="font-size:10px;color:var(--hint);">${P}% ของรอบ</div>`:''}
       <div class="tdn" style="margin-top:6px;">${item.note}</div>
       ${item.cm>0?`<span class="tdc">฿${item.cm.toLocaleString()}–${item.cx.toLocaleString()}</span>`:''}
+      ${photoRow}
     </div>
     <div style="display:flex;border-top:0.5px solid var(--gb);">
       <button style="flex:1;padding:11px 6px;background:var(--green-lt);border:none;border-right:0.5px solid var(--gb);font-size:12px;color:var(--green);cursor:pointer;font-family:inherit;font-weight:600;" onclick="openQuickLog('${cid}','${item.id}','${item.l}')">📝 บันทึกงานนี้</button>
@@ -822,6 +844,16 @@ function rTodo(el){
     <div class="sc a"><div class="sn">${s}</div><div class="sl">ใกล้ถึง</div></div>
     <div class="sc g"><div class="sn">${o}</div><div class="sl">ปกติ</div></div></div>
     <div class="sec">รายการทั้งหมด — ${car.name}</div>${items}`;
+}
+
+async function loadTdPhoto(logId, idx, path){
+  const el=document.getElementById(`tdph_${logId}_${idx}`);
+  if(!el)return;
+  el.textContent='⏳';
+  const url=await getSignedUrl(path);
+  if(url){
+    el.innerHTML=`<img src="${url}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open('${url}','_blank')">`;
+  } else { el.textContent='❌'; }
 }
 
 async function updKm(){
@@ -1196,8 +1228,19 @@ function openEditLog(id){
   document.getElementById('elCar').value=l.carId;
   document.getElementById('elDate').value=l.date;
   document.getElementById('elKm').value=l.km;
-  document.getElementById('elType').value=l.type;
-  document.getElementById('elPlace').value=l.place||'ศูนย์โตโยต้า';
+  // Set select by matching text content
+  const setSelect=(selId,val)=>{
+    const sel=document.getElementById(selId);
+    const opt=Array.from(sel.options).find(o=>o.value===val||o.text===val);
+    if(opt) sel.value=opt.value||opt.text;
+    else {
+      // Add as custom option if not in list
+      const o=document.createElement('option');
+      o.value=val;o.text=val;sel.add(o);sel.value=val;
+    }
+  };
+  setSelect('elType', l.type||'');
+  setSelect('elPlace', l.place||'ศูนย์โตโยต้า');
   document.getElementById('elShop').value=l.shop||'';
   document.getElementById('elPart').value=l.partCost||'';
   document.getElementById('elLabor').value=l.laborCost||'';
@@ -1235,11 +1278,59 @@ function rContacts(el){
       <button class="delbtn" onclick="delContact(${i})">ลบ</button>
     </div>
   </div>`).join(''):`<div class="empty" style="padding:20px;"><div class="et">ยังไม่มีรายชื่อร้านช่าง</div></div>`;
+
+  const now=new Date().toLocaleDateString('th-TH');
   el.innerHTML=`<div class="sec">เบอร์ฉุกเฉิน</div>${emH}
     <div class="sec" style="display:flex;justify-content:space-between;align-items:center;">
       <span>ศูนย์บริการ / ร้านช่าง</span>
       <button onclick="document.getElementById('ovContact').classList.add('on')" style="font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">+ เพิ่ม</button>
-    </div>${myH}`;
+    </div>${myH}
+
+    <div class="sec" style="margin-top:24px;">💾 สำรองข้อมูล (Backup & Restore)</div>
+    <div class="gc" style="padding:16px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+        ข้อมูลทั้งหมดเก็บใน Supabase cloud อยู่แล้ว แต่แนะนำให้ backup ไว้เป็น JSON file เพิ่มเติมครับ
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button onclick="doBackup()" style="width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+          📥 Download Backup (JSON)
+        </button>
+        <div style="font-size:11px;color:var(--hint);text-align:center;">ดาวน์โหลดข้อมูลทั้งหมดเป็น carcare_backup_${now}.json</div>
+
+        <div style="height:0.5px;background:var(--gb);margin:4px 0;"></div>
+
+        <label style="width:100%;padding:13px;background:var(--amber-lt);color:var(--amber);border:none;border-radius:var(--rx);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+          📤 Restore จาก Backup
+          <input type="file" accept=".json" style="display:none;" onchange="doRestore(event)">
+        </label>
+        <div style="font-size:11px;color:var(--hint);text-align:center;">⚠️ Restore จะ merge ข้อมูลจากไฟล์เข้ากับข้อมูลปัจจุบัน ไม่ลบทิ้ง</div>
+      </div>
+
+      <div id="backupMsg" style="font-size:13px;text-align:center;margin-top:10px;min-height:18px;"></div>
+    </div>
+
+    <div class="gc" style="padding:14px;margin-top:4px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">📊 สถิติข้อมูลปัจจุบัน</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:var(--gray-lt);padding:10px;border-radius:var(--rx);text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--blue);">${LOGS.length}</div>
+          <div style="font-size:11px;color:var(--muted);">รายการซ่อม</div>
+        </div>
+        <div style="background:var(--gray-lt);padding:10px;border-radius:var(--rx);text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--green);">${Object.keys(DOCS).length}</div>
+          <div style="font-size:11px;color:var(--muted);">เอกสาร</div>
+        </div>
+        <div style="background:var(--gray-lt);padding:10px;border-radius:var(--rx);text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--amber);">${Object.values(KM).filter(v=>v>0).length}</div>
+          <div style="font-size:11px;color:var(--muted);">รถที่มีข้อมูลไมล์</div>
+        </div>
+        <div style="background:var(--gray-lt);padding:10px;border-radius:var(--rx);text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--muted);">${CONTACTS.length}</div>
+          <div style="font-size:11px;color:var(--muted);">รายชื่อช่าง</div>
+        </div>
+      </div>
+    </div>`;
 }
 
 function saveContact(){
@@ -1251,6 +1342,119 @@ function saveContact(){
   closeOv('ovContact');rContacts(document.getElementById('mainC'));
 }
 function delContact(i){CONTACTS.splice(i,1);localStorage.setItem('cc_contacts',JSON.stringify(CONTACTS));rContacts(document.getElementById('mainC'));}
+
+// ── BACKUP & RESTORE ──
+async function doBackup(){
+  const msg=document.getElementById('backupMsg');
+  msg.textContent='⟳ กำลังเตรียมข้อมูล...';msg.style.color='var(--muted)';
+  try{
+    const backup={
+      version: 2,
+      exported_at: new Date().toISOString(),
+      user_email: sess?.user?.email||'',
+      data:{
+        logs: LOGS,
+        km: KM,
+        lastdone: LD,
+        docs: DOCS,
+        contacts: CONTACTS
+      }
+    };
+    const json=JSON.stringify(backup,null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const date=new Date().toISOString().split('T')[0];
+    a.href=url;
+    a.download=`carcare_backup_${date}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    msg.textContent=`✅ Backup สำเร็จ! ${LOGS.length} รายการ`;
+    msg.style.color='var(--green)';
+  }catch(e){
+    msg.textContent='❌ '+e.message;msg.style.color='var(--red)';
+  }
+}
+
+async function doRestore(event){
+  const msg=document.getElementById('backupMsg');
+  const file=event.target.files[0];
+  if(!file)return;
+  if(!confirm('Restore จะนำข้อมูลจากไฟล์ merge เข้ากับข้อมูลปัจจุบัน ต้องการดำเนินการต่อไหม?'))return;
+  msg.textContent='⟳ กำลัง restore...';msg.style.color='var(--muted)';
+  try{
+    const text=await file.text();
+    const backup=JSON.parse(text);
+    if(!backup.data){throw new Error('ไฟล์ไม่ถูกต้อง ไม่พบ data field');}
+
+    const {logs,km,lastdone,docs,contacts}=backup.data;
+    const tok=sess.access_token,uid=sess.user.id;
+    let restored=0;
+
+    // Restore logs — insert only if id doesn't exist
+    if(logs&&logs.length){
+      const existingIds=new Set(LOGS.map(l=>l.id));
+      const newLogs=logs.filter(l=>l.id&&!existingIds.has(l.id));
+      for(const l of newLogs){
+        const r=await rpc('/rest/v1/car_logs','POST',{
+          id:l.id,user_id:uid,recorded_by:l.recordedBy||'restore',
+          car_id:l.carId,date:l.date,km:l.km,type:l.type,
+          place:l.place,shop:l.shop,part_cost:l.partCost,
+          labor_cost:l.laborCost,product:l.product,note:l.note,
+          photos:l.photos||'[]'
+        },tok,{Prefer:'resolution=ignore-duplicates'});
+        if(r.ok)restored++;
+      }
+      LOGS=[...LOGS,...newLogs].sort((a,b)=>b.ts-a.ts);
+    }
+
+    // Restore km
+    if(km){
+      for(const [carId,kmVal] of Object.entries(km)){
+        if(kmVal>0&&(!KM[carId]||kmVal>KM[carId])){
+          KM[carId]=kmVal;
+          await rpc('/rest/v1/car_km','POST',{user_id:uid,car_id:carId,km:kmVal},tok,{Prefer:'resolution=merge-duplicates'});
+        }
+      }
+    }
+
+    // Restore lastdone
+    if(lastdone){
+      for(const [key,kmVal] of Object.entries(lastdone)){
+        if(!LD[key]||kmVal>LD[key]){
+          LD[key]=kmVal;
+          await rpc('/rest/v1/car_lastdone','POST',{user_id:uid,item_key:key,km:kmVal},tok,{Prefer:'resolution=merge-duplicates'});
+        }
+      }
+    }
+
+    // Restore docs
+    if(docs){
+      for(const [key,doc] of Object.entries(docs)){
+        if(doc.expiry&&!DOCS[key]?.expiry){
+          DOCS[key]=doc;
+          await rpc('/rest/v1/car_docs','POST',{user_id:uid,doc_key:key,expiry:doc.expiry,note:doc.note||''},tok,{Prefer:'resolution=merge-duplicates'});
+        }
+      }
+    }
+
+    // Restore contacts (local only)
+    if(contacts&&contacts.length){
+      const existNames=new Set(CONTACTS.map(c=>c.name));
+      const newC=contacts.filter(c=>!existNames.has(c.name));
+      CONTACTS=[...CONTACTS,...newC];
+      localStorage.setItem('cc_contacts',JSON.stringify(CONTACTS));
+    }
+
+    msg.textContent=`✅ Restore สำเร็จ! นำเข้า ${restored} รายการใหม่`;
+    msg.style.color='var(--green)';
+    setTimeout(()=>render(),1500);
+  }catch(e){
+    msg.textContent='❌ Restore ล้มเหลว: '+e.message;
+    msg.style.color='var(--red)';
+  }
+  event.target.value='';
+}
 
 // DOCS
 function openDoc(cid,type){
