@@ -407,22 +407,7 @@ async function doSignup(){
   }
 }
 
-async function doLogin(){
-  const email=document.getElementById('lEmail').value.trim();
-  const pass=document.getElementById('lPass').value;
-  if(!email||!pass){authMsg('กรุณากรอก email และ password',true);return;}
-  const b=document.getElementById('lBtn');b.disabled=true;b.textContent='กำลังเข้าสู่ระบบ...';
-  const r=await api('/auth/v1/token?grant_type=password','POST',{email,password:pass});
-  b.disabled=false;b.textContent='เข้าสู่ระบบ';
-  if(r.ok&&r.d.access_token){
-    sess=r.d;
-    uName=r.d.user?.user_metadata?.display_name||email.split('@')[0];
-    localStorage.setItem('cc_sess',JSON.stringify(sess));
-    await startApp();
-  } else {
-    authMsg(r.d.error_description||r.d.msg||'email หรือ password ไม่ถูกต้อง',true);
-  }
-}
+
 
 async function doLogout(){
   if(!confirm('ออกจากระบบ?'))return;
@@ -828,22 +813,118 @@ async function saveDoc(){
 function closeOv(id){document.getElementById(id).classList.remove('on');}
 document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('on');}));
 
-// INIT
+// INIT — also handles redirect from password reset email
 async function init(){
-  const stored=localStorage.getItem('cc_sess');
+  // 1. Check URL hash for access_token (from Supabase password reset email)
+  const hash = window.location.hash;
+  if(hash && hash.includes('access_token')){
+    const params = new URLSearchParams(hash.replace('#',''));
+    const tok = params.get('access_token');
+    const refresh = params.get('refresh_token');
+    if(tok){
+      const r = await api('/auth/v1/user','GET',null,tok);
+      if(r.ok && r.d.id){
+        sess = { access_token: tok, refresh_token: refresh, user: r.d };
+        uName = r.d.user_metadata?.display_name || r.d.email.split('@')[0];
+        localStorage.setItem('cc_sess', JSON.stringify(sess));
+        // clean URL
+        history.replaceState(null,'',window.location.pathname);
+        // if this was a password reset, show a set-new-password prompt
+        if(params.get('type')==='recovery'){
+          showSetPassword(tok);
+          return;
+        }
+        await startApp();
+        return;
+      }
+    }
+  }
+
+  // 2. Check stored session
+  const stored = localStorage.getItem('cc_sess');
   if(stored){
     try{
-      const s=JSON.parse(stored);
-      const r=await api('/auth/v1/user','GET',null,s.access_token);
-      if(r.ok&&r.d.id){
-        sess=s;sess.user=r.d;
-        uName=r.d.user_metadata?.display_name||r.d.email.split('@')[0];
-        await startApp();return;
+      const s = JSON.parse(stored);
+      const r = await api('/auth/v1/user','GET',null,s.access_token);
+      if(r.ok && r.d.id){
+        sess=s; sess.user=r.d;
+        uName = r.d.user_metadata?.display_name || r.d.email.split('@')[0];
+        await startApp(); return;
       }
     }catch(e){}
     localStorage.removeItem('cc_sess');
   }
 }
+
+function showSetPassword(tok){
+  document.getElementById('authWrap').style.display='flex';
+  document.getElementById('fLogin').style.display='none';
+  document.getElementById('fSignup').style.display='none';
+  document.querySelector('.a-tabs').style.display='none';
+  document.querySelector('.a-sub').textContent='ตั้ง password ใหม่';
+  const box = document.createElement('div');
+  box.id='fSetPass';
+  box.innerHTML=`
+    <div class="a-field"><label class="a-label">Password ใหม่</label>
+      <input class="a-input" type="password" id="newPass1" placeholder="อย่างน้อย 6 ตัวอักษร"></div>
+    <div class="a-field"><label class="a-label">ยืนยัน Password</label>
+      <input class="a-input" type="password" id="newPass2" placeholder="พิมพ์ซ้ำอีกครั้ง"></div>
+    <button class="a-btn" onclick="doSetPassword('${tok}')">ตั้ง Password ใหม่</button>`;
+  document.querySelector('.a-logo').insertAdjacentElement('afterend', box);
+  document.querySelector('.a-title').textContent='ตั้ง Password ใหม่';
+}
+
+async function doSetPassword(tok){
+  const p1=document.getElementById('newPass1').value;
+  const p2=document.getElementById('newPass2').value;
+  if(!p1||p1.length<6){authMsg('Password ต้องมีอย่างน้อย 6 ตัวอักษร',true);return;}
+  if(p1!==p2){authMsg('Password ไม่ตรงกัน',true);return;}
+  const r=await fetch(SBURL+'/auth/v1/user',{
+    method:'PUT',
+    headers:{...BH,'Authorization':'Bearer '+tok},
+    body:JSON.stringify({password:p1})
+  });
+  const d=await r.json();
+  if(r.ok){
+    authMsg('✅ ตั้ง Password สำเร็จ! กำลังเข้าสู่ระบบ...',false);
+    setTimeout(async()=>{
+      const r2=await api('/auth/v1/user','GET',null,tok);
+      if(r2.ok&&r2.d.id){
+        sess={access_token:tok,user:r2.d};
+        uName=r2.d.user_metadata?.display_name||r2.d.email.split('@')[0];
+        localStorage.setItem('cc_sess',JSON.stringify(sess));
+        await startApp();
+      }
+    },1000);
+  } else {
+    authMsg(d.msg||d.error_description||'เกิดข้อผิดพลาด',true);
+  }
+}
+
+// Improve login error visibility
+async function doLogin(){
+  const email=document.getElementById('lEmail').value.trim();
+  const pass=document.getElementById('lPass').value;
+  if(!email||!pass){authMsg('กรุณากรอก email และ password',true);return;}
+  const b=document.getElementById('lBtn');b.disabled=true;b.textContent='กำลังเข้าสู่ระบบ...';
+  try{
+    const r=await api('/auth/v1/token?grant_type=password','POST',{email,password:pass});
+    b.disabled=false;b.textContent='เข้าสู่ระบบ';
+    if(r.ok&&r.d.access_token){
+      sess=r.d;
+      uName=r.d.user?.user_metadata?.display_name||email.split('@')[0];
+      localStorage.setItem('cc_sess',JSON.stringify(sess));
+      await startApp();
+    } else {
+      const msg=r.d.error_description||r.d.msg||r.d.error||JSON.stringify(r.d);
+      authMsg('❌ '+msg,true);
+    }
+  }catch(e){
+    b.disabled=false;b.textContent='เข้าสู่ระบบ';
+    authMsg('❌ เชื่อมต่อไม่ได้: '+e.message,true);
+  }
+}
+
 init();
 </script>
 </body>
