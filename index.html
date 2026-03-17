@@ -320,6 +320,44 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
 </div>
 </div>
 
+<!-- OVERLAY: QUICK LOG FROM TODO -->
+<div class="ov" id="ovQuickLog">
+<div class="ovs">
+  <div class="ovh"></div>
+  <div class="ovt" id="qlTitle">📝 บันทึกการซ่อม</div>
+  <input type="hidden" id="qlCar">
+  <input type="hidden" id="qlType">
+  <div style="background:var(--blue-lt);border-radius:var(--rx);padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--blue);">
+    <span id="qlItemName" style="font-weight:600;"></span><br>
+    <span id="qlCarName" style="font-size:11px;opacity:.8;"></span>
+  </div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">วันที่</label><input class="fi" type="date" id="qlDate"></div>
+    <div class="fs"><label class="fl">เลขไมล์ (กม.)</label><input class="fi" type="number" id="qlKm" placeholder="85000"></div>
+  </div>
+  <div class="fs"><label class="fl">บันทึกโดย</label><input class="fi" id="qlBy" placeholder="ชื่อผู้บันทึก"></div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">สถานที่</label>
+      <select class="fi" id="qlPlace">
+        <option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option>
+        <option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option>
+      </select></div>
+    <div class="fs"><label class="fl">ชื่อร้าน</label><input class="fi" id="qlShop" placeholder="สาขา..."></div>
+  </div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">ค่าอะไหล่ (฿)</label><input class="fi" type="number" id="qlPart" placeholder="0"></div>
+    <div class="fs"><label class="fl">ค่าแรง (฿)</label><input class="fi" type="number" id="qlLabor" placeholder="0"></div>
+  </div>
+  <div class="fs"><label class="fl">ยี่ห้อ/เกรดน้ำมัน หรืออะไหล่</label>
+    <input class="fi" id="qlProduct" placeholder="เช่น Mobil 1 5W-30"></div>
+  <div class="fs"><label class="fl">หมายเหตุ</label>
+    <textarea class="fi" id="qlNote" style="min-height:60px;"></textarea></div>
+  <div id="qlMsg" style="font-size:13px;color:var(--green);text-align:center;min-height:18px;margin-bottom:4px;"></div>
+  <button class="fbtn" onclick="saveQuickLog()">💾 บันทึก</button>
+  <button class="cancelbtn" onclick="closeOv('ovQuickLog')">ยกเลิก</button>
+</div>
+</div>
+
 <script>
 const SBURL='https://svuiphbzceatqodluvxl.supabase.co';
 const SBKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2dWlwaGJ6Y2VhdHFvZGx1dnhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MzI3ODUsImV4cCI6MjA4OTMwODc4NX0.0Ee2LfF8kwjatASFAzXINBRb46UHEX5sPdIHPxAuHZk';
@@ -761,7 +799,10 @@ function rTodo(el){
       <div class="tdn" style="margin-top:6px;">${item.note}</div>
       ${item.cm>0?`<span class="tdc">฿${item.cm.toLocaleString()}–${item.cx.toLocaleString()}</span>`:''}
     </div>
-    ${canMark?`<button class="mkbtn${ready?' ready':''}" onclick="markDone('${cid}','${item.id}')">✓ ทำแล้ว @${ck.toLocaleString()} กม. — แตะเพื่อบันทึก</button>`:''}
+    <div style="display:flex;border-top:0.5px solid var(--gb);">
+      <button style="flex:1;padding:11px 6px;background:var(--green-lt);border:none;border-right:0.5px solid var(--gb);font-size:12px;color:var(--green);cursor:pointer;font-family:inherit;font-weight:600;" onclick="openQuickLog('${cid}','${item.id}','${item.l}')">📝 บันทึกงานนี้</button>
+      ${canMark?`<button style="flex:1;padding:11px 6px;background:var(--gray-lt);border:none;font-size:12px;color:var(--muted);cursor:pointer;font-family:inherit;font-weight:500;" onclick="markDone('${cid}','${item.id}')">✓ ทำแล้ว @${ck?ck.toLocaleString():'?'} กม.</button>`:'<button style="flex:1;padding:11px 6px;background:var(--gray-lt);border:none;font-size:12px;color:var(--hint);font-family:inherit;" disabled>ใส่ไมล์ก่อน</button>'}
+    </div>
     </div>`;
   }).join('');
   el.innerHTML=`<div class="kmb"><label>ไมล์ปัจจุบัน</label>
@@ -789,6 +830,81 @@ async function markDone(cid,iid){
   const uid=sess.user.id,tok=sess.access_token;
   await rpc('/rest/v1/car_lastdone','POST',{user_id:uid,item_key:key,km:ck},tok,{Prefer:'resolution=merge-duplicates'});
   sync(false);render();
+}
+
+function openQuickLog(cid, iid, itemLabel){
+  const car = CARS[cid];
+  const today = new Date().toISOString().split('T')[0];
+  // pre-fill place based on car type
+  const defaultPlace = car.id==='cx5' ? 'ศูนย์มาสด้า' : 'ศูนย์โตโยต้า';
+
+  document.getElementById('qlCar').value = cid;
+  document.getElementById('qlType').value = itemLabel;
+  document.getElementById('qlItemName').textContent = itemLabel;
+  document.getElementById('qlCarName').textContent = car.name + ' · ' + car.plate;
+  document.getElementById('qlDate').value = today;
+  document.getElementById('qlKm').value = KM[cid] || '';
+  document.getElementById('qlBy').value = uName;
+  document.getElementById('qlPlace').value = defaultPlace;
+  document.getElementById('qlShop').value = '';
+  document.getElementById('qlPart').value = '';
+  document.getElementById('qlLabor').value = '';
+  document.getElementById('qlProduct').value = '';
+  document.getElementById('qlNote').value = '';
+  document.getElementById('qlMsg').textContent = '';
+  document.getElementById('ovQuickLog').classList.add('on');
+}
+
+async function saveQuickLog(){
+  const cid = document.getElementById('qlCar').value;
+  const date = document.getElementById('qlDate').value;
+  const kv = parseInt(document.getElementById('qlKm').value);
+  const msg = document.getElementById('qlMsg');
+  if(!date||!kv){ msg.textContent='⚠ กรุณากรอกวันที่และเลขไมล์'; msg.style.color='var(--red)'; return; }
+
+  msg.textContent='⟳ กำลังบันทึก...'; msg.style.color='var(--muted)';
+  const uid=sess.user.id, tok=sess.access_token;
+  const itemLabel = document.getElementById('qlType').value;
+
+  const body={
+    user_id:uid,
+    recorded_by: document.getElementById('qlBy').value || uName,
+    car_id:cid, date, km:kv,
+    type: itemLabel,
+    place: document.getElementById('qlPlace').value,
+    shop: document.getElementById('qlShop').value,
+    part_cost: document.getElementById('qlPart').value || null,
+    labor_cost: document.getElementById('qlLabor').value || null,
+    product: document.getElementById('qlProduct').value,
+    note: document.getElementById('qlNote').value
+  };
+
+  const r = await rpc('/rest/v1/car_logs','POST',body,tok,{Prefer:'return=representation'});
+  const data = await r.json();
+  const newId = data[0]?.id;
+
+  // Add to local state
+  LOGS.unshift({id:newId,carId:cid,date,km:kv,type:itemLabel,
+    place:body.place,shop:body.shop,partCost:body.part_cost,
+    laborCost:body.labor_cost,product:body.product,note:body.note,
+    recordedBy:body.recorded_by,ts:Date.now()});
+
+  // Update KM if higher
+  if(!KM[cid]||kv>KM[cid]){
+    KM[cid]=kv;
+    await rpc('/rest/v1/car_km','POST',{user_id:uid,car_id:cid,km:kv},tok,{Prefer:'resolution=merge-duplicates'});
+  }
+
+  // Also mark as done
+  const itemId = Object.values(CARS[cid].sc).find(i=>i.l===itemLabel)?.id;
+  if(itemId){
+    const key=`${cid}_${itemId}`;
+    LD[key]=kv;
+    await rpc('/rest/v1/car_lastdone','POST',{user_id:uid,item_key:key,km:kv},tok,{Prefer:'resolution=merge-duplicates'});
+  }
+
+  msg.textContent='✅ บันทึกสำเร็จ!'; msg.style.color='var(--green)';
+  setTimeout(()=>{ closeOv('ovQuickLog'); render(); }, 800);
 }
 
 // LOG
