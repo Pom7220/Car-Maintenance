@@ -248,7 +248,7 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
   <button class="ti" onclick="goTab('todo')" id="tab-todo"><div class="tiw"><span class="tic">🔧</span></div><span class="til">To-Do</span></button>
   <button class="ti" onclick="goTab('log')" id="tab-log"><div class="tiw"><span class="tic">➕</span></div><span class="til">บันทึก</span></button>
   <button class="ti" onclick="goTab('history')" id="tab-history"><div class="tiw"><span class="tic">📋</span></div><span class="til">ประวัติ</span></button>
-  <button class="ti" onclick="goTab('contacts')" id="tab-contacts"><div class="tiw"><span class="tic">📞</span></div><span class="til">ฉุกเฉิน</span></button>
+  <button class="ti" onclick="goTab('settings')" id="tab-settings"><div class="tiw"><span class="tic">⚙️</span></div><span class="til">ตั้งค่า</span></button>
 </div>
 </div>
 
@@ -645,29 +645,23 @@ async function startApp(){
 
 function startAutoSync(){
   if(syncTimer) clearInterval(syncTimer);
+  // Silent data refresh — NEVER re-render if user is on log tab
   syncTimer=setInterval(async()=>{
+    if(curTab==='log') return; // Never interrupt form filling
     await loadAll();
-    // Don't reset the log form if user is actively on it
-    if(curTab!=='log') render();
-    else {
-      // Only refresh data silently — update other tabs' data but don't re-render
-      if(curTab==='dashboard') render();
-    }
+    render();
   }, 30000);
 
+  // Re-sync when app comes back to foreground
   document.addEventListener('visibilitychange',async()=>{
     if(document.visibilityState==='visible' && sess){
+      if(curTab==='log') return; // Don't reset form
       await loadAll();
-      if(curTab!=='log') render();
+      render();
     }
   });
-
-  window.addEventListener('focus',async()=>{
-    if(sess){
-      await loadAll();
-      if(curTab!=='log') render();
-    }
-  });
+  // Note: NO window focus listener — iOS keyboard show/hide triggers focus
+  // which was causing the form to reset. Removed intentionally.
 }
 
 // STATUS
@@ -702,11 +696,13 @@ function goCar(id){
 }
 function renderHeader(){
   const pills=document.getElementById('cPills'),sub=document.getElementById('hSub');
-  if(curTab==='dashboard'){pills.style.display='none';sub.textContent='ระบบบำรุงรักษารถยนต์';}
-  else{
+  if(curTab==='dashboard'||curTab==='settings'){
+    pills.style.display='none';
+    sub.textContent=curTab==='settings'?'ตั้งค่า & ข้อมูล':'ระบบบำรุงรักษารถยนต์';
+  } else {
     pills.style.display='flex';
     pills.innerHTML=Object.values(CARS).map(c=>`<button class="cpill${c.id===curCar?' on':''}" data-c="${c.id}" onclick="goCar('${c.id}')">${c.name.replace('Toyota ','').replace('Mazda ','')}</button>`).join('');
-    sub.textContent={todo:'To-Do รายการซ่อม',log:'บันทึกการซ่อม',history:'ประวัติ & เอกสาร',contacts:'เบอร์ฉุกเฉิน'}[curTab]||'';
+    sub.textContent={todo:'To-Do รายการซ่อม',log:'บันทึกการซ่อม',history:'ประวัติ & เอกสาร'}[curTab]||'';
   }
 }
 function render(){
@@ -716,7 +712,7 @@ function render(){
   else if(curTab==='todo')rTodo(el);
   else if(curTab==='log')rLog(el);
   else if(curTab==='history')rHist(el);
-  else if(curTab==='contacts')rContacts(el);
+  else if(curTab==='settings')rSettings(el);
 }
 
 // DASHBOARD
@@ -1127,6 +1123,9 @@ async function saveLog(){
   const msg=document.getElementById('logMsg');
   if(!date||!kv){msg.textContent='⚠ กรุณากรอกวันที่และเลขไมล์';msg.style.color='var(--red)';return;}
   msg.textContent='⟳ กำลังบันทึก...';msg.style.color='var(--muted)';
+  // Disable button to prevent double-submit
+  const btn=document.querySelector('#mainC .fbtn');
+  if(btn){btn.disabled=true;}
   try{
     const uid=sess.user.id,tok=sess.access_token;
     const body={user_id:uid,recorded_by:document.getElementById('logBy').value||uName,car_id:cid,date,km:kv,
@@ -1137,10 +1136,9 @@ async function saveLog(){
       product:document.getElementById('logProduct').value,
       note:document.getElementById('logNote').value};
     const r=await rpc('/rest/v1/car_logs','POST',body,tok,{Prefer:'return=representation'});
-    if(!r.ok){const e=await r.text();msg.textContent='❌ '+e.substring(0,100);msg.style.color='var(--red)';return;}
+    if(!r.ok){const e=await r.text();msg.textContent='❌ '+e.substring(0,100);msg.style.color='var(--red)';if(btn)btn.disabled=false;return;}
     const data=await r.json();
     const newId=data[0]?.id;
-    // Upload photos if any
     if(photoQueues.log.length){
       msg.textContent='⟳ กำลัง upload รูป...';
       await uploadPhotos('log',newId);
@@ -1149,9 +1147,24 @@ async function saveLog(){
       partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,
       recordedBy:body.recorded_by,ts:Date.now(),photos:'[]'});
     if(!KM[cid]||kv>KM[cid]){KM[cid]=kv;await rpc('/rest/v1/car_km','POST',{user_id:uid,car_id:cid,km:kv},tok,{Prefer:'resolution=merge-duplicates'});}
+
     msg.textContent='✅ บันทึกเรียบร้อย!';msg.style.color='var(--green)';
-    setTimeout(()=>rLog(document.getElementById('mainC')),1400);
-  }catch(e){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';}
+    // Clear only the variable fields — DON'T call rLog() which resets everything
+    setTimeout(()=>{
+      const fields=['logKm','logShop','logPart','logLabor','logProduct','logNote'];
+      fields.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+      photoQueues.log=[];
+      const prev=document.getElementById('logPhotoPreview');
+      if(prev)prev.innerHTML='';
+      const pi=document.getElementById('logPhotoInput');
+      if(pi)pi.value='';
+      if(msg)msg.textContent='';
+      if(btn)btn.disabled=false;
+    },1200);
+  }catch(e){
+    msg.textContent='❌ '+e.message;msg.style.color='var(--red)';
+    if(btn)btn.disabled=false;
+  }
 }
 
 // HISTORY
@@ -1267,8 +1280,100 @@ async function saveEditLog(){
   sync(false);closeOv('ovEditLog');rHist(document.getElementById('mainC'));
 }
 
-// CONTACTS
-function rContacts(el){
+// ── SETTINGS ──
+function rSettings(el){
+  const now=new Date().toLocaleDateString('th-TH');
+  const emH=EMG.map(c=>`<div class="ccard"><div><div class="ctype">${c.type}</div><div class="cname">${c.name}</div></div><a href="tel:${c.num}" class="cbtn">${c.num}</a></div>`).join('');
+  const myH=CONTACTS.length?CONTACTS.map((c,i)=>`<div class="ccard">
+    <div><div class="ctype">${c.type}</div><div class="cname">${c.name}</div>
+    ${c.note?`<div style="font-size:11px;color:var(--hint);">${c.note}</div>`:''}</div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+      <a href="tel:${c.phone}" class="cbtn">${c.phone}</a>
+      <button class="delbtn" onclick="delContact(${i})">ลบ</button>
+    </div>
+  </div>`).join(''):`<div class="empty" style="padding:20px;"><div class="et">ยังไม่มีรายชื่อร้านช่าง</div></div>`;
+
+  el.innerHTML=`
+  <!-- PROFILE -->
+  <div class="sec">👤 โปรไฟล์</div>
+  <div class="gc" style="padding:16px;">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👤</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;" id="profileNameDisplay">${uName}</div>
+        <div style="font-size:12px;color:var(--muted);">${sess?.user?.email||''}</div>
+      </div>
+    </div>
+    <div class="fs"><label class="fl">แก้ไขชื่อแสดง</label>
+      <input class="fi" id="newDisplayName" value="${uName}" placeholder="เช่น คุณปอม หรือ ภรรยา"></div>
+    <div id="profileMsg" style="font-size:13px;text-align:center;min-height:16px;margin-bottom:6px;"></div>
+    <button onclick="saveDisplayName()" style="width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">💾 บันทึกชื่อ</button>
+  </div>
+
+  <!-- BACKUP -->
+  <div class="sec">💾 สำรองข้อมูล</div>
+  <div class="gc" style="padding:16px;">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6;">ข้อมูลอยู่ใน Supabase cloud อยู่แล้ว แนะนำ backup ไว้เพิ่มเติมเป็น JSON file</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div style="background:var(--gray-lt);padding:10px;border-radius:var(--rx);text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:var(--blue);">${LOGS.length}</div>
+        <div style="font-size:11px;color:var(--muted);">รายการซ่อม</div>
+      </div>
+      <div style="background:var(--gray-lt);padding:10px;border-radius:var(--rx);text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:var(--green);">${Object.keys(DOCS).length}</div>
+        <div style="font-size:11px;color:var(--muted);">เอกสาร</div>
+      </div>
+    </div>
+    <button onclick="doBackup()" style="width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">
+      📥 Download Backup (JSON)
+    </button>
+    <label style="width:100%;padding:13px;background:var(--amber-lt);color:var(--amber);border:0.5px solid rgba(255,159,10,.3);border-radius:var(--rx);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+      📤 Restore จาก Backup
+      <input type="file" accept=".json" style="display:none;" onchange="doRestore(event)">
+    </label>
+    <div id="backupMsg" style="font-size:13px;text-align:center;margin-top:8px;min-height:18px;"></div>
+  </div>
+
+  <!-- EMERGENCY -->
+  <div class="sec">📞 เบอร์ฉุกเฉิน</div>
+  ${emH}
+  <div class="sec" style="display:flex;justify-content:space-between;align-items:center;">
+    <span>ศูนย์บริการ / ร้านช่าง</span>
+    <button onclick="document.getElementById('ovContact').classList.add('on')" style="font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">+ เพิ่ม</button>
+  </div>
+  ${myH}
+
+  <!-- LOGOUT -->
+  <div style="margin-top:24px;">
+    <button onclick="doLogout()" style="width:100%;padding:14px;background:var(--red-lt);color:var(--red);border:0.5px solid rgba(255,69,58,.3);border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+      🚪 ออกจากระบบ
+    </button>
+  </div>`;
+}
+
+async function saveDisplayName(){
+  const newName=document.getElementById('newDisplayName').value.trim();
+  const msg=document.getElementById('profileMsg');
+  if(!newName){msg.textContent='⚠ กรุณาใส่ชื่อ';msg.style.color='var(--red)';return;}
+  msg.textContent='⟳ กำลังบันทึก...';msg.style.color='var(--muted)';
+  try{
+    const r=await fetch(SBURL+'/auth/v1/user',{
+      method:'PUT',
+      headers:{...BH,'Authorization':'Bearer '+sess.access_token},
+      body:JSON.stringify({data:{display_name:newName}})
+    });
+    if(r.ok){
+      uName=newName;
+      sess.user.user_metadata={...sess.user.user_metadata,display_name:newName};
+      localStorage.setItem('cc_sess',JSON.stringify(sess));
+      document.getElementById('uBadge').textContent='👤 '+uName+' · ออก';
+      document.getElementById('profileNameDisplay').textContent=uName;
+      msg.textContent='✅ เปลี่ยนชื่อสำเร็จ!';msg.style.color='var(--green)';
+    } else {
+      msg.textContent='❌ บันทึกไม่สำเร็จ';msg.style.color='var(--red)';
+    }
+  }catch(e){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';}
+}
   const emH=EMG.map(c=>`<div class="ccard"><div><div class="ctype">${c.type}</div><div class="cname">${c.name}</div></div><a href="tel:${c.num}" class="cbtn">${c.num}</a></div>`).join('');
   const myH=CONTACTS.length?CONTACTS.map((c,i)=>`<div class="ccard">
     <div><div class="ctype">${c.type}</div><div class="cname">${c.name}</div>
