@@ -411,6 +411,7 @@ async function doSignup(){
 
 async function doLogout(){
   if(!confirm('ออกจากระบบ?'))return;
+  if(syncTimer){ clearInterval(syncTimer); syncTimer=null; }
   if(sess)await api('/auth/v1/logout','POST',{},sess.access_token);
   sess=null;uName='';
   localStorage.removeItem('cc_sess');
@@ -441,12 +442,37 @@ async function ups(table,body,tok){
   return rpc(`/rest/v1/${table}`,'POST',body,tok,{Prefer:'resolution=merge-duplicates'});
 }
 
+let syncTimer=null;
+
 async function startApp(){
   document.getElementById('authWrap').style.display='none';
   document.getElementById('App').classList.add('on');
   document.getElementById('uBadge').textContent='👤 '+uName+' · ออก';
   await loadAll();
   render();
+  startAutoSync();
+}
+
+function startAutoSync(){
+  // Auto refresh every 30 seconds
+  if(syncTimer) clearInterval(syncTimer);
+  syncTimer=setInterval(async()=>{
+    await loadAll();
+    render();
+  }, 30000);
+
+  // Also refresh when user comes back to the tab/app
+  document.addEventListener('visibilitychange',async()=>{
+    if(document.visibilityState==='visible' && sess){
+      await loadAll();
+      render();
+    }
+  });
+
+  // Refresh when iPhone wakes from background (focus event)
+  window.addEventListener('focus',async()=>{
+    if(sess){ await loadAll(); render(); }
+  });
 }
 
 // STATUS
