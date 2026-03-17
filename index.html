@@ -193,7 +193,23 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
   <div class="a-logo">🚗</div>
   <div class="a-title">Car Care</div>
   <div class="a-sub">ระบบบำรุงรักษารถยนต์ส่วนตัว</div>
-  <div class="a-tabs">
+
+  <!-- Face ID quick login — shown only if available -->
+  <div id="faceIdBtn" style="display:none;margin-bottom:16px;">
+    <button class="a-btn" id="faceIdLogin" onclick="doFaceIdLogin()" style="background:linear-gradient(135deg,#1C1C1E,#3A3A3C);font-size:17px;letter-spacing:.5px;">
+      Face ID / Touch ID เข้าสู่ระบบ
+    </button>
+    <div style="text-align:center;margin-top:10px;">
+      <span onclick="showPasswordForm()" style="font-size:13px;color:var(--blue);cursor:pointer;">ใช้ password แทน</span>
+    </div>
+  </div>
+
+  <div id="faceIdSaved" style="display:none;text-align:center;margin-bottom:12px;">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">เข้าสู่ระบบในชื่อ</div>
+    <div style="font-size:16px;font-weight:700;" id="faceIdName"></div>
+  </div>
+
+  <div class="a-tabs" id="authTabs">
     <div class="a-tab active" id="tabL" onclick="authTab('login')">เข้าสู่ระบบ</div>
     <div class="a-tab" id="tabS" onclick="authTab('signup')">สมัครสมาชิก</div>
   </div>
@@ -391,6 +407,123 @@ function authTab(t){
 }
 function authMsg(m,err){const e=document.getElementById('authMsg');e.textContent=m;e.className='a-msg '+(err?'err':'ok');}
 
+// ── FACE ID / BIOMETRIC LOGIN ──
+const BIOMETRIC_KEY='cc_biometric';
+
+function isBiometricAvailable(){
+  return window.PublicKeyCredential !== undefined &&
+    typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function';
+}
+
+async function checkBiometricAvailable(){
+  if(!isBiometricAvailable()) return false;
+  try{ return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); }
+  catch(e){ return false; }
+}
+
+function showPasswordForm(){
+  document.getElementById('faceIdBtn').style.display='none';
+  document.getElementById('faceIdSaved').style.display='none';
+  document.getElementById('authTabs').style.display='flex';
+  document.getElementById('fLogin').style.display='';
+}
+
+async function initBiometricUI(){
+  const saved=localStorage.getItem(BIOMETRIC_KEY);
+  const available=await checkBiometricAvailable();
+  if(saved && available){
+    const data=JSON.parse(saved);
+    document.getElementById('faceIdName').textContent='👤 '+data.name;
+    document.getElementById('faceIdSaved').style.display='block';
+    document.getElementById('faceIdBtn').style.display='block';
+    document.getElementById('authTabs').style.display='none';
+    document.getElementById('fLogin').style.display='none';
+  }
+}
+
+async function doFaceIdLogin(){
+  const saved=localStorage.getItem(BIOMETRIC_KEY);
+  if(!saved){ authMsg('ไม่พบข้อมูล Face ID กรุณา login ด้วย password ก่อน',true); showPasswordForm(); return; }
+  const data=JSON.parse(saved);
+  authMsg('กำลังยืนยัน Face ID...', false);
+  try{
+    // Use WebAuthn to verify biometric — challenge is just a random buffer
+    const challenge=new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    await navigator.credentials.get({
+      publicKey:{
+        challenge,
+        timeout:60000,
+        userVerification:'required',
+        allowCredentials: data.credId ? [{
+          id: base64ToBuffer(data.credId),
+          type:'public-key',
+          transports:['internal']
+        }] : []
+      }
+    });
+    // Biometric verified — restore session
+    authMsg('✅ Face ID สำเร็จ กำลังเข้าสู่ระบบ...', false);
+    sess={ access_token: data.token, refresh_token: data.refresh, user:{ id: data.uid, email: data.email, user_metadata:{ display_name: data.name } } };
+    uName = data.name;
+    // Verify token still valid
+    const r=await api('/auth/v1/user','GET',null,data.token);
+    if(r.ok && r.d.id){
+      sess.user=r.d;
+      localStorage.setItem('cc_sess',JSON.stringify(sess));
+      await startApp();
+    } else {
+      authMsg('Session หมดอายุ กรุณา login ใหม่',true);
+      showPasswordForm();
+    }
+  }catch(e){
+    authMsg('Face ID ไม่สำเร็จ กรุณาลองใหม่ หรือใช้ password',true);
+  }
+}
+
+async function offerBiometricSetup(){
+  const available=await checkBiometricAvailable();
+  if(!available) return;
+  if(localStorage.getItem(BIOMETRIC_KEY)) return; // already set up
+  // Ask user
+  if(!confirm('ต้องการใช้ Face ID / Touch ID ในการเข้าสู่ระบบครั้งถัดไปไหม?')) return;
+  try{
+    const challenge=new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    const uid=sess.user.id;
+    const cred=await navigator.credentials.create({
+      publicKey:{
+        challenge,
+        rp:{ name:'Car Care', id: location.hostname },
+        user:{ id: new TextEncoder().encode(uid), name: sess.user.email, displayName: uName },
+        pubKeyCredParams:[{alg:-7,type:'public-key'},{alg:-257,type:'public-key'}],
+        authenticatorSelection:{ authenticatorAttachment:'platform', userVerification:'required' },
+        timeout:60000,
+        attestation:'none'
+      }
+    });
+    const credId=bufferToBase64(cred.rawId);
+    localStorage.setItem(BIOMETRIC_KEY, JSON.stringify({
+      name: uName, email: sess.user.email, uid,
+      token: sess.access_token, refresh: sess.refresh_token,
+      credId
+    }));
+    alert('✅ ตั้งค่า Face ID สำเร็จ! ครั้งถัดไปกด Face ID ได้เลยครับ');
+  }catch(e){
+    // User cancelled or not supported — silently skip
+  }
+}
+
+function bufferToBase64(buffer){
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+}
+function base64ToBuffer(base64){
+  const bin=atob(base64);
+  const buf=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
+  return buf.buffer;
+}
+
 async function doSignup(){
   const name=document.getElementById('sName').value.trim();
   const email=document.getElementById('sEmail').value.trim();
@@ -412,6 +545,12 @@ async function doSignup(){
 async function doLogout(){
   if(!confirm('ออกจากระบบ?'))return;
   if(syncTimer){ clearInterval(syncTimer); syncTimer=null; }
+  // Ask if they want to remove Face ID too
+  if(localStorage.getItem(BIOMETRIC_KEY)){
+    if(confirm('ลบ Face ID ด้วยไหม? (ถ้าไม่ลบ ครั้งหน้าก็ยังใช้ Face ID ได้)')){
+      localStorage.removeItem(BIOMETRIC_KEY);
+    }
+  }
   if(sess)await api('/auth/v1/logout','POST',{},sess.access_token);
   sess=null;uName='';
   localStorage.removeItem('cc_sess');
@@ -451,6 +590,8 @@ async function startApp(){
   await loadAll();
   render();
   startAutoSync();
+  // Offer Face ID setup after first login (slight delay so app is visible first)
+  setTimeout(()=>offerBiometricSetup(), 1500);
 }
 
 function startAutoSync(){
@@ -536,7 +677,7 @@ function rDash(el){
   const nextH=next.length?next.map(({i,s,car})=>{
     const ck=KM[car.id]||0,lk=LD[`${car.id}_${i.id}`]||0,nk=lk+i.n,rem=ck?nk-ck:null;
     const ac=s==='urgent'?'var(--red)':s==='soon'?'var(--amber)':'var(--hint)';
-    return `<div style="background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--r);margin-bottom:8px;overflow:hidden;display:flex;box-shadow:var(--sh);">
+    return `<div style="background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--r);margin-bottom:8px;overflow:hidden;display:flex;box-shadow:var(--sh);" onclick="curCar='${car.id}';goTab('todo')">
       <div style="width:4px;background:${ac};flex-shrink:0;"></div>
       <div style="padding:10px 12px;flex:1;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
@@ -552,20 +693,28 @@ function rDash(el){
 
   const lastH=Object.values(CARS).map(car=>{
     const cl=LOGS.filter(l=>l.carId===car.id).sort((a,b)=>b.ts-a.ts),last=cl[0];
-    if(!last)return `<div class="gc" style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
-      <div><div style="font-size:13px;font-weight:600;">${car.name}</div><div style="font-size:11px;color:var(--hint);margin-top:2px;">${car.plate}</div></div>
-      <button onclick="curCar='${car.id}';goTab('log')" style="padding:7px 14px;background:var(--blue-lt);color:var(--blue);border:none;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;">+ บันทึกแรก</button>
+    if(!last) return `<div class="gc" style="padding:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div><div style="font-size:14px;font-weight:600;">${car.name}</div>
+        <div style="font-size:11px;color:var(--hint);margin-top:2px;">${car.plate}</div></div>
+      </div>
+      <button onclick="curCar='${car.id}';goTab('log')" style="width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(10,132,255,.3);">
+        ➕ บันทึกการซ่อมครั้งแรก
+      </button>
     </div>`;
     const tot=(+last.partCost||0)+(+last.laborCost||0);
-    return `<div class="gc" style="padding:12px 14px;cursor:pointer;" onclick="curCar='${car.id}';goTab('history')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:1px;">${car.name}${KM[car.id]?' · '+KM[car.id].toLocaleString()+' กม.':''}</div>
-          <div style="font-size:14px;font-weight:600;">${last.type}</div>
+    return `<div class="gc" style="padding:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px;" onclick="curCar='${car.id}';goTab('history')">
+        <div style="flex:1;min-width:0;cursor:pointer;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:2px;">${car.name}${KM[car.id]?' · '+KM[car.id].toLocaleString()+' กม.':''}</div>
+          <div style="font-size:15px;font-weight:600;">${last.type}</div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px;">${last.date}${last.shop?' · '+last.shop:''}${last.recordedBy?' · โดย '+last.recordedBy:''}</div>
         </div>
-        ${tot?`<div style="font-size:13px;font-weight:700;color:var(--blue);flex-shrink:0;">฿${tot.toLocaleString()}</div>`:''}
+        ${tot?`<div style="font-size:14px;font-weight:700;color:var(--blue);flex-shrink:0;cursor:pointer;">฿${tot.toLocaleString()}</div>`:''}
       </div>
+      <button onclick="curCar='${car.id}';goTab('log')" style="width:100%;padding:9px;background:var(--blue-lt);color:var(--blue);border:none;border-radius:var(--rx);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+        ➕ บันทึกรายการใหม่
+      </button>
     </div>`;
   }).join('');
 
@@ -574,7 +723,7 @@ function rDash(el){
     const s=car.sc.filter(i=>i.n>0&&st(car.id,i)==='soon').length;
     const col=u?'var(--red)':s?'var(--amber)':KM[car.id]?'var(--green)':'var(--hint)';
     const lbl=u?u+' ถึงกำหนด':s?s+' ใกล้ถึง':KM[car.id]?'ปกติ':'ยังไม่มีข้อมูล';
-    return `<div onclick="curCar='${car.id}';goTab('todo')" style="flex:1;background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--rs);padding:10px 6px;text-align:center;cursor:pointer;box-shadow:var(--sh);">
+    return `<div onclick="curCar='${car.id}';goTab('todo')" style="flex:1;background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--rs);padding:10px 6px;text-align:center;cursor:pointer;box-shadow:var(--sh);-webkit-tap-highlight-color:rgba(10,132,255,.1);">
       <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${car.name.replace('Toyota ','').replace('Mazda ','')}</div>
       <div style="font-size:11px;font-weight:700;color:${col};">${lbl}</div>
     </div>`;
@@ -582,7 +731,10 @@ function rDash(el){
 
   el.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px;">${strip}</div>
     <div class="sec">รายการที่ต้องดำเนินการ</div>${nextH}
-    <div class="sec" style="margin-top:18px;">งานล่าสุดที่ทำแล้ว — แต่ละคัน</div>${lastH}`;
+    <div class="sec" style="margin-top:18px;display:flex;justify-content:space-between;align-items:center;">
+      <span>งานล่าสุด — แต่ละคัน</span>
+      <button onclick="goTab('log')" style="font-size:12px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">➕ บันทึกใหม่</button>
+    </div>${lastH}`;
 }
 
 // TODO
@@ -841,6 +993,8 @@ document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',function(
 
 // INIT — also handles redirect from password reset email
 async function init(){
+  // Show Face ID button if previously set up
+  await initBiometricUI();
   // 1. Check URL hash for access_token (from Supabase password reset email)
   const hash = window.location.hash;
   if(hash && hash.includes('access_token')){
