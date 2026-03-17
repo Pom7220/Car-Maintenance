@@ -322,7 +322,7 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
 
 <!-- OVERLAY: QUICK LOG FROM TODO -->
 <div class="ov" id="ovQuickLog">
-<div class="ovs">
+<div class="ovs" style="background:var(--bg);">
   <div class="ovh"></div>
   <div class="ovt" id="qlTitle">📝 บันทึกการซ่อม</div>
   <input type="hidden" id="qlCar">
@@ -349,9 +349,18 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
     <div class="fs"><label class="fl">ค่าแรง (฿)</label><input class="fi" type="number" id="qlLabor" placeholder="0"></div>
   </div>
   <div class="fs"><label class="fl">ยี่ห้อ/เกรดน้ำมัน หรืออะไหล่</label>
-    <input class="fi" id="qlProduct" placeholder="เช่น Mobil 1 5W-30"></div>
+    <textarea class="fi" id="qlProduct" placeholder="เช่น Mobil 1 5W-30 Fully Synthetic" style="min-height:72px;line-height:1.5;"></textarea></div>
   <div class="fs"><label class="fl">หมายเหตุ</label>
-    <textarea class="fi" id="qlNote" style="min-height:60px;"></textarea></div>
+    <textarea class="fi" id="qlNote" style="min-height:80px;line-height:1.5;"></textarea></div>
+  <div class="fs">
+    <label class="fl">รูปภาพ (น้ำมัน / ใบเสร็จ / ใบรับประกัน)</label>
+    <div id="qlPhotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;"></div>
+    <label style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--glass);border:1.5px dashed var(--gb);border-radius:var(--rx);cursor:pointer;font-size:14px;color:var(--muted);font-weight:500;">
+      📷 แตะเพื่อเพิ่มรูป
+      <input type="file" accept="image/*" multiple id="qlPhotoInput" style="display:none;" onchange="handlePhotos('ql',event)">
+    </label>
+    <div style="font-size:11px;color:var(--hint);margin-top:4px;">รูปจะถูก resize เป็น 800px อัตโนมัติ ประหยัดพื้นที่</div>
+  </div>
   <div id="qlMsg" style="font-size:13px;color:var(--green);text-align:center;min-height:18px;margin-bottom:4px;"></div>
   <button class="fbtn" onclick="saveQuickLog()">💾 บันทึก</button>
   <button class="cancelbtn" onclick="closeOv('ovQuickLog')">ยกเลิก</button>
@@ -609,7 +618,7 @@ async function loadAll(){
   ]);
   if(rk.ok)rk.d.forEach(r=>KM[r.car_id]=r.km);
   if(rd.ok)rd.d.forEach(r=>LD[r.item_key]=r.km);
-  if(rl.ok)LOGS=rl.d.map(r=>({id:r.id,carId:r.car_id,date:r.date,km:r.km,type:r.type,place:r.place,shop:r.shop,partCost:r.part_cost,laborCost:r.labor_cost,product:r.product,note:r.note,recordedBy:r.recorded_by,ts:new Date(r.created_at).getTime()}));
+  if(rl.ok)LOGS=rl.d.map(r=>({id:r.id,carId:r.car_id,date:r.date,km:r.km,type:r.type,place:r.place,shop:r.shop,partCost:r.part_cost,laborCost:r.labor_cost,product:r.product,note:r.note,recordedBy:r.recorded_by,photos:r.photos||'[]',ts:new Date(r.created_at).getTime()}));
   if(rc.ok)rc.d.forEach(r=>DOCS[r.doc_key]={expiry:r.expiry,note:r.note});
   CONTACTS=JSON.parse(localStorage.getItem('cc_contacts')||'[]');
   sync(false);
@@ -832,27 +841,75 @@ async function markDone(cid,iid){
   sync(false);render();
 }
 
-function openQuickLog(cid, iid, itemLabel){
-  const car = CARS[cid];
-  const today = new Date().toISOString().split('T')[0];
-  // pre-fill place based on car type
-  const defaultPlace = car.id==='cx5' ? 'ศูนย์มาสด้า' : 'ศูนย์โตโยต้า';
-
-  document.getElementById('qlCar').value = cid;
-  document.getElementById('qlType').value = itemLabel;
-  document.getElementById('qlItemName').textContent = itemLabel;
-  document.getElementById('qlCarName').textContent = car.name + ' · ' + car.plate;
-  document.getElementById('qlDate').value = today;
-  document.getElementById('qlKm').value = KM[cid] || '';
-  document.getElementById('qlBy').value = uName;
-  document.getElementById('qlPlace').value = defaultPlace;
-  document.getElementById('qlShop').value = '';
-  document.getElementById('qlPart').value = '';
-  document.getElementById('qlLabor').value = '';
-  document.getElementById('qlProduct').value = '';
-  document.getElementById('qlNote').value = '';
-  document.getElementById('qlMsg').textContent = '';
+function openQuickLog(cid,iid,itemLabel){
+  const car=CARS[cid];
+  const today=new Date().toISOString().split('T')[0];
+  const defaultPlace=car.id==='cx5'?'ศูนย์มาสด้า':'ศูนย์โตโยต้า';
+  document.getElementById('qlCar').value=cid;
+  document.getElementById('qlType').value=itemLabel;
+  document.getElementById('qlItemName').textContent=itemLabel;
+  document.getElementById('qlCarName').textContent=car.name+' · '+car.plate;
+  document.getElementById('qlDate').value=today;
+  document.getElementById('qlKm').value=KM[cid]||'';
+  document.getElementById('qlBy').value=uName;
+  document.getElementById('qlPlace').value=defaultPlace;
+  document.getElementById('qlShop').value='';
+  document.getElementById('qlPart').value='';
+  document.getElementById('qlLabor').value='';
+  document.getElementById('qlProduct').value='';
+  document.getElementById('qlNote').value='';
+  document.getElementById('qlMsg').textContent='';
+  // Reset photo queue and preview
+  photoQueues.ql=[];
+  renderPhotoPreview('ql');
   document.getElementById('ovQuickLog').classList.add('on');
+}
+
+async function saveQuickLog(){
+  const cid=document.getElementById('qlCar').value;
+  const date=document.getElementById('qlDate').value;
+  const kv=parseInt(document.getElementById('qlKm').value);
+  const msg=document.getElementById('qlMsg');
+  if(!date||!kv){msg.textContent='⚠ กรุณากรอกวันที่และเลขไมล์';msg.style.color='var(--red)';return;}
+  msg.textContent='⟳ กำลังบันทึก...';msg.style.color='var(--muted)';
+  try{
+    const uid=sess.user.id,tok=sess.access_token;
+    const itemLabel=document.getElementById('qlType').value;
+    const body={
+      user_id:uid,recorded_by:document.getElementById('qlBy').value||uName,
+      car_id:cid,date,km:kv,type:itemLabel,
+      place:document.getElementById('qlPlace').value,
+      shop:document.getElementById('qlShop').value,
+      part_cost:document.getElementById('qlPart').value||null,
+      labor_cost:document.getElementById('qlLabor').value||null,
+      product:document.getElementById('qlProduct').value,
+      note:document.getElementById('qlNote').value
+    };
+    const r=await rpc('/rest/v1/car_logs','POST',body,tok,{Prefer:'return=representation'});
+    if(!r.ok){const e=await r.text();msg.textContent='❌ '+e.substring(0,100);msg.style.color='var(--red)';return;}
+    const data=await r.json();
+    const newId=data[0]?.id;
+    // Upload photos
+    if(photoQueues.ql.length){
+      msg.textContent='⟳ กำลัง upload รูป...';
+      await uploadPhotos('ql',newId);
+    }
+    LOGS.unshift({id:newId,carId:cid,date,km:kv,type:itemLabel,
+      place:body.place,shop:body.shop,partCost:body.part_cost,
+      laborCost:body.labor_cost,product:body.product,note:body.note,
+      recordedBy:body.recorded_by,ts:Date.now(),photos:'[]'});
+    if(!KM[cid]||kv>KM[cid]){
+      KM[cid]=kv;
+      await rpc('/rest/v1/car_km','POST',{user_id:uid,car_id:cid,km:kv},tok,{Prefer:'resolution=merge-duplicates'});
+    }
+    const itemId=Object.values(CARS[cid].sc).find(i=>i.l===itemLabel)?.id;
+    if(itemId){
+      const key=`${cid}_${itemId}`;LD[key]=kv;
+      await rpc('/rest/v1/car_lastdone','POST',{user_id:uid,item_key:key,km:kv},tok,{Prefer:'resolution=merge-duplicates'});
+    }
+    msg.textContent='✅ บันทึกสำเร็จ!';msg.style.color='var(--green)';
+    setTimeout(()=>{closeOv('ovQuickLog');render();},800);
+  }catch(e){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';}
 }
 
 async function saveQuickLog(){
@@ -939,11 +996,96 @@ function rLog(el){
       <div class="fs"><label class="fl">ค่าอะไหล่ (฿)</label><input class="fi" type="number" id="logPart" placeholder="0"></div>
       <div class="fs"><label class="fl">ค่าแรง (฿)</label><input class="fi" type="number" id="logLabor" placeholder="0"></div>
     </div>
-    <div class="fs"><label class="fl">ยี่ห้อ/เกรดน้ำมัน</label><input class="fi" id="logProduct" placeholder="เช่น Mobil 1 5W-30"></div>
-    <div class="fs"><label class="fl">หมายเหตุ</label><textarea class="fi" id="logNote"></textarea></div>
+    <div class="fs"><label class="fl">ยี่ห้อ/เกรดน้ำมัน</label>
+      <textarea class="fi" id="logProduct" placeholder="เช่น Mobil 1 5W-30 Fully Synthetic" style="min-height:72px;line-height:1.5;"></textarea></div>
+    <div class="fs"><label class="fl">หมายเหตุ</label>
+      <textarea class="fi" id="logNote" style="min-height:80px;line-height:1.5;"></textarea></div>
+    <div class="fs">
+      <label class="fl">รูปภาพ (น้ำมัน / ใบเสร็จ / ใบรับประกัน)</label>
+      <div id="logPhotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;"></div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--glass);border:1.5px dashed var(--gb);border-radius:var(--rx);cursor:pointer;font-size:14px;color:var(--muted);font-weight:500;">
+        📷 แตะเพื่อเพิ่มรูป
+        <input type="file" accept="image/*" multiple id="logPhotoInput" style="display:none;" onchange="handlePhotos('log',event)">
+      </label>
+      <div style="font-size:11px;color:var(--hint);margin-top:4px;">รูปจะถูก resize เป็น 800px อัตโนมัติ ประหยัดพื้นที่</div>
+    </div>
     <div id="logMsg" style="font-size:13px;color:var(--green);text-align:center;min-height:18px;margin-bottom:4px;"></div>
     <button class="fbtn" onclick="saveLog()">💾 บันทึก</button>
   </div></div>`;
+}
+
+// ── PHOTO HANDLING ──
+const photoQueues={log:[],ql:[]};
+
+function handlePhotos(prefix,event){
+  Array.from(event.target.files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=800;
+        let w=img.width,h=img.height;
+        if(w>MAX||h>MAX){
+          if(w>h){h=Math.round(h*MAX/w);w=MAX;}
+          else{w=Math.round(w*MAX/h);h=MAX;}
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        const dataUrl=canvas.toDataURL('image/jpeg',0.75);
+        const fname=`${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+        photoQueues[prefix].push({dataUrl,name:fname});
+        renderPhotoPreview(prefix);
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPhotoPreview(prefix){
+  const el=document.getElementById(`${prefix}PhotoPreview`);
+  if(!el)return;
+  el.innerHTML=photoQueues[prefix].map((p,i)=>
+    `<div style="position:relative;">
+      <img src="${p.dataUrl}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;border:0.5px solid var(--gb);">
+      <button onclick="removePhoto('${prefix}',${i})" style="position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:12px;cursor:pointer;line-height:1;">×</button>
+    </div>`
+  ).join('');
+}
+
+function removePhoto(prefix,i){photoQueues[prefix].splice(i,1);renderPhotoPreview(prefix);}
+
+async function uploadPhotos(prefix,logId){
+  const photos=photoQueues[prefix];
+  if(!photos.length)return[];
+  const tok=sess.access_token,uid=sess.user.id;
+  const paths=[];
+  for(const p of photos){
+    const blob=await(await fetch(p.dataUrl)).blob();
+    const path=`${uid}/${logId}/${p.name}`;
+    const r=await fetch(`${SBURL}/storage/v1/object/car-photos/${path}`,{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+tok,'Content-Type':'image/jpeg','x-upsert':'true'},
+      body:blob
+    });
+    if(r.ok)paths.push(path);
+  }
+  if(paths.length&&logId){
+    await rpc(`/rest/v1/car_logs?id=eq.${logId}`,'PATCH',{photos:JSON.stringify(paths)},tok);
+  }
+  photoQueues[prefix]=[];
+  return paths;
+}
+
+async function getSignedUrl(path){
+  const r=await fetch(`${SBURL}/storage/v1/object/sign/car-photos/${path}`,{
+    method:'POST',
+    headers:{...BH,'Authorization':'Bearer '+sess.access_token},
+    body:JSON.stringify({expiresIn:3600})
+  });
+  const d=await r.json();
+  return d.signedURL?`${SBURL}/storage/v1${d.signedURL}`:null;
 }
 
 async function saveLog(){
@@ -953,22 +1095,31 @@ async function saveLog(){
   const msg=document.getElementById('logMsg');
   if(!date||!kv){msg.textContent='⚠ กรุณากรอกวันที่และเลขไมล์';msg.style.color='var(--red)';return;}
   msg.textContent='⟳ กำลังบันทึก...';msg.style.color='var(--muted)';
-  const uid=sess.user.id,tok=sess.access_token;
-  const body={user_id:uid,recorded_by:document.getElementById('logBy').value||uName,car_id:cid,date,km:kv,
-    type:document.getElementById('logType').value,place:document.getElementById('logPlace').value,
-    shop:document.getElementById('logShop').value,
-    part_cost:document.getElementById('logPart').value||null,
-    labor_cost:document.getElementById('logLabor').value||null,
-    product:document.getElementById('logProduct').value,note:document.getElementById('logNote').value};
-  const r=await rpc('/rest/v1/car_logs','POST',body,tok,{Prefer:'return=representation'});
-  const data=await r.json();
-  const newId=data[0]?.id;
-  LOGS.unshift({id:newId,carId:cid,date,km:kv,type:body.type,place:body.place,shop:body.shop,
-    partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,
-    recordedBy:body.recorded_by,ts:Date.now()});
-  if(!KM[cid]||kv>KM[cid]){KM[cid]=kv;await rpc('/rest/v1/car_km','POST',{user_id:uid,car_id:cid,km:kv},tok,{Prefer:'resolution=merge-duplicates'});}
-  msg.textContent='✅ บันทึกเรียบร้อย! ข้อมูล sync แล้ว';msg.style.color='var(--green)';
-  setTimeout(()=>rLog(document.getElementById('mainC')),1400);
+  try{
+    const uid=sess.user.id,tok=sess.access_token;
+    const body={user_id:uid,recorded_by:document.getElementById('logBy').value||uName,car_id:cid,date,km:kv,
+      type:document.getElementById('logType').value,place:document.getElementById('logPlace').value,
+      shop:document.getElementById('logShop').value,
+      part_cost:document.getElementById('logPart').value||null,
+      labor_cost:document.getElementById('logLabor').value||null,
+      product:document.getElementById('logProduct').value,
+      note:document.getElementById('logNote').value};
+    const r=await rpc('/rest/v1/car_logs','POST',body,tok,{Prefer:'return=representation'});
+    if(!r.ok){const e=await r.text();msg.textContent='❌ '+e.substring(0,100);msg.style.color='var(--red)';return;}
+    const data=await r.json();
+    const newId=data[0]?.id;
+    // Upload photos if any
+    if(photoQueues.log.length){
+      msg.textContent='⟳ กำลัง upload รูป...';
+      await uploadPhotos('log',newId);
+    }
+    LOGS.unshift({id:newId,carId:cid,date,km:kv,type:body.type,place:body.place,shop:body.shop,
+      partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,
+      recordedBy:body.recorded_by,ts:Date.now(),photos:'[]'});
+    if(!KM[cid]||kv>KM[cid]){KM[cid]=kv;await rpc('/rest/v1/car_km','POST',{user_id:uid,car_id:cid,km:kv},tok,{Prefer:'resolution=merge-duplicates'});}
+    msg.textContent='✅ บันทึกเรียบร้อย!';msg.style.color='var(--green)';
+    setTimeout(()=>rLog(document.getElementById('mainC')),1400);
+  }catch(e){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';}
 }
 
 // HISTORY
@@ -976,6 +1127,7 @@ function rHist(el){
   const cl=LOGS.filter(l=>l.carId===curCar).sort((a,b)=>b.ts-a.ts);
   const items=cl.length?cl.map(l=>{
     const tot=(+l.partCost||0)+(+l.laborCost||0);
+    const photoPaths=JSON.parse(l.photos||'[]');
     return`<div class="le">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div><div class="lt">${l.type}</div>
@@ -985,13 +1137,17 @@ function rHist(el){
           <button class="delbtn" onclick="delLog('${l.id}')">ลบ</button>
         </div>
       </div>
-      ${l.product?`<div style="font-size:12px;color:var(--muted);margin:3px 0;">${l.product}</div>`:''}
-      <div class="chips">
+      ${l.product?`<div style="font-size:12px;color:var(--muted);margin:4px 0;line-height:1.5;">${l.product}</div>`:''}
+      <div class="chips" style="margin-top:4px;">
         ${l.partCost?`<span class="chip">อะไหล่ ฿${parseInt(l.partCost).toLocaleString()}</span>`:''}
         ${l.laborCost?`<span class="chip">ค่าแรง ฿${parseInt(l.laborCost).toLocaleString()}</span>`:''}
         ${tot?`<span class="chip" style="font-weight:700;">รวม ฿${tot.toLocaleString()}</span>`:''}
         ${l.note?`<span class="chip">${l.note}</span>`:''}
       </div>
+      ${photoPaths.length?`<div id="photos_${l.id}" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+        <div style="font-size:11px;color:var(--hint);width:100%;margin-bottom:2px;">📷 ${photoPaths.length} รูป</div>
+        ${photoPaths.map((_,i)=>`<div id="ph_${l.id}_${i}" style="width:72px;height:72px;background:var(--gray-lt);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;" onclick="loadPhoto('${l.id}',${i},'${_}')">🖼️</div>`).join('')}
+      </div>`:''}
     </div>`;
   }).join(''):`<div class="empty"><div class="ei">📋</div><div class="et">ยังไม่มีประวัติ</div></div>`;
 
@@ -1020,6 +1176,18 @@ async function delLog(id){
   await rpc(`/rest/v1/car_logs?id=eq.${id}`,'DELETE',null,sess.access_token);
   LOGS=LOGS.filter(l=>l.id!==id);sync(false);
   rHist(document.getElementById('mainC'));
+}
+
+async function loadPhoto(logId, idx, path){
+  const el=document.getElementById(`ph_${logId}_${idx}`);
+  if(!el)return;
+  el.textContent='⏳';
+  const url=await getSignedUrl(path);
+  if(url){
+    el.innerHTML=`<img src="${url}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;cursor:pointer;" onclick="window.open('${url}','_blank')">`;
+  } else {
+    el.textContent='❌';
+  }
 }
 
 function openEditLog(id){
