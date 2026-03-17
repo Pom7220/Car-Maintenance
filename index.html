@@ -840,7 +840,7 @@ function rTodo(el){
     const lastLog=LOGS.filter(l=>l.carId===cid&&l.type===item.l).sort((a,b)=>b.ts-a.ts)[0];
     const photos=lastLog?JSON.parse(lastLog.photos||'[]'):[];
     const photoRow=photos.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 2px;">
-      ${photos.map((_,i)=>`<div id="tdph_${lastLog.id}_${i}" style="width:56px;height:56px;background:var(--gray-lt);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;" onclick="loadPhoto('tdph_${lastLog.id}_${i}','${_}')">🖼️</div>`).join('')}
+      ${photos.map((_,i)=>`<div id="tdph_${lastLog.id}_${i}" style="width:56px;height:56px;background:var(--gray-lt);border-radius:8px;overflow:hidden;flex-shrink:0;">⏳</div>`).join('')}
     </div>`:'';
 
     if(item.n===0)return `<div class="tdi"><div class="tda info"></div><div class="tdin">
@@ -868,6 +868,7 @@ function rTodo(el){
     <div style="display:flex;border-top:0.5px solid var(--gb);">
       <button style="flex:1;padding:11px 6px;background:var(--green-lt);border:none;border-right:0.5px solid var(--gb);font-size:12px;color:var(--green);cursor:pointer;font-family:inherit;font-weight:600;" onclick="openQL('${cid}','${item.id}','${item.l}')">📝 บันทึกงานนี้</button>
       <button style="flex:1;padding:11px 6px;background:var(--gray-lt);border:none;font-size:12px;color:${canMark?'var(--muted)':'var(--hint)'};cursor:pointer;font-family:inherit;font-weight:500;" onclick="markDone('${cid}','${item.id}')" ${canMark?'':'disabled'}>${canMark?'✓ ทำแล้ว @'+ck.toLocaleString()+' กม.':'ใส่ไมล์ก่อน'}</button>
+      ${lk?`<button style="padding:11px 8px;background:var(--red-lt);border:none;border-left:0.5px solid var(--gb);font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;font-weight:600;" onclick="resetTodo('${cid}','${item.id}')" title="รีเซ็ตกลับเป็นยังไม่ได้ทำ">↺</button>`:''}
     </div>
     </div>`;
   }).join('');
@@ -882,6 +883,14 @@ function rTodo(el){
       <div class="sc g"><div class="sn">${o}</div><div class="sl">ปกติ</div></div>
     </div>
     <div class="sec">รายการทั้งหมด — ${car.name}</div>${items}`;
+
+  // Auto-load thumbnails for each item's last log
+  car.sc.forEach(item=>{
+    const lastLog=LOGS.filter(l=>l.carId===cid&&l.type===item.l).sort((a,b)=>b.ts-a.ts)[0];
+    if(!lastLog)return;
+    const photos=JSON.parse(lastLog.photos||'[]');
+    photos.forEach((path,i)=>autoLoadThumb(`tdph_${lastLog.id}_${i}`,path));
+  });
 }
 
 async function updKm(){
@@ -905,8 +914,22 @@ async function loadPhoto(elId,path){
   const r=await sbPost('/storage/v1/object/sign/car-photos/'+path,{expiresIn:3600},sess.access_token);
   const d=await r.json();
   const url=d.signedURL?SBURL+'/storage/v1'+d.signedURL:null;
-  if(url)el.innerHTML=`<img src="${url}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open('${url}','_blank')">`;
+  if(url)el.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;cursor:pointer;" onclick="window.open('${url}','_blank')">`;
   else el.textContent='❌';
+}
+
+// Auto-load thumbnail silently (no ⏳ flicker for already-set elements)
+async function autoLoadThumb(elId,path){
+  const el=document.getElementById(elId);
+  if(!el||el.querySelector('img'))return; // skip if already loaded
+  try{
+    const r=await sbPost('/storage/v1/object/sign/car-photos/'+path,{expiresIn:3600},sess.access_token);
+    const d=await r.json();
+    const url=d.signedURL?SBURL+'/storage/v1'+d.signedURL:null;
+    if(url&&document.getElementById(elId)){
+      el.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;cursor:pointer;" onclick="window.open('${url}','_blank')">`;
+    }
+  }catch(e){}
 }
 
 // ══ LOG FORM ══
@@ -982,7 +1005,11 @@ async function saveLog(){
     if(!r.ok){const e=await r.text();msg.textContent='❌ '+e.substring(0,100);msg.style.color='var(--red)';if(btn)btn.disabled=false;return;}
     const data=await r.json();
     const newId=data[0]?.id;
-    if(photoQ.log.length){msg.textContent='⟳ กำลัง upload รูป...';await uploadPhotos('log',newId);}
+    if(photoQ.log.length){
+      msg.textContent='⟳ กำลัง upload รูป...';
+      const paths=await uploadPhotos('log',newId);
+      // uploadPhotos already updates LOGS[idx].photos
+    }
     LOGS.unshift({id:newId,carId:cid,date,km:kv,type:body.type,place:body.place,shop:body.shop,
       partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,
       recordedBy:body.recorded_by,ts:Date.now(),photos:'[]'});
@@ -1087,13 +1114,37 @@ async function uploadPhotos(prefix,logId){
   for(const p of photoQ[prefix]){
     const blob=await(await fetch(p.dataUrl)).blob();
     const path=`${uid}/${logId}/${p.name}`;
+    // Use PUT for storage upload (not POST)
     const r=await fetch(`${SBURL}/storage/v1/object/car-photos/${path}`,{
-      method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'image/jpeg','x-upsert':'true'},body:blob
+      method:'POST',
+      headers:{'Authorization':'Bearer '+tok,'Content-Type':'image/jpeg','x-upsert':'true'},
+      body:blob
     });
-    if(r.ok)paths.push(path);
+    if(r.ok) paths.push(path);
+    else {
+      // Try token refresh once if 401
+      if(r.status===401){
+        const refreshed=await refreshToken();
+        if(refreshed){
+          const r2=await fetch(`${SBURL}/storage/v1/object/car-photos/${path}`,{
+            method:'POST',
+            headers:{'Authorization':'Bearer '+sess.access_token,'Content-Type':'image/jpeg','x-upsert':'true'},
+            body:blob
+          });
+          if(r2.ok) paths.push(path);
+        }
+      }
+    }
   }
-  if(paths.length){await sbPost(`/rest/v1/car_logs?id=eq.${logId}`,{photos:JSON.stringify(paths)},sess.access_token,{method:'PATCH'});}
-  photoQ[prefix]=[];return paths;
+  if(paths.length && logId){
+    // Use PATCH correctly to update photos column
+    await sbPatch(`/rest/v1/car_logs?id=eq.${logId}`,{photos:JSON.stringify(paths)},sess.access_token);
+    // Update local LOGS state so thumbnails show immediately
+    const idx=LOGS.findIndex(l=>l.id===logId);
+    if(idx>=0) LOGS[idx].photos=JSON.stringify(paths);
+  }
+  photoQ[prefix]=[];
+  return paths;
 }
 
 // ══ HISTORY ══
@@ -1119,7 +1170,7 @@ function rHist(el){
         ${l.note?`<span class="chip">${l.note}</span>`:''}
       </div>
       ${photos.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
-        ${photos.map((_,i)=>`<div id="hph_${l.id}_${i}" style="width:64px;height:64px;background:var(--gray-lt);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;" onclick="loadPhoto('hph_${l.id}_${i}','${_}')">🖼️</div>`).join('')}
+        ${photos.map((path,i)=>`<div id="hph_${l.id}_${i}" style="width:72px;height:72px;background:var(--gray-lt);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;cursor:pointer;flex-shrink:0;">⏳</div>`).join('')}
       </div>`:''}
     </div>`;
   }).join(''):`<div class="empty"><div class="ei">📋</div><div class="et">ยังไม่มีประวัติ</div></div>`;
@@ -1141,14 +1192,61 @@ function rHist(el){
   el.innerHTML=`<div class="sec">เอกสารสำคัญ — ${CARS[curCar].name}</div>
     <div class="gc"><div class="gcb" style="padding-top:12px;">${drows}</div></div>
     <div class="sec">ประวัติการซ่อม — ${CARS[curCar].name}</div>${items}`;
+
+  // Auto-load all photo thumbnails
+  cl.forEach(l=>{
+    const photos=JSON.parse(l.photos||'[]');
+    photos.forEach((path,i)=>autoLoadThumb(`hph_${l.id}_${i}`,path));
+  });
 }
 
 async function delLog(id){
   if(!confirm('ลบรายการนี้?'))return;
   syncBar(true);
+  const log=LOGS.find(l=>l.id===id);
   await sbDelete(`/rest/v1/car_logs?id=eq.${id}`,sess.access_token);
-  LOGS=LOGS.filter(l=>l.id!==id);syncBar(false);
+  LOGS=LOGS.filter(l=>l.id!==id);
+
+  // Check if we need to reset lastDone for this item type
+  if(log){
+    const car=CARS[log.carId];
+    if(car){
+      // Find matching schedule item
+      const item=car.sc.find(i=>i.l===log.type);
+      if(item){
+        const key=`${log.carId}_${item.id}`;
+        // If the deleted log's km matches what's stored as lastDone → clear or recalculate
+        if(LD[key]===log.km){
+          // Find next most recent log for same type
+          const remaining=LOGS.filter(l=>l.carId===log.carId&&l.type===log.type).sort((a,b)=>b.km-a.km);
+          const uid=sess.user.id,tok=sess.access_token;
+          if(remaining.length>0){
+            // Update lastDone to previous record
+            LD[key]=remaining[0].km;
+            await sbFetch(`/rest/v1/car_lastdone?user_id=eq.${uid}&item_key=eq.${key}`,'PATCH',{km:remaining[0].km},tok);
+          } else {
+            // No more records → delete lastDone entry
+            delete LD[key];
+            await sbDelete(`/rest/v1/car_lastdone?user_id=eq.${uid}&item_key=eq.${key}`,tok);
+          }
+        }
+      }
+    }
+  }
+  syncBar(false);
   rHist(document.getElementById('mainC'));
+}
+
+// Reset a To-Do item back to "not done" without deleting the log
+async function resetTodo(cid,iid){
+  if(!confirm('รีเซ็ตรายการนี้กลับเป็น "ยังไม่ได้ทำ" ไหม?\n(ประวัติการซ่อมยังอยู่ แค่ล้างไมล์ที่บันทึก)'))return;
+  const key=`${cid}_${iid}`;
+  const uid=sess.user.id,tok=sess.access_token;
+  syncBar(true);
+  delete LD[key];
+  await sbDelete(`/rest/v1/car_lastdone?user_id=eq.${uid}&item_key=eq.${key}`,tok);
+  syncBar(false);
+  render();
 }
 
 function openEditLog(id){
