@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Car Care">
+<meta name="theme-color" content="#185FA5">
+<title>Car Care — บำรุงรักษารถยนต์</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --blue:#185FA5;--blue-lt:#E6F1FB;--blue-dk:#0C447C;
+    --green:#3B6D11;--green-lt:#EAF3DE;
+    --amber:#854F0B;--amber-lt:#FAEEDA;
+    --red:#A32D2D;--red-lt:#FCEBEB;
+    --gray:#888780;--gray-lt:#F1EFE8;
+    --bg:#F8F8F6;--card:#FFFFFF;
+    --border:#E0DED8;--border2:#C8C6C0;
+    --text:#1A1A18;--muted:#666660;--hint:#999994;
+    --radius:12px;--radius-sm:8px;
+    --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  }
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#111110;--card:#1E1E1C;--border:#333330;--border2:#444440;
+      --text:#F0F0EE;--muted:#A0A09A;--hint:#666660;
+      --blue-lt:#0C2A4A;--green-lt:#1A2E0A;--amber-lt:#2A1C06;--red-lt:#2A0E0E;--gray-lt:#222220;
+    }
+  }
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;}
+  
+  /* Layout */
+  .app{display:flex;flex-direction:column;height:100vh;max-width:600px;margin:0 auto;}
+  .header{background:var(--card);border-bottom:0.5px solid var(--border);padding:12px 16px 8px;flex-shrink:0;}
+  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .header-title{font-size:17px;font-weight:600;letter-spacing:-.3px;}
+  .header-sub{font-size:12px;color:var(--muted);}
+  .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px 100px;}
+  .tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:600px;background:var(--card);border-top:0.5px solid var(--border);display:flex;padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:100;}
+  .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px;cursor:pointer;border:none;background:none;color:var(--hint);transition:color .15s;}
+  .tab-item.active{color:var(--blue);}
+  .tab-icon{font-size:22px;line-height:1;}
+  .tab-label{font-size:9px;font-weight:500;letter-spacing:.01em;}
+
+  /* Car selector */
+  .car-pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+  .car-pills::-webkit-scrollbar{display:none;}
+  .car-pill{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;font-size:13px;color:var(--muted);white-space:nowrap;cursor:pointer;transition:all .15s;flex-shrink:0;}
+  .car-pill.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+  /* Cards */
+  .card{background:var(--card);border-radius:var(--radius);border:0.5px solid var(--border);margin-bottom:10px;overflow:hidden;}
+  .card-header{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;}
+  .card-title{font-size:14px;font-weight:600;}
+  .card-body{padding:0 14px 14px;}
+  .section-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--hint);margin:16px 0 8px;}
+
+  /* Status badges */
+  .badge{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
+  .badge-urgent{background:var(--red-lt);color:var(--red);}
+  .badge-soon{background:var(--amber-lt);color:var(--amber);}
+  .badge-ok{background:var(--green-lt);color:var(--green);}
+  .badge-unknown{background:var(--gray-lt);color:var(--gray);}
+  .badge-info{background:var(--blue-lt);color:var(--blue);}
+
+  /* Summary row */
+  .summary-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+  .sum-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px;text-align:center;}
+  .sum-num{font-size:24px;font-weight:700;}
+  .sum-label{font-size:10px;color:var(--muted);margin-top:1px;}
+  .sum-card.red .sum-num{color:var(--red);}
+  .sum-card.amber .sum-num{color:var(--amber);}
+  .sum-card.green .sum-num{color:var(--green);}
+
+  /* Progress bar */
+  .prog-wrap{height:5px;background:var(--gray-lt);border-radius:3px;margin:6px 0 2px;overflow:hidden;}
+  .prog-bar{height:100%;border-radius:3px;transition:width .4s;}
+
+  /* Todo item */
+  .todo-item{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;position:relative;}
+  .todo-accent{position:absolute;left:0;top:0;bottom:0;width:3px;}
+  .todo-accent.urgent{background:var(--red);}
+  .todo-accent.soon{background:#BA7517;}
+  .todo-accent.ok{background:var(--green);}
+  .todo-accent.unknown{background:var(--border2);}
+  .todo-accent.info{background:var(--blue);}
+  .todo-inner{padding:11px 12px 11px 16px;}
+  .todo-row1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;}
+  .todo-name{font-size:14px;font-weight:600;}
+  .todo-detail{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:4px;}
+  .todo-note{font-size:11px;color:var(--hint);line-height:1.5;margin-bottom:6px;}
+  .todo-cost{font-size:11px;padding:3px 8px;background:var(--gray-lt);border-radius:20px;display:inline-block;color:var(--muted);}
+  .mark-done-btn{width:100%;padding:9px;background:var(--gray-lt);border:none;border-top:0.5px solid var(--border);font-size:13px;color:var(--muted);cursor:pointer;font-family:inherit;text-align:center;transition:background .12s;}
+  .mark-done-btn:active{background:var(--border);}
+  .mark-done-btn.ready{background:var(--green-lt);color:var(--green);font-weight:500;}
+
+  /* KM input */
+  .km-bar{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .km-bar label{font-size:13px;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+  .km-bar input{flex:1;font-size:15px;font-weight:500;padding:6px 10px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:inherit;}
+  .km-bar button{padding:7px 14px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;}
+  .km-bar button:active{background:var(--blue-dk);}
+
+  /* Form */
+  .form-section{margin-bottom:14px;}
+  .form-label{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px;display:block;}
+  .form-input{width:100%;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:15px;font-family:inherit;-webkit-appearance:none;}
+  .form-input:focus{outline:none;border-color:var(--blue);}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .form-btn{width:100%;padding:14px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;}
+  .form-btn:active{background:var(--blue-dk);}
+  textarea.form-input{resize:vertical;min-height:70px;}
+
+  /* Log entry */
+  .log-entry{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;}
+  .log-title{font-size:14px;font-weight:600;margin-bottom:3px;}
+  .log-meta{font-size:12px;color:var(--muted);margin-bottom:6px;}
+  .log-chips{display:flex;gap:5px;flex-wrap:wrap;}
+  .chip{font-size:11px;padding:3px 8px;border-radius:20px;background:var(--gray-lt);color:var(--muted);}
+
+  /* Contact card */
+  .contact-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+  .contact-info .contact-type{font-size:10px;color:var(--hint);margin-bottom:1px;}
+  .contact-info .contact-name{font-size:14px;font-weight:600;}
+  .contact-num{font-size:16px;font-weight:600;color:var(--blue);}
+  a.call-btn{padding:8px 16px;background:var(--blue-lt);color:var(--blue);border-radius:20px;font-size:13px;font-weight:500;text-decoration:none;}
+
+  /* Doc row */
+  .doc-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:0.5px solid var(--border);}
+  .doc-row:last-child{border-bottom:none;}
+  .doc-label{font-size:14px;font-weight:500;}
+  .doc-exp{font-size:12px;color:var(--muted);margin-top:2px;}
+  .doc-edit-btn{padding:5px 12px;border:0.5px solid var(--border2);border-radius:20px;background:transparent;font-size:12px;color:var(--muted);cursor:pointer;font-family:inherit;}
+
+  /* Alert */
+  .alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;line-height:1.5;margin-bottom:8px;display:flex;gap:8px;}
+  .alert.warn{background:var(--amber-lt);color:var(--amber);}
+  .alert.danger{background:var(--red-lt);color:var(--red);}
+  .alert.ok{background:var(--green-lt);color:var(--green);}
+  .alert.hybrid{background:var(--blue-lt);color:var(--blue);}
+
+  /* Empty state */
+  .empty{text-align:center;padding:40px 20px;color:var(--hint);}
+  .empty-icon{font-size:40px;margin-bottom:10px;}
+  .empty-text{font-size:14px;}
+
+  /* Overlay form */
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:flex-end;}
+  .overlay.open{display:flex;}
+  .overlay-sheet{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:600px;margin:0 auto;padding:16px 16px max(20px,env(safe-area-inset-bottom));max-height:85vh;overflow-y:auto;}
+  .overlay-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 14px;}
+  .overlay-title{font-size:17px;font-weight:600;margin-bottom:16px;}
+
+  /* Car summary card on dashboard */
+  .car-sum-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+  .car-sum-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .car-sum-name{font-size:15px;font-weight:600;}
+  .car-sum-plate{font-size:12px;color:var(--muted);margin-top:1px;}
+  .car-sum-badges{display:flex;gap:5px;flex-wrap:wrap;}
+
+  .delete-btn{padding:4px 10px;background:var(--red-lt);color:var(--red);border:none;border-radius:20px;font-size:11px;cursor:pointer;font-family:inherit;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-title">🚗 Car Care</div>
+        <div class="header-sub">ระบบบำรุงรักษารถยนต์</div>
+      </div>
+    </div>
+    <div class="car-pills" id="carPills"></div>
+  </div>
+
+  <div class="content" id="mainContent"></div>
+
+  <div class="tab-bar">
+    <button class="tab-item active" onclick="switchTab('dashboard')" id="tab-dashboard">
+      <span class="tab-icon">🏠</span><span class="tab-label">ภาพรวม</span>
+    </button>
+    <button class="tab-item" onclick="switchTab('todo')" id="tab-todo">
+      <span class="tab-icon">🔧</span><span class="tab-label">To-Do</span>
+    </button>
+    <button class="tab-item" onclick="switchTab('log')" id="tab-log">
+      <span class="tab-icon">➕</span><span class="tab-label">บันทึก</span>
+    </button>
+    <button class="tab-item" onclick="switchTab('history')" id="tab-history">
+      <span class="tab-icon">📋</span><span class="tab-label">ประวัติ</span>
+    </button>
+    <button class="tab-item" onclick="switchTab('contacts')" id="tab-contacts">
+      <span class="tab-icon">📞</span><span class="tab-label">ฉุกเฉิน</span>
+    </button>
+  </div>
+</div>
+
+<!-- ADD CONTACT OVERLAY -->
+<div class="overlay" id="contactOverlay">
+  <div class="overlay-sheet">
+    <div class="overlay-handle"></div>
+    <div class="overlay-title">เพิ่มรายชื่อติดต่อ</div>
+    <div class="form-section">
+      <label class="form-label">ประเภท</label>
+      <select class="form-input" id="ctType">
+        <option>ศูนย์บริการ</option><option>ร้านช่าง</option>
+        <option>ปั๊มน้ำมัน</option><option>ประกันภัย</option><option>อื่นๆ</option>
+      </select>
+    </div>
+    <div class="form-section">
+      <label class="form-label">ชื่อสถานที่</label>
+      <input class="form-input" id="ctName" placeholder="เช่น ศูนย์โตโยต้า เอกมัย">
+    </div>
+    <div class="form-section">
+      <label class="form-label">เบอร์โทร</label>
+      <input class="form-input" id="ctPhone" type="tel" placeholder="02-xxx-xxxx">
+    </div>
+    <div class="form-section">
+      <label class="form-label">หมายเหตุ</label>
+      <input class="form-input" id="ctNote" placeholder="เปิด จ-ศ 8:00-17:00">
+    </div>
+    <button class="form-btn" onclick="saveContact()">บันทึก</button>
+    <button onclick="closeContactOverlay()" style="width:100%;padding:12px;background:transparent;border:none;color:var(--muted);font-size:15px;margin-top:6px;cursor:pointer;font-family:inherit;">ยกเลิก</button>
+  </div>
+</div>
+
+<!-- DOC EDIT OVERLAY -->
+<div class="overlay" id="docOverlay">
+  <div class="overlay-sheet">
+    <div class="overlay-handle"></div>
+    <div class="overlay-title" id="docOverlayTitle">แก้ไขเอกสาร</div>
+    <input type="hidden" id="docCarId"><input type="hidden" id="docType">
+    <div class="form-section">
+      <label class="form-label">วันหมดอายุ</label>
+      <input class="form-input" type="date" id="docExpiry">
+    </div>
+    <div class="form-section">
+      <label class="form-label">บริษัท / หมายเหตุ</label>
+      <input class="form-input" id="docNote" placeholder="เช่น วิริยะประกันภัย กรมธรรม์ 12345">
+    </div>
+    <button class="form-btn" onclick="saveDoc()">บันทึก</button>
+    <button onclick="closeDocOverlay()" style="width:100%;padding:12px;background:transparent;border:none;color:var(--muted);font-size:15px;margin-top:6px;cursor:pointer;font-family:inherit;">ยกเลิก</button>
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const CAR_DATA = {
+  altis: {
+    id:'altis', name:'Toyota Altis', plate:'ษล 3427 กทม', year:2019, type:'sedan',
+    oilNote:'5W-30 Semi/Conventional',
+    schedule:[
+      {id:'oil',label:'เปลี่ยนน้ำมันเครื่อง',interval:5000,place:'ศูนย์/B-Quik/ปั๊ม',costMin:900,costMax:1800,note:'5W-30 ธรรมดา/กึ่งสังเคราะห์'},
+      {id:'oilfilter',label:'ไส้กรองน้ำมันเครื่อง',interval:5000,place:'เปลี่ยนพร้อมน้ำมัน',costMin:200,costMax:400,note:'เปลี่ยนทุกครั้งที่เปลี่ยนน้ำมัน'},
+      {id:'airfilter',label:'ไส้กรองอากาศ',interval:30000,place:'ศูนย์/อู่',costMin:300,costMax:700,note:'ตรวจทุก 15,000 กม.'},
+      {id:'cabinfilter',label:'ไส้กรองแอร์',interval:20000,place:'ศูนย์/อู่',costMin:300,costMax:600,note:'หรือทุก 1 ปี'},
+      {id:'sparkplug',label:'หัวเทียน Iridium',interval:40000,place:'ศูนย์โตโยต้า',costMin:1200,costMax:2400,note:'NGK/Denso Iridium ทุก 40,000 กม.'},
+      {id:'gearoil',label:'น้ำมันเกียร์อัตโนมัติ',interval:40000,place:'ศูนย์โตโยต้า',costMin:2000,costMax:4000,note:'Toyota WS ATF เท่านั้น'},
+      {id:'brakeoil',label:'น้ำมันเบรก',interval:40000,place:'ศูนย์/อู่',costMin:500,costMax:1000,note:'หรือทุก 2 ปี'},
+      {id:'coolant',label:'น้ำหล่อเย็น',interval:80000,place:'ศูนย์',costMin:800,costMax:1500,note:'Toyota Long Life Coolant'},
+      {id:'timing',label:'Timing Chain',interval:0,place:'—',costMin:0,costMax:0,note:'✅ Altis 1ZR-FE ใช้ Timing Chain ไม่ต้องเปลี่ยนตามระยะ'},
+      {id:'brakepad',label:'ผ้าเบรก (ตรวจ)',interval:20000,place:'ศูนย์/อู่',costMin:2000,costMax:5000,note:'เปลี่ยนเมื่อเหลือ < 3mm'},
+      {id:'tirerot',label:'สลับยาง',interval:10000,place:'ร้านยาง/ศูนย์',costMin:300,costMax:500,note:'ตั้งศูนย์ถ่วงล้อทุก 20,000 กม.'},
+    ]
+  },
+  estima: {
+    id:'estima', name:'Toyota Estima Hybrid', plate:'ฎจ 6302 กทม', year:2006, type:'hybrid',
+    oilNote:'0W-20 Full Synthetic เท่านั้น',
+    schedule:[
+      {id:'oil',label:'เปลี่ยนน้ำมันเครื่อง',interval:10000,place:'ศูนย์โตโยต้า',costMin:2000,costMax:4500,note:'⚡ Hybrid ต้องใช้ Full Synthetic 0W-20 Toyota Genuine เท่านั้น'},
+      {id:'oilfilter',label:'ไส้กรองน้ำมันเครื่อง',interval:10000,place:'ศูนย์',costMin:300,costMax:600,note:'เปลี่ยนพร้อมน้ำมันทุกครั้ง'},
+      {id:'hybridbat',label:'ตรวจ Hybrid Battery',interval:20000,place:'ศูนย์โตโยต้าเท่านั้น',costMin:500,costMax:1000,note:'⚡ รถอายุ 18+ ปี ควรตรวจทุกปี'},
+      {id:'inverter',label:'น้ำหล่อเย็น Inverter',interval:80000,place:'ศูนย์โตโยต้า',costMin:2000,costMax:4000,note:'ระบบ Hybrid แยกต่างหากจากเครื่องยนต์'},
+      {id:'airfilter',label:'ไส้กรองอากาศ',interval:30000,place:'ศูนย์/อู่',costMin:400,costMax:800,note:'ตรวจทุก 15,000 กม.'},
+      {id:'cabinfilter',label:'ไส้กรองแอร์',interval:20000,place:'ศูนย์/อู่',costMin:400,costMax:700,note:'หรือทุก 1 ปี'},
+      {id:'sparkplug',label:'หัวเทียน',interval:50000,place:'ศูนย์โตโยต้า',costMin:2000,costMax:4000,note:'Iridium ของแท้ V6 2AZ — 6 หัว'},
+      {id:'gearoil',label:'น้ำมันเกียร์ Hybrid Transaxle',interval:80000,place:'ศูนย์โตโยต้าเท่านั้น',costMin:3000,costMax:6000,note:'Toyota Genuine เฉพาะ ห้ามใช้น้ำมันทั่วไป'},
+      {id:'brakeoil',label:'น้ำมันเบรก',interval:40000,place:'ศูนย์',costMin:600,costMax:1200,note:'Hybrid ใช้ Regenerative Braking ผ้าเบรกอยู่นานกว่า'},
+      {id:'coolant',label:'น้ำหล่อเย็นเครื่องยนต์',interval:80000,place:'ศูนย์',costMin:1000,costMax:2000,note:'Toyota Super Long Life Coolant สีชมพู'},
+      {id:'timing',label:'Timing Chain',interval:0,place:'—',costMin:0,costMax:0,note:'✅ Estima 2AZ-FXE ใช้ Timing Chain ไม่ต้องเปลี่ยนตามระยะ'},
+      {id:'12vbat',label:'แบตเตอรี่ 12V',interval:0,place:'ศูนย์/ร้านแบต',costMin:2500,costMax:5000,note:'⚡ เปลี่ยนทุก 3-4 ปี ขนาดเฉพาะ Hybrid'},
+    ]
+  },
+  cx5: {
+    id:'cx5', name:'Mazda CX-5', plate:'3กษ 809 กทม', year:2019, type:'suv',
+    oilNote:'0W-20 / 5W-30 Mazda Genuine',
+    schedule:[
+      {id:'oil',label:'เปลี่ยนน้ำมันเครื่อง',interval:10000,place:'ศูนย์มาสด้า/B-Quik',costMin:1800,costMax:3500,note:'Mazda Genuine 0W-20 Skyactiv หรือ 5W-30'},
+      {id:'oilfilter',label:'ไส้กรองน้ำมันเครื่อง',interval:10000,place:'เปลี่ยนพร้อมน้ำมัน',costMin:300,costMax:500,note:'เปลี่ยนทุกครั้งที่เปลี่ยนน้ำมัน'},
+      {id:'airfilter',label:'ไส้กรองอากาศ',interval:30000,place:'ศูนย์/อู่',costMin:400,costMax:900,note:'ตรวจทุก 15,000 กม.'},
+      {id:'cabinfilter',label:'ไส้กรองแอร์',interval:20000,place:'ศูนย์/อู่',costMin:400,costMax:700,note:'หรือทุก 1-2 ปี'},
+      {id:'sparkplug',label:'หัวเทียน Skyactiv Iridium',interval:120000,place:'ศูนย์มาสด้า',costMin:3000,costMax:6000,note:'Non-turbo ทุก 120,000 กม. / Turbo ทุก 65,000 กม.'},
+      {id:'gearoil',label:'น้ำมันเกียร์ ATF FZ',interval:50000,place:'ศูนย์มาสด้า',costMin:2500,costMax:5000,note:'⚠️ Mazda ATF FZ Genuine เท่านั้น ห้ามใช้น้ำมันทั่วไป'},
+      {id:'brakeoil',label:'น้ำมันเบรก',interval:48000,place:'ศูนย์/อู่',costMin:600,costMax:1200,note:'หรือทุก 2 ปี DOT3/DOT4'},
+      {id:'coolant',label:'น้ำหล่อเย็น FL-22',interval:192000,place:'ศูนย์มาสด้า',costMin:1500,costMax:3000,note:'⚠️ Mazda FL-22 เฉพาะ ห้ามใช้คูแลนท์ทั่วไป! ครั้งแรก 192,000/10ปี'},
+      {id:'timing',label:'Timing Chain',interval:0,place:'—',costMin:0,costMax:0,note:'✅ CX-5 Skyactiv-G ใช้ Timing Chain ไม่ต้องเปลี่ยนตามระยะ'},
+      {id:'brakepad',label:'ผ้าเบรก (ตรวจ)',interval:20000,place:'ศูนย์/อู่',costMin:2500,costMax:6000,note:'ตรวจทุกปี เปลี่ยนเมื่อ < 3mm'},
+      {id:'tirerot',label:'สลับยาง',interval:8000,place:'ร้านยาง/ศูนย์',costMin:300,costMax:600,note:'Mazda แนะนำทุก 8,000 กม.'},
+      {id:'diffoil',label:'น้ำมัน Differential (AWD)',interval:50000,place:'ศูนย์มาสด้า',costMin:1500,costMax:3000,note:'สำหรับรุ่น AWD เท่านั้น'},
+    ]
+  }
+};
+
+const EMERGENCY = [
+  {type:'ฉุกเฉิน',name:'กู้ชีพ / กู้ภัย',num:'1669'},
+  {type:'ตำรวจ',name:'แจ้งเหตุ',num:'191'},
+  {type:'ทางหลวง',name:'กรมทางหลวง',num:'1586'},
+  {type:'ทางด่วน',name:'ศูนย์ควบคุมทางด่วน',num:'1543'},
+  {type:'Toyota TH',name:'Toyota Customer',num:'02-386-2000'},
+  {type:'Mazda TH',name:'Mazda Customer',num:'02-260-8000'},
+];
+
+// ============ STATE ============
+let currentCar = 'altis';
+let currentTab = 'dashboard';
+let km = JSON.parse(localStorage.getItem('v2_km') || '{"altis":0,"estima":0,"cx5":0}');
+let lastDone = JSON.parse(localStorage.getItem('v2_done') || '{}');
+let logs = JSON.parse(localStorage.getItem('v2_logs') || '[]');
+let contacts = JSON.parse(localStorage.getItem('v2_contacts') || '[]');
+let docs = JSON.parse(localStorage.getItem('v2_docs') || '{}');
+
+function save() {
+  try {
+    localStorage.setItem('v2_km', JSON.stringify(km));
+    localStorage.setItem('v2_done', JSON.stringify(lastDone));
+    localStorage.setItem('v2_logs', JSON.stringify(logs));
+    localStorage.setItem('v2_contacts', JSON.stringify(contacts));
+    localStorage.setItem('v2_docs', JSON.stringify(docs));
+  } catch(e) {}
+}
+
+// ============ STATUS HELPERS ============
+function getStatus(carId, item) {
+  if (item.interval === 0) return 'info';
+  const curKm = km[carId] || 0;
+  if (!curKm) return 'unknown';
+  const key = `${carId}_${item.id}`;
+  const lkm = lastDone[key] || 0;
+  const pct = lkm ? ((curKm - lkm) / item.interval * 100) : (curKm / item.interval * 100);
+  if (pct >= 95) return 'urgent';
+  if (pct >= 75) return 'soon';
+  return 'ok';
+}
+
+function getPct(carId, item) {
+  if (item.interval === 0) return 0;
+  const curKm = km[carId] || 0;
+  if (!curKm) return 0;
+  const key = `${carId}_${item.id}`;
+  const lkm = lastDone[key] || 0;
+  return Math.min(100, Math.round(lkm ? ((curKm - lkm) / item.interval * 100) : (curKm / item.interval * 100)));
+}
+
+function statusLabel(s) {
+  return {urgent:'⚠ ถึงกำหนด!',soon:'▲ ใกล้ถึง',ok:'✓ ปกติ',unknown:'? ยังไม่มีข้อมูล',info:'ℹ ไม่ต้องเปลี่ยน'}[s];
+}
+function badgeClass(s) {
+  return {urgent:'badge-urgent',soon:'badge-soon',ok:'badge-ok',unknown:'badge-unknown',info:'badge-info'}[s];
+}
+function barColor(s) {
+  return {urgent:'var(--red)',soon:'#BA7517',ok:'var(--green)',unknown:'var(--border2)',info:'var(--blue)'}[s];
+}
+
+// ============ TABS ============
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  renderContent();
+}
+
+function switchCar(id) {
+  currentCar = id;
+  document.querySelectorAll('.car-pill').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll(`.car-pill[data-car="${id}"]`).forEach(p => p.classList.add('active'));
+  renderContent();
+}
+
+// ============ HEADER ============
+function renderHeader() {
+  const pills = document.getElementById('carPills');
+  pills.innerHTML = Object.values(CAR_DATA).map(c =>
+    `<button class="car-pill${c.id===currentCar?' active':''}" data-car="${c.id}" onclick="switchCar('${c.id}')">${c.name.replace('Toyota ','').replace('Mazda ','')}</button>`
+  ).join('');
+}
+
+// ============ DASHBOARD ============
+function renderDashboard() {
+  const html = Object.values(CAR_DATA).map(car => {
+    const carId = car.id;
+    const curKm = km[carId];
+    const urgent = car.schedule.filter(i=>i.interval>0 && getStatus(carId,i)==='urgent').length;
+    const soon = car.schedule.filter(i=>i.interval>0 && getStatus(carId,i)==='soon').length;
+    const badges = [];
+    if (urgent > 0) badges.push(`<span class="badge badge-urgent">${urgent} ถึงกำหนด</span>`);
+    if (soon > 0) badges.push(`<span class="badge badge-soon">${soon} ใกล้ถึง</span>`);
+    if (!urgent && !soon && curKm) badges.push(`<span class="badge badge-ok">ปกติ</span>`);
+    if (!curKm) badges.push(`<span class="badge badge-unknown">ยังไม่กรอกไมล์</span>`);
+    return `<div class="car-sum-card">
+      <div class="car-sum-top">
+        <div>
+          <div class="car-sum-name">${car.name} ${car.type==='hybrid'?'⚡':''}</div>
+          <div class="car-sum-plate">ทะเบียน ${car.plate} · ${curKm?curKm.toLocaleString()+' กม.':'ยังไม่มีข้อมูล'}</div>
+        </div>
+      </div>
+      <div class="car-sum-badges">${badges.join('')}</div>
+      ${urgent>0 ? `<div class="alert danger" style="margin-top:8px;font-size:12px;">ถึงกำหนดซ่อม ${urgent} รายการ — <span style="cursor:pointer;text-decoration:underline;" onclick="currentCar='${carId}';switchTab('todo')">ดูรายการ →</span></div>` : ''}
+    </div>`;
+  }).join('');
+
+  const recentLogs = logs.slice(-5).reverse().map(l => {
+    const car = CAR_DATA[l.carId];
+    return `<div class="log-entry">
+      <div class="log-title">${l.type}</div>
+      <div class="log-meta">${car?.name} · ${l.date} · ${l.km.toLocaleString()} กม.</div>
+      <div class="log-chips">
+        ${l.shop?`<span class="chip">${l.shop}</span>`:''}
+        ${(l.partCost||l.laborCost)?`<span class="chip">฿${((+l.partCost||0)+(+l.laborCost||0)).toLocaleString()}</span>`:''}
+      </div>
+    </div>`;
+  }).join('') || `<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">ยังไม่มีประวัติ<br>เริ่มบันทึกที่แถบ ➕</div></div>`;
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="section-label">สถานะรถทุกคัน</div>
+    ${html}
+    <div class="section-label">บันทึกล่าสุด</div>
+    ${recentLogs}`;
+}
+
+// ============ TODO ============
+function renderTodo() {
+  const car = CAR_DATA[currentCar];
+  const carId = currentCar;
+  const curKm = km[carId];
+
+  const urgent = car.schedule.filter(i=>i.interval>0&&getStatus(carId,i)==='urgent').length;
+  const soon = car.schedule.filter(i=>i.interval>0&&getStatus(carId,i)==='soon').length;
+  const ok = car.schedule.filter(i=>i.interval>0&&getStatus(carId,i)==='ok').length;
+
+  const hybridNote = car.type==='hybrid' ? `<div class="alert hybrid">⚡ Hybrid อายุ 18+ ปี — ควรเข้าศูนย์โตโยต้าเป็นประจำ ห้ามซ่อมที่อู่ทั่วไป</div>` : '';
+
+  const items = car.schedule.map(item => {
+    const st = getStatus(carId, item);
+    const pct = getPct(carId, item);
+    const key = `${carId}_${item.id}`;
+    const lkm = lastDone[key] || 0;
+    const nextKm = lkm + item.interval;
+    const remaining = curKm ? (nextKm - curKm) : null;
+    const canMark = curKm > 0 && item.interval > 0;
+    const isReady = st === 'urgent' || st === 'soon';
+
+    if (item.interval === 0) {
+      return `<div class="todo-item">
+        <div class="todo-accent info"></div>
+        <div class="todo-inner">
+          <div class="todo-row1"><div class="todo-name">${item.label}</div><span class="badge badge-info">ไม่ต้องเปลี่ยน</span></div>
+          <div class="todo-note">${item.note}</div>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="todo-item">
+      <div class="todo-accent ${st}"></div>
+      <div class="todo-inner">
+        <div class="todo-row1"><div class="todo-name">${item.label}</div><span class="badge ${badgeClass(st)}">${statusLabel(st)}</span></div>
+        <div class="todo-detail">ทุก ${item.interval.toLocaleString()} กม. · ${item.place}</div>
+        ${lkm ? `<div class="todo-detail">ล่าสุด: ${lkm.toLocaleString()} กม. → ครั้งถัดไป: ${nextKm.toLocaleString()} กม.</div>` :
+          `<div class="todo-detail" style="color:var(--amber);">ยังไม่มีข้อมูลครั้งล่าสุด</div>`}
+        ${remaining !== null ? `<div style="font-size:11px;color:${remaining<=0?'var(--red)':remaining<item.interval*0.25?'var(--amber)':'var(--muted)'};margin-top:1px;">${remaining<=0?'เกินกำหนด '+Math.abs(remaining).toLocaleString()+' กม.':'เหลืออีก '+remaining.toLocaleString()+' กม.'}</div>` : ''}
+        ${pct>0 ? `<div class="prog-wrap"><div class="prog-bar" style="width:${pct}%;background:${barColor(st)};"></div></div>
+        <div style="font-size:10px;color:var(--hint);">${pct}% ของรอบ</div>` : ''}
+        <div class="todo-note" style="margin-top:6px;">${item.note}</div>
+        ${item.costMin>0 ? `<span class="todo-cost">฿${item.costMin.toLocaleString()}–${item.costMax.toLocaleString()}</span>` : ''}
+      </div>
+      ${canMark ? `<button class="mark-done-btn${isReady?' ready':''}" onclick="markDone('${carId}','${item.id}')">✓ ทำแล้ว @${curKm.toLocaleString()} กม. กดเพื่อบันทึก</button>` : ''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="km-bar">
+      <label>ไมล์ปัจจุบัน</label>
+      <input type="number" id="kmInput" value="${curKm||''}" placeholder="เช่น 85000">
+      <button onclick="updateKm()">อัพเดต</button>
+    </div>
+    ${hybridNote}
+    <div class="summary-row">
+      <div class="sum-card red"><div class="sum-num">${urgent}</div><div class="sum-label">ถึงกำหนด</div></div>
+      <div class="sum-card amber"><div class="sum-num">${soon}</div><div class="sum-label">ใกล้ถึง</div></div>
+      <div class="sum-card green"><div class="sum-num">${ok}</div><div class="sum-label">ปกติ</div></div>
+    </div>
+    <div class="section-label">รายการทั้งหมด — ${car.name}</div>
+    ${items}`;
+}
+
+function updateKm() {
+  const val = parseInt(document.getElementById('kmInput').value);
+  if (!val || val <= 0) return;
+  km[currentCar] = val;
+  save();
+  renderContent();
+}
+
+function markDone(carId, itemId) {
+  const curKm = km[carId];
+  if (!curKm) { alert('กรุณาใส่เลขไมล์ก่อน'); return; }
+  lastDone[`${carId}_${itemId}`] = curKm;
+  save();
+  renderContent();
+}
+
+// ============ LOG FORM ============
+function renderLog() {
+  const carOptions = Object.values(CAR_DATA).map(c =>
+    `<option value="${c.id}"${c.id===currentCar?' selected':''}>${c.name} (${c.plate})</option>`).join('');
+
+  const today = new Date().toISOString().split('T')[0];
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="section-label">บันทึกการซ่อมบำรุง</div>
+    <div class="card"><div class="card-body" style="padding-top:14px;">
+      <div class="form-section"><label class="form-label">รถ</label>
+        <select class="form-input" id="logCar">${carOptions}</select></div>
+      <div class="form-row">
+        <div class="form-section"><label class="form-label">วันที่</label>
+          <input class="form-input" type="date" id="logDate" value="${today}"></div>
+        <div class="form-section"><label class="form-label">เลขไมล์ (กม.)</label>
+          <input class="form-input" type="number" id="logKm" placeholder="85000"></div>
+      </div>
+      <div class="form-section"><label class="form-label">ประเภทงาน</label>
+        <select class="form-input" id="logType">
+          <option>เปลี่ยนถ่ายน้ำมันเครื่อง</option>
+          <option>เปลี่ยนไส้กรองน้ำมันเครื่อง</option>
+          <option>เปลี่ยนสายพาน/โซ่</option>
+          <option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option>
+          <option>เปลี่ยนยาง</option><option>ตั้งศูนย์ถ่วงล้อ</option>
+          <option>เบรก (ผ้า/จาน)</option><option>แบตเตอรี่</option>
+          <option>ระบบแอร์</option><option>ช่วงล่าง</option>
+          <option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option>
+        </select></div>
+      <div class="form-row">
+        <div class="form-section"><label class="form-label">สถานที่</label>
+          <select class="form-input" id="logPlace">
+            <option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option>
+            <option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option>
+          </select></div>
+        <div class="form-section"><label class="form-label">ชื่อร้าน/ศูนย์</label>
+          <input class="form-input" id="logShop" placeholder="เช่น สาขาเอกมัย"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-section"><label class="form-label">ค่าอะไหล่ (฿)</label>
+          <input class="form-input" type="number" id="logPart" placeholder="0"></div>
+        <div class="form-section"><label class="form-label">ค่าแรง (฿)</label>
+          <input class="form-input" type="number" id="logLabor" placeholder="0"></div>
+      </div>
+      <div class="form-section"><label class="form-label">ยี่ห้อ/เกรดน้ำมัน หรืออะไหล่</label>
+        <input class="form-input" id="logProduct" placeholder="เช่น Mobil 1 5W-30 Fully Synthetic"></div>
+      <div class="form-section"><label class="form-label">หมายเหตุ</label>
+        <textarea class="form-input" id="logNote" placeholder="รายละเอียดเพิ่มเติม..."></textarea></div>
+      <div id="logMsg" style="font-size:13px;color:var(--green);text-align:center;min-height:18px;margin-bottom:4px;"></div>
+      <button class="form-btn" onclick="saveLog()">💾 บันทึก</button>
+    </div></div>`;
+}
+
+function saveLog() {
+  const carId = document.getElementById('logCar').value;
+  const date = document.getElementById('logDate').value;
+  const kmVal = parseInt(document.getElementById('logKm').value);
+  if (!date || !kmVal) {
+    document.getElementById('logMsg').textContent = '⚠ กรุณากรอกวันที่และเลขไมล์';
+    document.getElementById('logMsg').style.color = 'var(--red)';
+    return;
+  }
+  const entry = {
+    carId, date, km: kmVal,
+    type: document.getElementById('logType').value,
+    place: document.getElementById('logPlace').value,
+    shop: document.getElementById('logShop').value,
+    partCost: document.getElementById('logPart').value,
+    laborCost: document.getElementById('logLabor').value,
+    product: document.getElementById('logProduct').value,
+    note: document.getElementById('logNote').value,
+    ts: Date.now()
+  };
+  logs.push(entry);
+  if (!km[carId] || kmVal > km[carId]) { km[carId] = kmVal; }
+  save();
+  document.getElementById('logMsg').textContent = '✓ บันทึกเรียบร้อย!';
+  document.getElementById('logMsg').style.color = 'var(--green)';
+  setTimeout(() => renderLog(), 1200);
+}
+
+// ============ HISTORY ============
+function renderHistory() {
+  const carLogs = logs.filter(l => l.carId === currentCar).sort((a,b) => b.ts - a.ts);
+  const items = carLogs.length ? carLogs.map((l, i) => {
+    const total = (+l.partCost||0)+(+l.laborCost||0);
+    return `<div class="log-entry">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div class="log-title">${l.type}</div>
+        <div class="log-meta">${l.date} · ${l.km.toLocaleString()} กม. · ${l.shop||l.place}</div></div>
+        <button class="delete-btn" onclick="deleteLog(${logs.indexOf(l)})">ลบ</button>
+      </div>
+      ${l.product?`<div style="font-size:12px;color:var(--muted);margin:3px 0;">${l.product}</div>`:''}
+      <div class="log-chips">
+        ${l.partCost?`<span class="chip">อะไหล่ ฿${parseInt(l.partCost).toLocaleString()}</span>`:''}
+        ${l.laborCost?`<span class="chip">ค่าแรง ฿${parseInt(l.laborCost).toLocaleString()}</span>`:''}
+        ${total?`<span class="chip" style="font-weight:600;">รวม ฿${total.toLocaleString()}</span>`:''}
+        ${l.note?`<span class="chip">${l.note}</span>`:''}
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">ยังไม่มีประวัติสำหรับรถคันนี้</div></div>`;
+
+  // Documents section
+  const docTypes = ['ทะเบียนรถ','พ.ร.บ.','ประกันภัยชั้น 1','ประกันภัยชั้น 2/3'];
+  const docRows = docTypes.map(type => {
+    const key = `${currentCar}_${type}`;
+    const doc = docs[key] || {};
+    const isExpiring = doc.expiry && new Date(doc.expiry) < new Date(Date.now()+60*24*3600000);
+    return `<div class="doc-row">
+      <div>
+        <div class="doc-label">${type}</div>
+        ${doc.expiry?`<div class="doc-exp" style="color:${isExpiring?'var(--red)':'var(--muted)'};">${isExpiring?'⚠ ':''}หมดอายุ: ${doc.expiry}${doc.note?' · '+doc.note:''}</div>`:'<div class="doc-exp">ยังไม่บันทึก</div>'}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${doc.expiry?`<span class="badge ${isExpiring?'badge-urgent':'badge-ok'}">${isExpiring?'ใกล้หมด':'ปกติ'}</span>`:''}
+        <button class="doc-edit-btn" onclick="openDocOverlay('${currentCar}','${type}')">แก้ไข</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="section-label">เอกสารสำคัญ — ${CAR_DATA[currentCar].name}</div>
+    <div class="card"><div class="card-body" style="padding-top:12px;">${docRows}</div></div>
+    <div class="section-label">ประวัติการซ่อม — ${CAR_DATA[currentCar].name}</div>
+    ${items}`;
+}
+
+function deleteLog(idx) {
+  if (!confirm('ลบรายการนี้?')) return;
+  logs.splice(idx, 1);
+  save();
+  renderHistory();
+}
+
+// ============ CONTACTS ============
+function renderContacts() {
+  const emergency = EMERGENCY.map(c =>
+    `<div class="contact-card">
+      <div class="contact-info">
+        <div class="contact-type">${c.type}</div>
+        <div class="contact-name">${c.name}</div>
+      </div>
+      <a href="tel:${c.num}" class="call-btn">${c.num}</a>
+    </div>`).join('');
+
+  const myContacts = contacts.length ? contacts.map((c,i) =>
+    `<div class="contact-card">
+      <div class="contact-info">
+        <div class="contact-type">${c.type}</div>
+        <div class="contact-name">${c.name}</div>
+        ${c.note?`<div style="font-size:11px;color:var(--hint)">${c.note}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <a href="tel:${c.phone}" class="call-btn">${c.phone}</a>
+        <button class="delete-btn" onclick="deleteContact(${i})">ลบ</button>
+      </div>
+    </div>`).join('')
+    : `<div class="empty" style="padding:20px;"><div class="empty-text">ยังไม่มีรายชื่อ</div></div>`;
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="section-label">เบอร์ฉุกเฉิน</div>
+    ${emergency}
+    <div class="section-label" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>ศูนย์บริการ / ร้านช่าง</span>
+      <button onclick="document.getElementById('contactOverlay').classList.add('open')" style="font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;">+ เพิ่ม</button>
+    </div>
+    ${myContacts}`;
+}
+
+function saveContact() {
+  const name = document.getElementById('ctName').value.trim();
+  const phone = document.getElementById('ctPhone').value.trim();
+  if (!name || !phone) { alert('กรุณากรอกชื่อและเบอร์โทร'); return; }
+  contacts.push({
+    type: document.getElementById('ctType').value,
+    name, phone,
+    note: document.getElementById('ctNote').value
+  });
+  save();
+  closeContactOverlay();
+  renderContacts();
+}
+
+function deleteContact(i) {
+  contacts.splice(i, 1);
+  save();
+  renderContacts();
+}
+
+function closeContactOverlay() {
+  document.getElementById('contactOverlay').classList.remove('open');
+  ['ctName','ctPhone','ctNote'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ============ DOCS ============
+function openDocOverlay(carId, type) {
+  const key = `${carId}_${type}`;
+  const doc = docs[key] || {};
+  document.getElementById('docCarId').value = carId;
+  document.getElementById('docType').value = type;
+  document.getElementById('docOverlayTitle').textContent = type;
+  document.getElementById('docExpiry').value = doc.expiry || '';
+  document.getElementById('docNote').value = doc.note || '';
+  document.getElementById('docOverlay').classList.add('open');
+}
+
+function saveDoc() {
+  const carId = document.getElementById('docCarId').value;
+  const type = document.getElementById('docType').value;
+  docs[`${carId}_${type}`] = {
+    expiry: document.getElementById('docExpiry').value,
+    note: document.getElementById('docNote').value
+  };
+  save();
+  closeDocOverlay();
+  renderHistory();
+}
+
+function closeDocOverlay() {
+  document.getElementById('docOverlay').classList.remove('open');
+}
+
+// ============ MAIN RENDER ============
+function renderContent() {
+  renderHeader();
+  if (currentTab === 'dashboard') renderDashboard();
+  else if (currentTab === 'todo') renderTodo();
+  else if (currentTab === 'log') renderLog();
+  else if (currentTab === 'history') renderHistory();
+  else if (currentTab === 'contacts') renderContacts();
+}
+
+// Close overlays on backdrop click
+document.getElementById('contactOverlay').addEventListener('click', function(e){ if(e.target===this) closeContactOverlay(); });
+document.getElementById('docOverlay').addEventListener('click', function(e){ if(e.target===this) closeDocOverlay(); });
+
+renderContent();
+</script>
+</body>
+</html>
