@@ -682,16 +682,26 @@ const SB={urgent:'bu',soon:'bs',ok:'bo',unknown:'bk',info:'bi'};
 const SC={urgent:'var(--red)',soon:'var(--amber)',ok:'var(--green)',unknown:'var(--hint)',info:'var(--blue)'};
 
 // NAVIGATION
+let logFormRendered = false; // track if log form is already on screen
+
 function goTab(t){
   curTab=t;
   document.querySelectorAll('.ti').forEach(b=>b.classList.remove('on'));
   document.getElementById('tab-'+t).classList.add('on');
+  if(t!=='log') logFormRendered=false; // reset flag when leaving log tab
   render();
 }
 function goCar(id){
   curCar=id;
   document.querySelectorAll('.cpill').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll(`.cpill[data-c="${id}"]`).forEach(p=>p.classList.add('on'));
+  // On log tab: only update the car selector, don't rebuild form
+  if(curTab==='log'){
+    const sel=document.getElementById('logCar');
+    if(sel) sel.value=id;
+    renderHeader();
+    return;
+  }
   render();
 }
 function renderHeader(){
@@ -708,11 +718,14 @@ function renderHeader(){
 function render(){
   renderHeader();
   const el=document.getElementById('mainC');
-  if(curTab==='dashboard')rDash(el);
-  else if(curTab==='todo')rTodo(el);
-  else if(curTab==='log')rLog(el);
-  else if(curTab==='history')rHist(el);
-  else if(curTab==='settings')rSettings(el);
+  if(curTab==='dashboard') rDash(el);
+  else if(curTab==='todo') rTodo(el);
+  else if(curTab==='log'){
+    if(!logFormRendered){ rLog(el); logFormRendered=true; }
+    // else: form already on screen — do nothing, preserve user input
+  }
+  else if(curTab==='history') rHist(el);
+  else if(curTab==='settings') rSettings(el);
 }
 
 // DASHBOARD
@@ -1149,10 +1162,13 @@ async function saveLog(){
     if(!KM[cid]||kv>KM[cid]){KM[cid]=kv;await rpc('/rest/v1/car_km','POST',{user_id:uid,car_id:cid,km:kv},tok,{Prefer:'resolution=merge-duplicates'});}
 
     msg.textContent='✅ บันทึกเรียบร้อย!';msg.style.color='var(--green)';
-    // Clear only the variable fields — DON'T call rLog() which resets everything
+    // Clear only variable fields — preserve car, type, place, byName
     setTimeout(()=>{
       const fields=['logKm','logShop','logPart','logLabor','logProduct','logNote'];
       fields.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+      // Reset date to today
+      const dateEl=document.getElementById('logDate');
+      if(dateEl) dateEl.value=new Date().toISOString().split('T')[0];
       photoQueues.log=[];
       const prev=document.getElementById('logPhotoPreview');
       if(prev)prev.innerHTML='';
