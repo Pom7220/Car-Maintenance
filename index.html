@@ -2,750 +2,849 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Car Care">
-<meta name="theme-color" content="#185FA5">
-<title>Car Care — บำรุงรักษารถยนต์</title>
+<meta name="theme-color" content="#1C1C1E">
+<title>Car Care</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --blue:#0A84FF;--blue-lt:rgba(10,132,255,.15);
+  --green:#30D158;--green-lt:rgba(48,209,88,.15);
+  --amber:#FF9F0A;--amber-lt:rgba(255,159,10,.15);
+  --red:#FF453A;--red-lt:rgba(255,69,58,.15);
+  --gray-lt:rgba(120,120,128,.12);
+  --glass:rgba(255,255,255,.72);--glass-dk:rgba(28,28,30,.82);
+  --gb:rgba(255,255,255,.45);--gb2:rgba(255,255,255,.1);
+  --blur:saturate(180%) blur(20px);
+  --bg:linear-gradient(160deg,#E8F4FF 0%,#F0EBF8 50%,#E6F7F0 100%);
+  --text:#1C1C1E;--muted:#636366;--hint:#AEAEB2;
+  --r:16px;--rs:12px;--rx:10px;
+  --sh:0 2px 8px rgba(0,0,0,.06);
+}
+@media(prefers-color-scheme:dark){
   :root{
-    --blue:#185FA5;--blue-lt:#E6F1FB;--blue-dk:#0C447C;
-    --green:#3B6D11;--green-lt:#EAF3DE;
-    --amber:#854F0B;--amber-lt:#FAEEDA;
-    --red:#A32D2D;--red-lt:#FCEBEB;
-    --gray:#888780;--gray-lt:#F1EFE8;
-    --bg:#F8F8F6;--card:#FFFFFF;
-    --border:#E0DED8;--border2:#C8C6C0;
-    --text:#1A1A18;--muted:#666660;--hint:#999994;
-    --radius:12px;--radius-sm:8px;
-    --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+    --glass:rgba(44,44,46,.82);--gb:rgba(255,255,255,.1);
+    --bg:linear-gradient(160deg,#0D1B2A 0%,#1A0D2E 50%,#0A1F17 100%);
+    --text:#F2F2F7;--muted:#AEAEB2;--hint:#636366;
+    --blue-lt:rgba(10,132,255,.2);--green-lt:rgba(48,209,88,.2);
+    --amber-lt:rgba(255,159,10,.2);--red-lt:rgba(255,69,58,.2);--gray-lt:rgba(120,120,128,.18);
   }
-  @media(prefers-color-scheme:dark){
-    :root{
-      --bg:#111110;--card:#1E1E1C;--border:#333330;--border2:#444440;
-      --text:#F0F0EE;--muted:#A0A09A;--hint:#666660;
-      --blue-lt:#0C2A4A;--green-lt:#1A2E0A;--amber-lt:#2A1C06;--red-lt:#2A0E0E;--gray-lt:#222220;
-    }
-  }
-  html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;}
-  
-  /* Layout */
-  .app{display:flex;flex-direction:column;height:100vh;max-width:600px;margin:0 auto;}
-  .header{background:var(--card);border-bottom:0.5px solid var(--border);padding:12px 16px 8px;flex-shrink:0;}
-  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-  .header-title{font-size:17px;font-weight:600;letter-spacing:-.3px;}
-  .header-sub{font-size:12px;color:var(--muted);}
-  .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px 100px;}
-  .tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:600px;background:var(--card);border-top:0.5px solid var(--border);display:flex;padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:100;}
-  .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px;cursor:pointer;border:none;background:none;color:var(--hint);transition:color .15s;}
-  .tab-item.active{color:var(--blue);}
-  .tab-icon{font-size:22px;line-height:1;}
-  .tab-label{font-size:9px;font-weight:500;letter-spacing:.01em;}
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;}
 
-  /* Car selector */
-  .car-pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
-  .car-pills::-webkit-scrollbar{display:none;}
-  .car-pill{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;font-size:13px;color:var(--muted);white-space:nowrap;cursor:pointer;transition:all .15s;flex-shrink:0;}
-  .car-pill.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+/* AUTH */
+.aw{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg);}
+.ac{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:24px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.12);}
+.a-logo{font-size:48px;text-align:center;margin-bottom:6px;}
+.a-title{font-size:26px;font-weight:700;text-align:center;letter-spacing:-.5px;margin-bottom:4px;}
+.a-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:28px;}
+.a-tabs{display:flex;background:var(--gray-lt);border-radius:var(--rx);padding:3px;margin-bottom:20px;}
+.a-tab{flex:1;padding:8px;text-align:center;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;color:var(--muted);transition:all .2s;}
+.a-tab.active{background:var(--glass);color:var(--text);box-shadow:var(--sh);}
+.a-field{margin-bottom:14px;}
+.a-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;display:block;}
+.a-input{width:100%;padding:13px 14px;border:0.5px solid rgba(120,120,128,.3);border-radius:var(--rx);background:rgba(255,255,255,.5);color:var(--text);font-size:16px;font-family:inherit;-webkit-appearance:none;}
+.a-input:focus{outline:none;border-color:var(--blue);}
+.a-btn{width:100%;padding:15px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px;box-shadow:0 4px 16px rgba(10,132,255,.4);}
+.a-btn:active{opacity:.85;}
+.a-btn:disabled{opacity:.5;cursor:not-allowed;}
+.a-msg{font-size:13px;text-align:center;margin-top:10px;min-height:18px;padding:0 4px;line-height:1.4;}
+.a-msg.err{color:var(--red);}
+.a-msg.ok{color:var(--green);}
 
-  /* Cards */
-  .card{background:var(--card);border-radius:var(--radius);border:0.5px solid var(--border);margin-bottom:10px;overflow:hidden;}
-  .card-header{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;}
-  .card-title{font-size:14px;font-weight:600;}
-  .card-body{padding:0 14px 14px;}
-  .section-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--hint);margin:16px 0 8px;}
+/* LAYOUT */
+.app{display:none;flex-direction:column;height:100vh;max-width:430px;margin:0 auto;}
+.app.on{display:flex;}
+.hdr{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border-bottom:0.5px solid var(--gb);padding:max(52px,env(safe-area-inset-top)) 20px 10px;flex-shrink:0;position:sticky;top:0;z-index:50;}
+.hdr-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;}
+.hdr-title{font-size:28px;font-weight:700;letter-spacing:-.5px;line-height:1;}
+.hdr-sub{font-size:13px;color:var(--muted);}
+.ubadge{font-size:11px;font-weight:600;padding:5px 11px;border-radius:20px;background:var(--blue-lt);color:var(--blue);cursor:pointer;white-space:nowrap;border:none;font-family:inherit;}
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 110px;}
+.tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border-top:0.5px solid var(--gb);display:flex;padding:10px 8px max(24px,env(safe-area-inset-bottom));z-index:100;gap:4px;}
+.ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;cursor:pointer;border:none;background:none;color:var(--hint);transition:all .2s cubic-bezier(.34,1.56,.64,1);border-radius:var(--rx);}
+.ti.on{color:var(--blue);}
+.ti.on .tiw{background:var(--blue-lt);transform:scale(1.08);}
+.tiw{width:44px;height:28px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.34,1.56,.64,1);border-radius:var(--rx);}
+.tic{font-size:20px;line-height:1;}
+.til{font-size:10px;font-weight:500;}
 
-  /* Status badges */
-  .badge{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
-  .badge-urgent{background:var(--red-lt);color:var(--red);}
-  .badge-soon{background:var(--amber-lt);color:var(--amber);}
-  .badge-ok{background:var(--green-lt);color:var(--green);}
-  .badge-unknown{background:var(--gray-lt);color:var(--gray);}
-  .badge-info{background:var(--blue-lt);color:var(--blue);}
+/* CAR PILLS */
+.cpills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.cpills::-webkit-scrollbar{display:none;}
+.cpill{padding:6px 14px;border-radius:20px;border:0.5px solid var(--gb);background:rgba(255,255,255,.3);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:13px;color:var(--muted);white-space:nowrap;cursor:pointer;transition:all .15s;flex-shrink:0;font-family:inherit;}
+.cpill.on{background:var(--blue);color:#fff;border-color:var(--blue);}
 
-  /* Summary row */
-  .summary-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
-  .sum-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px;text-align:center;}
-  .sum-num{font-size:24px;font-weight:700;}
-  .sum-label{font-size:10px;color:var(--muted);margin-top:1px;}
-  .sum-card.red .sum-num{color:var(--red);}
-  .sum-card.amber .sum-num{color:var(--amber);}
-  .sum-card.green .sum-num{color:var(--green);}
+/* CARDS */
+.gc{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--sh);}
+.gcb{padding:0 14px 14px;}
+.sec{font-size:13px;font-weight:600;color:var(--muted);margin:18px 0 8px;}
 
-  /* Progress bar */
-  .prog-wrap{height:5px;background:var(--gray-lt);border-radius:3px;margin:6px 0 2px;overflow:hidden;}
-  .prog-bar{height:100%;border-radius:3px;transition:width .4s;}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;}
+.bu{background:var(--red-lt);color:var(--red);}
+.bs{background:var(--amber-lt);color:var(--amber);}
+.bo{background:var(--green-lt);color:var(--green);}
+.bk{background:var(--gray-lt);color:var(--muted);}
+.bi{background:var(--blue-lt);color:var(--blue);}
 
-  /* Todo item */
-  .todo-item{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;position:relative;}
-  .todo-accent{position:absolute;left:0;top:0;bottom:0;width:3px;}
-  .todo-accent.urgent{background:var(--red);}
-  .todo-accent.soon{background:#BA7517;}
-  .todo-accent.ok{background:var(--green);}
-  .todo-accent.unknown{background:var(--border2);}
-  .todo-accent.info{background:var(--blue);}
-  .todo-inner{padding:11px 12px 11px 16px;}
-  .todo-row1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;}
-  .todo-name{font-size:14px;font-weight:600;}
-  .todo-detail{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:4px;}
-  .todo-note{font-size:11px;color:var(--hint);line-height:1.5;margin-bottom:6px;}
-  .todo-cost{font-size:11px;padding:3px 8px;background:var(--gray-lt);border-radius:20px;display:inline-block;color:var(--muted);}
-  .mark-done-btn{width:100%;padding:9px;background:var(--gray-lt);border:none;border-top:0.5px solid var(--border);font-size:13px;color:var(--muted);cursor:pointer;font-family:inherit;text-align:center;transition:background .12s;}
-  .mark-done-btn:active{background:var(--border);}
-  .mark-done-btn.ready{background:var(--green-lt);color:var(--green);font-weight:500;}
+/* SUMMARY */
+.srow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.sc{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--rs);padding:12px 8px;text-align:center;box-shadow:var(--sh);}
+.sn{font-size:26px;font-weight:700;letter-spacing:-.5px;}
+.sl{font-size:10px;color:var(--muted);margin-top:2px;font-weight:500;}
+.sc.r .sn{color:var(--red);}
+.sc.a .sn{color:var(--amber);}
+.sc.g .sn{color:var(--green);}
 
-  /* KM input */
-  .km-bar{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-  .km-bar label{font-size:13px;color:var(--muted);white-space:nowrap;flex-shrink:0;}
-  .km-bar input{flex:1;font-size:15px;font-weight:500;padding:6px 10px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:inherit;}
-  .km-bar button{padding:7px 14px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;}
-  .km-bar button:active{background:var(--blue-dk);}
+/* PROGRESS */
+.pw{height:4px;background:var(--gray-lt);border-radius:2px;margin:6px 0 2px;overflow:hidden;}
+.pb{height:100%;border-radius:2px;transition:width .5s ease;}
 
-  /* Form */
-  .form-section{margin-bottom:14px;}
-  .form-label{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px;display:block;}
-  .form-input{width:100%;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:15px;font-family:inherit;-webkit-appearance:none;}
-  .form-input:focus{outline:none;border-color:var(--blue);}
-  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .form-btn{width:100%;padding:14px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;}
-  .form-btn:active{background:var(--blue-dk);}
-  textarea.form-input{resize:vertical;min-height:70px;}
+/* TODO */
+.tdi{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--r);margin-bottom:8px;overflow:hidden;position:relative;box-shadow:var(--sh);}
+.tda{position:absolute;left:0;top:0;bottom:0;width:3px;}
+.tda.urgent{background:var(--red);}
+.tda.soon{background:var(--amber);}
+.tda.ok{background:var(--green);}
+.tda.unknown,.tda.info{background:var(--hint);}
+.tda.info{background:var(--blue);}
+.tdin{padding:12px 12px 12px 17px;}
+.tdr1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;}
+.tdname{font-size:15px;font-weight:600;}
+.tdd{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:3px;}
+.tdn{font-size:11px;color:var(--hint);line-height:1.5;margin-bottom:6px;}
+.tdc{font-size:11px;padding:3px 9px;background:var(--gray-lt);border-radius:20px;display:inline-block;color:var(--muted);font-weight:500;}
+.mkbtn{width:100%;padding:11px;background:rgba(120,120,128,.1);border:none;border-top:0.5px solid var(--gb);font-size:13px;color:var(--muted);cursor:pointer;font-family:inherit;text-align:center;font-weight:500;}
+.mkbtn:active{background:var(--gray-lt);}
+.mkbtn.ready{background:var(--green-lt);color:var(--green);font-weight:600;}
 
-  /* Log entry */
-  .log-entry{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;}
-  .log-title{font-size:14px;font-weight:600;margin-bottom:3px;}
-  .log-meta{font-size:12px;color:var(--muted);margin-bottom:6px;}
-  .log-chips{display:flex;gap:5px;flex-wrap:wrap;}
-  .chip{font-size:11px;padding:3px 8px;border-radius:20px;background:var(--gray-lt);color:var(--muted);}
+/* KM BAR */
+.kmb{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--r);padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;box-shadow:var(--sh);}
+.kmb label{font-size:13px;color:var(--muted);white-space:nowrap;flex-shrink:0;font-weight:500;}
+.kmb input{flex:1;font-size:16px;font-weight:600;padding:6px 10px;border:0.5px solid rgba(120,120,128,.3);border-radius:var(--rx);background:rgba(255,255,255,.4);color:var(--text);font-family:inherit;-webkit-appearance:none;}
+.kmb input:focus{outline:none;border-color:var(--blue);}
+.kmb button{padding:8px 16px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
 
-  /* Contact card */
-  .contact-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
-  .contact-info .contact-type{font-size:10px;color:var(--hint);margin-bottom:1px;}
-  .contact-info .contact-name{font-size:14px;font-weight:600;}
-  .contact-num{font-size:16px;font-weight:600;color:var(--blue);}
-  a.call-btn{padding:8px 16px;background:var(--blue-lt);color:var(--blue);border-radius:20px;font-size:13px;font-weight:500;text-decoration:none;}
+/* FORMS */
+.fs{margin-bottom:14px;}
+.fl{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.04em;}
+.fi{width:100%;padding:12px 14px;border:0.5px solid rgba(120,120,128,.3);border-radius:var(--rx);background:rgba(255,255,255,.5);color:var(--text);font-size:15px;font-family:inherit;-webkit-appearance:none;}
+.fi:focus{outline:none;border-color:var(--blue);}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fbtn{width:100%;padding:15px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 4px 16px rgba(10,132,255,.4);}
+.fbtn:active{opacity:.85;}
+textarea.fi{resize:vertical;min-height:70px;}
 
-  /* Doc row */
-  .doc-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:0.5px solid var(--border);}
-  .doc-row:last-child{border-bottom:none;}
-  .doc-label{font-size:14px;font-weight:500;}
-  .doc-exp{font-size:12px;color:var(--muted);margin-top:2px;}
-  .doc-edit-btn{padding:5px 12px;border:0.5px solid var(--border2);border-radius:20px;background:transparent;font-size:12px;color:var(--muted);cursor:pointer;font-family:inherit;}
+/* LOG */
+.le{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--r);padding:13px 14px;margin-bottom:8px;box-shadow:var(--sh);}
+.lt{font-size:15px;font-weight:600;margin-bottom:3px;}
+.lm{font-size:12px;color:var(--muted);margin-bottom:7px;}
+.chips{display:flex;gap:5px;flex-wrap:wrap;}
+.chip{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--gray-lt);color:var(--muted);font-weight:500;}
 
-  /* Alert */
-  .alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;line-height:1.5;margin-bottom:8px;display:flex;gap:8px;}
-  .alert.warn{background:var(--amber-lt);color:var(--amber);}
-  .alert.danger{background:var(--red-lt);color:var(--red);}
-  .alert.ok{background:var(--green-lt);color:var(--green);}
-  .alert.hybrid{background:var(--blue-lt);color:var(--blue);}
+/* CONTACTS */
+.ccard{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--r);padding:13px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--sh);}
+.ctype{font-size:10px;color:var(--hint);margin-bottom:2px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.cname{font-size:15px;font-weight:600;}
+a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radius:20px;font-size:13px;font-weight:600;text-decoration:none;}
 
-  /* Empty state */
-  .empty{text-align:center;padding:40px 20px;color:var(--hint);}
-  .empty-icon{font-size:40px;margin-bottom:10px;}
-  .empty-text{font-size:14px;}
+/* DOCS */
+.dr{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:0.5px solid var(--gb);}
+.dr:last-child{border-bottom:none;}
+.dl{font-size:15px;font-weight:500;}
+.de{font-size:12px;color:var(--muted);margin-top:2px;}
+.dedit{padding:6px 13px;border:0.5px solid rgba(120,120,128,.3);border-radius:20px;background:var(--gray-lt);font-size:12px;color:var(--muted);cursor:pointer;font-family:inherit;font-weight:500;}
 
-  /* Overlay form */
-  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:flex-end;}
-  .overlay.open{display:flex;}
-  .overlay-sheet{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:600px;margin:0 auto;padding:16px 16px max(20px,env(safe-area-inset-bottom));max-height:85vh;overflow-y:auto;}
-  .overlay-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 14px;}
-  .overlay-title{font-size:17px;font-weight:600;margin-bottom:16px;}
+/* ALERTS */
+.alert{padding:11px 14px;border-radius:var(--rx);font-size:13px;line-height:1.5;margin-bottom:8px;display:flex;gap:8px;font-weight:500;}
+.alert.hybrid{background:var(--blue-lt);color:var(--blue);}
+.alert.danger{background:var(--red-lt);color:var(--red);}
 
-  /* Car summary card on dashboard */
-  .car-sum-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
-  .car-sum-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
-  .car-sum-name{font-size:15px;font-weight:600;}
-  .car-sum-plate{font-size:12px;color:var(--muted);margin-top:1px;}
-  .car-sum-badges{display:flex;gap:5px;flex-wrap:wrap;}
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--hint);}
+.empty .ei{font-size:44px;margin-bottom:12px;}
+.empty .et{font-size:15px;line-height:1.5;}
 
-  .delete-btn{padding:4px 10px;background:var(--red-lt);color:var(--red);border:none;border-radius:20px;font-size:11px;cursor:pointer;font-family:inherit;}
+/* OVERLAYS */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
+.ov.on{display:flex;}
+.ovs{background:var(--glass-dk,rgba(28,28,30,.88));-webkit-backdrop-filter:saturate(200%) blur(40px);backdrop-filter:saturate(200%) blur(40px);border:0.5px solid var(--gb2);border-radius:24px 24px 0 0;width:100%;max-width:430px;margin:0 auto;padding:16px 20px max(28px,env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto;}
+.ovh{width:36px;height:5px;background:rgba(120,120,128,.4);border-radius:3px;margin:0 auto 16px;}
+.ovt{font-size:19px;font-weight:700;margin-bottom:18px;letter-spacing:-.3px;}
+.cancelbtn{width:100%;padding:12px;background:transparent;border:none;color:var(--muted);font-size:15px;margin-top:6px;cursor:pointer;font-family:inherit;}
+
+/* MISC */
+.delbtn{padding:5px 11px;background:var(--red-lt);color:var(--red);border:none;border-radius:20px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;}
+.editbtn{padding:4px 10px;background:var(--blue-lt);color:var(--blue);border:none;border-radius:20px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;}
+#syncBar{position:fixed;top:max(58px,env(safe-area-inset-top));right:16px;background:var(--blue-lt);color:var(--blue);font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;z-index:300;display:none;}
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="header">
-    <div class="header-top">
-      <div>
-        <div class="header-title">🚗 Car Care</div>
-        <div class="header-sub">ระบบบำรุงรักษารถยนต์</div>
-      </div>
-    </div>
-    <div class="car-pills" id="carPills"></div>
-  </div>
 
-  <div class="content" id="mainContent"></div>
+<div id="syncBar">⟳ กำลัง sync...</div>
 
-  <div class="tab-bar">
-    <button class="tab-item active" onclick="switchTab('dashboard')" id="tab-dashboard">
-      <span class="tab-icon">🏠</span><span class="tab-label">ภาพรวม</span>
-    </button>
-    <button class="tab-item" onclick="switchTab('todo')" id="tab-todo">
-      <span class="tab-icon">🔧</span><span class="tab-label">To-Do</span>
-    </button>
-    <button class="tab-item" onclick="switchTab('log')" id="tab-log">
-      <span class="tab-icon">➕</span><span class="tab-label">บันทึก</span>
-    </button>
-    <button class="tab-item" onclick="switchTab('history')" id="tab-history">
-      <span class="tab-icon">📋</span><span class="tab-label">ประวัติ</span>
-    </button>
-    <button class="tab-item" onclick="switchTab('contacts')" id="tab-contacts">
-      <span class="tab-icon">📞</span><span class="tab-label">ฉุกเฉิน</span>
-    </button>
+<!-- AUTH -->
+<div class="aw" id="authWrap">
+<div class="ac">
+  <div class="a-logo">🚗</div>
+  <div class="a-title">Car Care</div>
+  <div class="a-sub">ระบบบำรุงรักษารถยนต์ส่วนตัว</div>
+  <div class="a-tabs">
+    <div class="a-tab active" id="tabL" onclick="authTab('login')">เข้าสู่ระบบ</div>
+    <div class="a-tab" id="tabS" onclick="authTab('signup')">สมัครสมาชิก</div>
   </div>
+  <div id="fLogin">
+    <div class="a-field"><label class="a-label">Email</label>
+      <input class="a-input" type="email" id="lEmail" placeholder="email@example.com" autocomplete="email"></div>
+    <div class="a-field"><label class="a-label">Password</label>
+      <input class="a-input" type="password" id="lPass" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="a-btn" id="lBtn" onclick="doLogin()">เข้าสู่ระบบ</button>
+  </div>
+  <div id="fSignup" style="display:none;">
+    <div class="a-field"><label class="a-label">ชื่อผู้ใช้</label>
+      <input class="a-input" type="text" id="sName" placeholder="เช่น คุณปอม หรือ ภรรยา"></div>
+    <div class="a-field"><label class="a-label">Email</label>
+      <input class="a-input" type="email" id="sEmail" placeholder="email@example.com" autocomplete="email"></div>
+    <div class="a-field"><label class="a-label">Password</label>
+      <input class="a-input" type="password" id="sPass" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password"></div>
+    <button class="a-btn" id="sBtn" onclick="doSignup()">สมัครสมาชิก</button>
+  </div>
+  <div class="a-msg" id="authMsg"></div>
+</div>
 </div>
 
-<!-- ADD CONTACT OVERLAY -->
-<div class="overlay" id="contactOverlay">
-  <div class="overlay-sheet">
-    <div class="overlay-handle"></div>
-    <div class="overlay-title">เพิ่มรายชื่อติดต่อ</div>
-    <div class="form-section">
-      <label class="form-label">ประเภท</label>
-      <select class="form-input" id="ctType">
-        <option>ศูนย์บริการ</option><option>ร้านช่าง</option>
-        <option>ปั๊มน้ำมัน</option><option>ประกันภัย</option><option>อื่นๆ</option>
-      </select>
-    </div>
-    <div class="form-section">
-      <label class="form-label">ชื่อสถานที่</label>
-      <input class="form-input" id="ctName" placeholder="เช่น ศูนย์โตโยต้า เอกมัย">
-    </div>
-    <div class="form-section">
-      <label class="form-label">เบอร์โทร</label>
-      <input class="form-input" id="ctPhone" type="tel" placeholder="02-xxx-xxxx">
-    </div>
-    <div class="form-section">
-      <label class="form-label">หมายเหตุ</label>
-      <input class="form-input" id="ctNote" placeholder="เปิด จ-ศ 8:00-17:00">
-    </div>
-    <button class="form-btn" onclick="saveContact()">บันทึก</button>
-    <button onclick="closeContactOverlay()" style="width:100%;padding:12px;background:transparent;border:none;color:var(--muted);font-size:15px;margin-top:6px;cursor:pointer;font-family:inherit;">ยกเลิก</button>
+<!-- APP -->
+<div class="app" id="App">
+<div class="hdr">
+  <div class="hdr-row">
+    <div><div class="hdr-title">🚗 Car Care</div><div class="hdr-sub" id="hSub">ระบบบำรุงรักษารถยนต์</div></div>
+    <button class="ubadge" id="uBadge" onclick="doLogout()">ออก</button>
   </div>
+  <div class="cpills" id="cPills" style="display:none;"></div>
+</div>
+<div class="main" id="mainC"></div>
+<div class="tabs">
+  <button class="ti on" onclick="goTab('dashboard')" id="tab-dashboard"><div class="tiw"><span class="tic">🏠</span></div><span class="til">ภาพรวม</span></button>
+  <button class="ti" onclick="goTab('todo')" id="tab-todo"><div class="tiw"><span class="tic">🔧</span></div><span class="til">To-Do</span></button>
+  <button class="ti" onclick="goTab('log')" id="tab-log"><div class="tiw"><span class="tic">➕</span></div><span class="til">บันทึก</span></button>
+  <button class="ti" onclick="goTab('history')" id="tab-history"><div class="tiw"><span class="tic">📋</span></div><span class="til">ประวัติ</span></button>
+  <button class="ti" onclick="goTab('contacts')" id="tab-contacts"><div class="tiw"><span class="tic">📞</span></div><span class="til">ฉุกเฉิน</span></button>
+</div>
 </div>
 
-<!-- DOC EDIT OVERLAY -->
-<div class="overlay" id="docOverlay">
-  <div class="overlay-sheet">
-    <div class="overlay-handle"></div>
-    <div class="overlay-title" id="docOverlayTitle">แก้ไขเอกสาร</div>
-    <input type="hidden" id="docCarId"><input type="hidden" id="docType">
-    <div class="form-section">
-      <label class="form-label">วันหมดอายุ</label>
-      <input class="form-input" type="date" id="docExpiry">
-    </div>
-    <div class="form-section">
-      <label class="form-label">บริษัท / หมายเหตุ</label>
-      <input class="form-input" id="docNote" placeholder="เช่น วิริยะประกันภัย กรมธรรม์ 12345">
-    </div>
-    <button class="form-btn" onclick="saveDoc()">บันทึก</button>
-    <button onclick="closeDocOverlay()" style="width:100%;padding:12px;background:transparent;border:none;color:var(--muted);font-size:15px;margin-top:6px;cursor:pointer;font-family:inherit;">ยกเลิก</button>
+<!-- OVERLAY: ADD CONTACT -->
+<div class="ov" id="ovContact">
+<div class="ovs">
+  <div class="ovh"></div><div class="ovt">เพิ่มรายชื่อ</div>
+  <div class="fs"><label class="fl">ประเภท</label>
+    <select class="fi" id="ctType"><option>ศูนย์บริการ</option><option>ร้านช่าง</option><option>ปั๊มน้ำมัน</option><option>ประกันภัย</option><option>อื่นๆ</option></select></div>
+  <div class="fs"><label class="fl">ชื่อ</label><input class="fi" id="ctName" placeholder="ศูนย์โตโยต้า เอกมัย"></div>
+  <div class="fs"><label class="fl">เบอร์โทร</label><input class="fi" id="ctPhone" type="tel"></div>
+  <div class="fs"><label class="fl">หมายเหตุ</label><input class="fi" id="ctNote" placeholder="เวลาทำการ ฯลฯ"></div>
+  <button class="fbtn" onclick="saveContact()">บันทึก</button>
+  <button class="cancelbtn" onclick="closeOv('ovContact')">ยกเลิก</button>
+</div>
+</div>
+
+<!-- OVERLAY: EDIT DOC -->
+<div class="ov" id="ovDoc">
+<div class="ovs">
+  <div class="ovh"></div><div class="ovt" id="ovDocTitle">แก้ไขเอกสาร</div>
+  <input type="hidden" id="dCarId"><input type="hidden" id="dType">
+  <div class="fs"><label class="fl">วันหมดอายุ</label><input class="fi" type="date" id="dExpiry"></div>
+  <div class="fs"><label class="fl">บริษัท / หมายเหตุ</label><input class="fi" id="dNote" placeholder="เช่น วิริยะประกันภัย"></div>
+  <button class="fbtn" onclick="saveDoc()">บันทึก</button>
+  <button class="cancelbtn" onclick="closeOv('ovDoc')">ยกเลิก</button>
+</div>
+</div>
+
+<!-- OVERLAY: EDIT LOG -->
+<div class="ov" id="ovEditLog">
+<div class="ovs">
+  <div class="ovh"></div><div class="ovt">✏️ แก้ไขรายการ</div>
+  <input type="hidden" id="elId">
+  <div class="fs"><label class="fl">รถ</label>
+    <select class="fi" id="elCar">
+      <option value="altis">Toyota Altis (ษล 3427)</option>
+      <option value="estima">Toyota Estima Hybrid (ฎจ 6302)</option>
+      <option value="cx5">Mazda CX-5 (3กษ 809)</option>
+    </select></div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">วันที่</label><input class="fi" type="date" id="elDate"></div>
+    <div class="fs"><label class="fl">เลขไมล์</label><input class="fi" type="number" id="elKm"></div>
   </div>
+  <div class="fs"><label class="fl">ประเภทงาน</label>
+    <select class="fi" id="elType">
+      <option>เปลี่ยนถ่ายน้ำมันเครื่อง</option><option>เปลี่ยนไส้กรองน้ำมันเครื่อง</option>
+      <option>เปลี่ยนสายพาน/โซ่</option><option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option>
+      <option>เปลี่ยนยาง</option><option>ตั้งศูนย์ถ่วงล้อ</option><option>เบรก (ผ้า/จาน)</option>
+      <option>แบตเตอรี่</option><option>ระบบแอร์</option><option>ช่วงล่าง</option>
+      <option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option>
+    </select></div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">สถานที่</label>
+      <select class="fi" id="elPlace">
+        <option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option>
+        <option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option>
+      </select></div>
+    <div class="fs"><label class="fl">ชื่อร้าน</label><input class="fi" id="elShop"></div>
+  </div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">ค่าอะไหล่ (฿)</label><input class="fi" type="number" id="elPart"></div>
+    <div class="fs"><label class="fl">ค่าแรง (฿)</label><input class="fi" type="number" id="elLabor"></div>
+  </div>
+  <div class="fs"><label class="fl">ผลิตภัณฑ์</label><input class="fi" id="elProduct"></div>
+  <div class="fs"><label class="fl">หมายเหตุ</label><textarea class="fi" id="elNote"></textarea></div>
+  <button class="fbtn" onclick="saveEditLog()">💾 บันทึกการแก้ไข</button>
+  <button class="cancelbtn" onclick="closeOv('ovEditLog')">ยกเลิก</button>
+</div>
 </div>
 
 <script>
-// ============ DATA ============
-const CAR_DATA = {
-  altis: {
-    id:'altis', name:'Toyota Altis', plate:'ษล 3427 กทม', year:2019, type:'sedan',
-    oilNote:'5W-30 Semi/Conventional',
-    schedule:[
-      {id:'oil',label:'เปลี่ยนน้ำมันเครื่อง',interval:5000,place:'ศูนย์/B-Quik/ปั๊ม',costMin:900,costMax:1800,note:'5W-30 ธรรมดา/กึ่งสังเคราะห์'},
-      {id:'oilfilter',label:'ไส้กรองน้ำมันเครื่อง',interval:5000,place:'เปลี่ยนพร้อมน้ำมัน',costMin:200,costMax:400,note:'เปลี่ยนทุกครั้งที่เปลี่ยนน้ำมัน'},
-      {id:'airfilter',label:'ไส้กรองอากาศ',interval:30000,place:'ศูนย์/อู่',costMin:300,costMax:700,note:'ตรวจทุก 15,000 กม.'},
-      {id:'cabinfilter',label:'ไส้กรองแอร์',interval:20000,place:'ศูนย์/อู่',costMin:300,costMax:600,note:'หรือทุก 1 ปี'},
-      {id:'sparkplug',label:'หัวเทียน Iridium',interval:40000,place:'ศูนย์โตโยต้า',costMin:1200,costMax:2400,note:'NGK/Denso Iridium ทุก 40,000 กม.'},
-      {id:'gearoil',label:'น้ำมันเกียร์อัตโนมัติ',interval:40000,place:'ศูนย์โตโยต้า',costMin:2000,costMax:4000,note:'Toyota WS ATF เท่านั้น'},
-      {id:'brakeoil',label:'น้ำมันเบรก',interval:40000,place:'ศูนย์/อู่',costMin:500,costMax:1000,note:'หรือทุก 2 ปี'},
-      {id:'coolant',label:'น้ำหล่อเย็น',interval:80000,place:'ศูนย์',costMin:800,costMax:1500,note:'Toyota Long Life Coolant'},
-      {id:'timing',label:'Timing Chain',interval:0,place:'—',costMin:0,costMax:0,note:'✅ Altis 1ZR-FE ใช้ Timing Chain ไม่ต้องเปลี่ยนตามระยะ'},
-      {id:'brakepad',label:'ผ้าเบรก (ตรวจ)',interval:20000,place:'ศูนย์/อู่',costMin:2000,costMax:5000,note:'เปลี่ยนเมื่อเหลือ < 3mm'},
-      {id:'tirerot',label:'สลับยาง',interval:10000,place:'ร้านยาง/ศูนย์',costMin:300,costMax:500,note:'ตั้งศูนย์ถ่วงล้อทุก 20,000 กม.'},
-    ]
-  },
-  estima: {
-    id:'estima', name:'Toyota Estima Hybrid', plate:'ฎจ 6302 กทม', year:2006, type:'hybrid',
-    oilNote:'0W-20 Full Synthetic เท่านั้น',
-    schedule:[
-      {id:'oil',label:'เปลี่ยนน้ำมันเครื่อง',interval:10000,place:'ศูนย์โตโยต้า',costMin:2000,costMax:4500,note:'⚡ Hybrid ต้องใช้ Full Synthetic 0W-20 Toyota Genuine เท่านั้น'},
-      {id:'oilfilter',label:'ไส้กรองน้ำมันเครื่อง',interval:10000,place:'ศูนย์',costMin:300,costMax:600,note:'เปลี่ยนพร้อมน้ำมันทุกครั้ง'},
-      {id:'hybridbat',label:'ตรวจ Hybrid Battery',interval:20000,place:'ศูนย์โตโยต้าเท่านั้น',costMin:500,costMax:1000,note:'⚡ รถอายุ 18+ ปี ควรตรวจทุกปี'},
-      {id:'inverter',label:'น้ำหล่อเย็น Inverter',interval:80000,place:'ศูนย์โตโยต้า',costMin:2000,costMax:4000,note:'ระบบ Hybrid แยกต่างหากจากเครื่องยนต์'},
-      {id:'airfilter',label:'ไส้กรองอากาศ',interval:30000,place:'ศูนย์/อู่',costMin:400,costMax:800,note:'ตรวจทุก 15,000 กม.'},
-      {id:'cabinfilter',label:'ไส้กรองแอร์',interval:20000,place:'ศูนย์/อู่',costMin:400,costMax:700,note:'หรือทุก 1 ปี'},
-      {id:'sparkplug',label:'หัวเทียน',interval:50000,place:'ศูนย์โตโยต้า',costMin:2000,costMax:4000,note:'Iridium ของแท้ V6 2AZ — 6 หัว'},
-      {id:'gearoil',label:'น้ำมันเกียร์ Hybrid Transaxle',interval:80000,place:'ศูนย์โตโยต้าเท่านั้น',costMin:3000,costMax:6000,note:'Toyota Genuine เฉพาะ ห้ามใช้น้ำมันทั่วไป'},
-      {id:'brakeoil',label:'น้ำมันเบรก',interval:40000,place:'ศูนย์',costMin:600,costMax:1200,note:'Hybrid ใช้ Regenerative Braking ผ้าเบรกอยู่นานกว่า'},
-      {id:'coolant',label:'น้ำหล่อเย็นเครื่องยนต์',interval:80000,place:'ศูนย์',costMin:1000,costMax:2000,note:'Toyota Super Long Life Coolant สีชมพู'},
-      {id:'timing',label:'Timing Chain',interval:0,place:'—',costMin:0,costMax:0,note:'✅ Estima 2AZ-FXE ใช้ Timing Chain ไม่ต้องเปลี่ยนตามระยะ'},
-      {id:'12vbat',label:'แบตเตอรี่ 12V',interval:0,place:'ศูนย์/ร้านแบต',costMin:2500,costMax:5000,note:'⚡ เปลี่ยนทุก 3-4 ปี ขนาดเฉพาะ Hybrid'},
-    ]
-  },
-  cx5: {
-    id:'cx5', name:'Mazda CX-5', plate:'3กษ 809 กทม', year:2019, type:'suv',
-    oilNote:'0W-20 / 5W-30 Mazda Genuine',
-    schedule:[
-      {id:'oil',label:'เปลี่ยนน้ำมันเครื่อง',interval:10000,place:'ศูนย์มาสด้า/B-Quik',costMin:1800,costMax:3500,note:'Mazda Genuine 0W-20 Skyactiv หรือ 5W-30'},
-      {id:'oilfilter',label:'ไส้กรองน้ำมันเครื่อง',interval:10000,place:'เปลี่ยนพร้อมน้ำมัน',costMin:300,costMax:500,note:'เปลี่ยนทุกครั้งที่เปลี่ยนน้ำมัน'},
-      {id:'airfilter',label:'ไส้กรองอากาศ',interval:30000,place:'ศูนย์/อู่',costMin:400,costMax:900,note:'ตรวจทุก 15,000 กม.'},
-      {id:'cabinfilter',label:'ไส้กรองแอร์',interval:20000,place:'ศูนย์/อู่',costMin:400,costMax:700,note:'หรือทุก 1-2 ปี'},
-      {id:'sparkplug',label:'หัวเทียน Skyactiv Iridium',interval:120000,place:'ศูนย์มาสด้า',costMin:3000,costMax:6000,note:'Non-turbo ทุก 120,000 กม. / Turbo ทุก 65,000 กม.'},
-      {id:'gearoil',label:'น้ำมันเกียร์ ATF FZ',interval:50000,place:'ศูนย์มาสด้า',costMin:2500,costMax:5000,note:'⚠️ Mazda ATF FZ Genuine เท่านั้น ห้ามใช้น้ำมันทั่วไป'},
-      {id:'brakeoil',label:'น้ำมันเบรก',interval:48000,place:'ศูนย์/อู่',costMin:600,costMax:1200,note:'หรือทุก 2 ปี DOT3/DOT4'},
-      {id:'coolant',label:'น้ำหล่อเย็น FL-22',interval:192000,place:'ศูนย์มาสด้า',costMin:1500,costMax:3000,note:'⚠️ Mazda FL-22 เฉพาะ ห้ามใช้คูแลนท์ทั่วไป! ครั้งแรก 192,000/10ปี'},
-      {id:'timing',label:'Timing Chain',interval:0,place:'—',costMin:0,costMax:0,note:'✅ CX-5 Skyactiv-G ใช้ Timing Chain ไม่ต้องเปลี่ยนตามระยะ'},
-      {id:'brakepad',label:'ผ้าเบรก (ตรวจ)',interval:20000,place:'ศูนย์/อู่',costMin:2500,costMax:6000,note:'ตรวจทุกปี เปลี่ยนเมื่อ < 3mm'},
-      {id:'tirerot',label:'สลับยาง',interval:8000,place:'ร้านยาง/ศูนย์',costMin:300,costMax:600,note:'Mazda แนะนำทุก 8,000 กม.'},
-      {id:'diffoil',label:'น้ำมัน Differential (AWD)',interval:50000,place:'ศูนย์มาสด้า',costMin:1500,costMax:3000,note:'สำหรับรุ่น AWD เท่านั้น'},
-    ]
-  }
+const SBURL='https://svuiphbzceaatqodluvxl.supabase.co';
+const SBKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2dWlwaGJ6Y2VhdHFvZGx1dnhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MzI3ODUsImV4cCI6MjA4OTMwODc4NX0.0Ee2LfF8kwjatASFAzXINBRb46UHEX5sPdIHPxAuHZk';
+const BH={'Content-Type':'application/json','apikey':SBKEY};
+
+async function api(path,method='GET',body=null,tok=null){
+  const h={...BH,Authorization:'Bearer '+(tok||SBKEY)};
+  const r=await fetch(SBURL+path,{method,headers:h,body:body?JSON.stringify(body):null});
+  const t=await r.text();
+  try{return{ok:r.ok,d:JSON.parse(t),s:r.status};}catch{return{ok:r.ok,d:t,s:r.status};}
+}
+async function rpc(path,method,body,tok,extra={}){
+  const h={...BH,Authorization:'Bearer '+(tok||SBKEY),...extra};
+  return fetch(SBURL+path,{method,headers:h,body:body?JSON.stringify(body):null});
+}
+
+const CARS={
+  altis:{id:'altis',name:'Toyota Altis',plate:'ษล 3427 กทม',year:2019,type:'sedan',
+    sc:[
+      {id:'oil',l:'เปลี่ยนน้ำมันเครื่อง',n:5000,p:'ศูนย์/B-Quik',cm:900,cx:1800,note:'5W-30 ธรรมดา/กึ่งสังเคราะห์'},
+      {id:'oilf',l:'ไส้กรองน้ำมันเครื่อง',n:5000,p:'เปลี่ยนพร้อมน้ำมัน',cm:200,cx:400,note:'เปลี่ยนทุกครั้งที่เปลี่ยนน้ำมัน'},
+      {id:'airf',l:'ไส้กรองอากาศ',n:30000,p:'ศูนย์/อู่',cm:300,cx:700,note:'ตรวจทุก 15,000 กม.'},
+      {id:'cab',l:'ไส้กรองแอร์',n:20000,p:'ศูนย์/อู่',cm:300,cx:600,note:'หรือทุก 1 ปี'},
+      {id:'spk',l:'หัวเทียน Iridium',n:40000,p:'ศูนย์โตโยต้า',cm:1200,cx:2400,note:'NGK/Denso Iridium'},
+      {id:'geo',l:'น้ำมันเกียร์ ATF',n:40000,p:'ศูนย์โตโยต้า',cm:2000,cx:4000,note:'Toyota WS ATF เท่านั้น'},
+      {id:'bro',l:'น้ำมันเบรก',n:40000,p:'ศูนย์/อู่',cm:500,cx:1000,note:'หรือทุก 2 ปี'},
+      {id:'cool',l:'น้ำหล่อเย็น',n:80000,p:'ศูนย์',cm:800,cx:1500,note:'Toyota Long Life Coolant'},
+      {id:'tc',l:'Timing Chain',n:0,p:'—',cm:0,cx:0,note:'✅ ไม่ต้องเปลี่ยนตามระยะ'},
+      {id:'brp',l:'ผ้าเบรก (ตรวจ)',n:20000,p:'ศูนย์/อู่',cm:2000,cx:5000,note:'เปลี่ยนเมื่อเหลือ < 3mm'},
+      {id:'tir',l:'สลับยาง',n:10000,p:'ร้านยาง',cm:300,cx:500,note:'ตั้งศูนย์ถ่วงล้อทุก 20,000 กม.'},
+    ]},
+  estima:{id:'estima',name:'Toyota Estima Hybrid',plate:'ฎจ 6302 กทม',year:2006,type:'hybrid',
+    sc:[
+      {id:'oil',l:'เปลี่ยนน้ำมันเครื่อง',n:10000,p:'ศูนย์โตโยต้า',cm:2000,cx:4500,note:'⚡ Full Synthetic 0W-20 Toyota Genuine เท่านั้น'},
+      {id:'oilf',l:'ไส้กรองน้ำมันเครื่อง',n:10000,p:'ศูนย์',cm:300,cx:600,note:'เปลี่ยนพร้อมน้ำมันทุกครั้ง'},
+      {id:'hbat',l:'ตรวจ Hybrid Battery',n:20000,p:'ศูนย์โตโยต้าเท่านั้น',cm:500,cx:1000,note:'⚡ รถอายุ 18+ ปี ควรตรวจทุกปี'},
+      {id:'inv',l:'น้ำหล่อเย็น Inverter',n:80000,p:'ศูนย์โตโยต้า',cm:2000,cx:4000,note:'ระบบ Hybrid แยกต่างหาก'},
+      {id:'airf',l:'ไส้กรองอากาศ',n:30000,p:'ศูนย์/อู่',cm:400,cx:800,note:'ตรวจทุก 15,000 กม.'},
+      {id:'cab',l:'ไส้กรองแอร์',n:20000,p:'ศูนย์/อู่',cm:400,cx:700,note:'หรือทุก 1 ปี'},
+      {id:'spk',l:'หัวเทียน V6 Iridium',n:50000,p:'ศูนย์โตโยต้า',cm:2000,cx:4000,note:'6 หัว ของแท้เท่านั้น'},
+      {id:'geo',l:'น้ำมันเกียร์ Hybrid',n:80000,p:'ศูนย์โตโยต้าเท่านั้น',cm:3000,cx:6000,note:'Toyota Genuine เฉพาะ'},
+      {id:'bro',l:'น้ำมันเบรก',n:40000,p:'ศูนย์',cm:600,cx:1200,note:'Hybrid ใช้ Regen Braking'},
+      {id:'cool',l:'น้ำหล่อเย็นเครื่องยนต์',n:80000,p:'ศูนย์',cm:1000,cx:2000,note:'Toyota Super Long Life Coolant สีชมพู'},
+      {id:'tc',l:'Timing Chain',n:0,p:'—',cm:0,cx:0,note:'✅ ไม่ต้องเปลี่ยนตามระยะ'},
+      {id:'12v',l:'แบตเตอรี่ 12V',n:0,p:'ศูนย์/ร้านแบต',cm:2500,cx:5000,note:'⚡ เปลี่ยนทุก 3-4 ปี'},
+    ]},
+  cx5:{id:'cx5',name:'Mazda CX-5',plate:'3กษ 809 กทม',year:2019,type:'suv',
+    sc:[
+      {id:'oil',l:'เปลี่ยนน้ำมันเครื่อง',n:10000,p:'ศูนย์มาสด้า',cm:1800,cx:3500,note:'Mazda Genuine 0W-20 Skyactiv'},
+      {id:'oilf',l:'ไส้กรองน้ำมันเครื่อง',n:10000,p:'เปลี่ยนพร้อมน้ำมัน',cm:300,cx:500,note:'เปลี่ยนทุกครั้งที่เปลี่ยนน้ำมัน'},
+      {id:'airf',l:'ไส้กรองอากาศ',n:30000,p:'ศูนย์/อู่',cm:400,cx:900,note:'ตรวจทุก 15,000 กม.'},
+      {id:'cab',l:'ไส้กรองแอร์',n:20000,p:'ศูนย์/อู่',cm:400,cx:700,note:'หรือทุก 1-2 ปี'},
+      {id:'spk',l:'หัวเทียน Skyactiv Iridium',n:120000,p:'ศูนย์มาสด้า',cm:3000,cx:6000,note:'Non-turbo 120,000 / Turbo 65,000 กม.'},
+      {id:'geo',l:'น้ำมันเกียร์ ATF FZ',n:50000,p:'ศูนย์มาสด้า',cm:2500,cx:5000,note:'⚠️ Mazda ATF FZ Genuine เท่านั้น'},
+      {id:'bro',l:'น้ำมันเบรก',n:48000,p:'ศูนย์/อู่',cm:600,cx:1200,note:'หรือทุก 2 ปี DOT3/DOT4'},
+      {id:'cool',l:'น้ำหล่อเย็น FL-22',n:192000,p:'ศูนย์มาสด้า',cm:1500,cx:3000,note:'⚠️ FL-22 เฉพาะ ห้ามใช้คูแลนท์ทั่วไป'},
+      {id:'tc',l:'Timing Chain',n:0,p:'—',cm:0,cx:0,note:'✅ ไม่ต้องเปลี่ยนตามระยะ'},
+      {id:'brp',l:'ผ้าเบรก (ตรวจ)',n:20000,p:'ศูนย์/อู่',cm:2500,cx:6000,note:'เปลี่ยนเมื่อ < 3mm'},
+      {id:'tir',l:'สลับยาง',n:8000,p:'ร้านยาง',cm:300,cx:600,note:'Mazda แนะนำทุก 8,000 กม.'},
+      {id:'dif',l:'น้ำมัน Differential (AWD)',n:50000,p:'ศูนย์มาสด้า',cm:1500,cx:3000,note:'สำหรับรุ่น AWD เท่านั้น'},
+    ]},
 };
 
-const EMERGENCY = [
-  {type:'ฉุกเฉิน',name:'กู้ชีพ / กู้ภัย',num:'1669'},
+const EMG=[
+  {type:'ฉุกเฉิน',name:'กู้ชีพ/กู้ภัย',num:'1669'},
   {type:'ตำรวจ',name:'แจ้งเหตุ',num:'191'},
   {type:'ทางหลวง',name:'กรมทางหลวง',num:'1586'},
-  {type:'ทางด่วน',name:'ศูนย์ควบคุมทางด่วน',num:'1543'},
+  {type:'ทางด่วน',name:'ศูนย์ควบคุม',num:'1543'},
   {type:'Toyota TH',name:'Toyota Customer',num:'02-386-2000'},
   {type:'Mazda TH',name:'Mazda Customer',num:'02-260-8000'},
 ];
 
-// ============ STATE ============
-let currentCar = 'altis';
-let currentTab = 'dashboard';
-let km = JSON.parse(localStorage.getItem('v2_km') || '{"altis":0,"estima":0,"cx5":0}');
-let lastDone = JSON.parse(localStorage.getItem('v2_done') || '{}');
-let logs = JSON.parse(localStorage.getItem('v2_logs') || '[]');
-let contacts = JSON.parse(localStorage.getItem('v2_contacts') || '[]');
-let docs = JSON.parse(localStorage.getItem('v2_docs') || '{}');
+let sess=null,uName='',curCar='altis',curTab='dashboard';
+let KM={altis:0,estima:0,cx5:0},LD={},LOGS=[],CONTACTS=[],DOCS={};
 
-function save() {
-  try {
-    localStorage.setItem('v2_km', JSON.stringify(km));
-    localStorage.setItem('v2_done', JSON.stringify(lastDone));
-    localStorage.setItem('v2_logs', JSON.stringify(logs));
-    localStorage.setItem('v2_contacts', JSON.stringify(contacts));
-    localStorage.setItem('v2_docs', JSON.stringify(docs));
-  } catch(e) {}
+function sync(v){document.getElementById('syncBar').style.display=v?'block':'none';}
+
+// AUTH
+function authTab(t){
+  document.getElementById('tabL').classList.toggle('active',t==='login');
+  document.getElementById('tabS').classList.toggle('active',t==='signup');
+  document.getElementById('fLogin').style.display=t==='login'?'':'none';
+  document.getElementById('fSignup').style.display=t==='signup'?'':'none';
+  document.getElementById('authMsg').textContent='';
 }
+function authMsg(m,err){const e=document.getElementById('authMsg');e.textContent=m;e.className='a-msg '+(err?'err':'ok');}
 
-// ============ STATUS HELPERS ============
-function getStatus(carId, item) {
-  if (item.interval === 0) return 'info';
-  const curKm = km[carId] || 0;
-  if (!curKm) return 'unknown';
-  const key = `${carId}_${item.id}`;
-  const lkm = lastDone[key] || 0;
-  const pct = lkm ? ((curKm - lkm) / item.interval * 100) : (curKm / item.interval * 100);
-  if (pct >= 95) return 'urgent';
-  if (pct >= 75) return 'soon';
-  return 'ok';
-}
-
-function getPct(carId, item) {
-  if (item.interval === 0) return 0;
-  const curKm = km[carId] || 0;
-  if (!curKm) return 0;
-  const key = `${carId}_${item.id}`;
-  const lkm = lastDone[key] || 0;
-  return Math.min(100, Math.round(lkm ? ((curKm - lkm) / item.interval * 100) : (curKm / item.interval * 100)));
-}
-
-function statusLabel(s) {
-  return {urgent:'⚠ ถึงกำหนด!',soon:'▲ ใกล้ถึง',ok:'✓ ปกติ',unknown:'? ยังไม่มีข้อมูล',info:'ℹ ไม่ต้องเปลี่ยน'}[s];
-}
-function badgeClass(s) {
-  return {urgent:'badge-urgent',soon:'badge-soon',ok:'badge-ok',unknown:'badge-unknown',info:'badge-info'}[s];
-}
-function barColor(s) {
-  return {urgent:'var(--red)',soon:'#BA7517',ok:'var(--green)',unknown:'var(--border2)',info:'var(--blue)'}[s];
-}
-
-// ============ TABS ============
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
-  document.getElementById(`tab-${tab}`).classList.add('active');
-  renderContent();
-}
-
-function switchCar(id) {
-  currentCar = id;
-  document.querySelectorAll('.car-pill').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll(`.car-pill[data-car="${id}"]`).forEach(p => p.classList.add('active'));
-  renderContent();
-}
-
-// ============ HEADER ============
-function renderHeader() {
-  const pills = document.getElementById('carPills');
-  pills.innerHTML = Object.values(CAR_DATA).map(c =>
-    `<button class="car-pill${c.id===currentCar?' active':''}" data-car="${c.id}" onclick="switchCar('${c.id}')">${c.name.replace('Toyota ','').replace('Mazda ','')}</button>`
-  ).join('');
-}
-
-// ============ DASHBOARD ============
-function renderDashboard() {
-  const html = Object.values(CAR_DATA).map(car => {
-    const carId = car.id;
-    const curKm = km[carId];
-    const urgent = car.schedule.filter(i=>i.interval>0 && getStatus(carId,i)==='urgent').length;
-    const soon = car.schedule.filter(i=>i.interval>0 && getStatus(carId,i)==='soon').length;
-    const badges = [];
-    if (urgent > 0) badges.push(`<span class="badge badge-urgent">${urgent} ถึงกำหนด</span>`);
-    if (soon > 0) badges.push(`<span class="badge badge-soon">${soon} ใกล้ถึง</span>`);
-    if (!urgent && !soon && curKm) badges.push(`<span class="badge badge-ok">ปกติ</span>`);
-    if (!curKm) badges.push(`<span class="badge badge-unknown">ยังไม่กรอกไมล์</span>`);
-    return `<div class="car-sum-card">
-      <div class="car-sum-top">
-        <div>
-          <div class="car-sum-name">${car.name} ${car.type==='hybrid'?'⚡':''}</div>
-          <div class="car-sum-plate">ทะเบียน ${car.plate} · ${curKm?curKm.toLocaleString()+' กม.':'ยังไม่มีข้อมูล'}</div>
-        </div>
-      </div>
-      <div class="car-sum-badges">${badges.join('')}</div>
-      ${urgent>0 ? `<div class="alert danger" style="margin-top:8px;font-size:12px;">ถึงกำหนดซ่อม ${urgent} รายการ — <span style="cursor:pointer;text-decoration:underline;" onclick="currentCar='${carId}';switchTab('todo')">ดูรายการ →</span></div>` : ''}
-    </div>`;
-  }).join('');
-
-  const recentLogs = logs.slice(-5).reverse().map(l => {
-    const car = CAR_DATA[l.carId];
-    return `<div class="log-entry">
-      <div class="log-title">${l.type}</div>
-      <div class="log-meta">${car?.name} · ${l.date} · ${l.km.toLocaleString()} กม.</div>
-      <div class="log-chips">
-        ${l.shop?`<span class="chip">${l.shop}</span>`:''}
-        ${(l.partCost||l.laborCost)?`<span class="chip">฿${((+l.partCost||0)+(+l.laborCost||0)).toLocaleString()}</span>`:''}
-      </div>
-    </div>`;
-  }).join('') || `<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">ยังไม่มีประวัติ<br>เริ่มบันทึกที่แถบ ➕</div></div>`;
-
-  document.getElementById('mainContent').innerHTML = `
-    <div class="section-label">สถานะรถทุกคัน</div>
-    ${html}
-    <div class="section-label">บันทึกล่าสุด</div>
-    ${recentLogs}`;
-}
-
-// ============ TODO ============
-function renderTodo() {
-  const car = CAR_DATA[currentCar];
-  const carId = currentCar;
-  const curKm = km[carId];
-
-  const urgent = car.schedule.filter(i=>i.interval>0&&getStatus(carId,i)==='urgent').length;
-  const soon = car.schedule.filter(i=>i.interval>0&&getStatus(carId,i)==='soon').length;
-  const ok = car.schedule.filter(i=>i.interval>0&&getStatus(carId,i)==='ok').length;
-
-  const hybridNote = car.type==='hybrid' ? `<div class="alert hybrid">⚡ Hybrid อายุ 18+ ปี — ควรเข้าศูนย์โตโยต้าเป็นประจำ ห้ามซ่อมที่อู่ทั่วไป</div>` : '';
-
-  const items = car.schedule.map(item => {
-    const st = getStatus(carId, item);
-    const pct = getPct(carId, item);
-    const key = `${carId}_${item.id}`;
-    const lkm = lastDone[key] || 0;
-    const nextKm = lkm + item.interval;
-    const remaining = curKm ? (nextKm - curKm) : null;
-    const canMark = curKm > 0 && item.interval > 0;
-    const isReady = st === 'urgent' || st === 'soon';
-
-    if (item.interval === 0) {
-      return `<div class="todo-item">
-        <div class="todo-accent info"></div>
-        <div class="todo-inner">
-          <div class="todo-row1"><div class="todo-name">${item.label}</div><span class="badge badge-info">ไม่ต้องเปลี่ยน</span></div>
-          <div class="todo-note">${item.note}</div>
-        </div>
-      </div>`;
-    }
-
-    return `<div class="todo-item">
-      <div class="todo-accent ${st}"></div>
-      <div class="todo-inner">
-        <div class="todo-row1"><div class="todo-name">${item.label}</div><span class="badge ${badgeClass(st)}">${statusLabel(st)}</span></div>
-        <div class="todo-detail">ทุก ${item.interval.toLocaleString()} กม. · ${item.place}</div>
-        ${lkm ? `<div class="todo-detail">ล่าสุด: ${lkm.toLocaleString()} กม. → ครั้งถัดไป: ${nextKm.toLocaleString()} กม.</div>` :
-          `<div class="todo-detail" style="color:var(--amber);">ยังไม่มีข้อมูลครั้งล่าสุด</div>`}
-        ${remaining !== null ? `<div style="font-size:11px;color:${remaining<=0?'var(--red)':remaining<item.interval*0.25?'var(--amber)':'var(--muted)'};margin-top:1px;">${remaining<=0?'เกินกำหนด '+Math.abs(remaining).toLocaleString()+' กม.':'เหลืออีก '+remaining.toLocaleString()+' กม.'}</div>` : ''}
-        ${pct>0 ? `<div class="prog-wrap"><div class="prog-bar" style="width:${pct}%;background:${barColor(st)};"></div></div>
-        <div style="font-size:10px;color:var(--hint);">${pct}% ของรอบ</div>` : ''}
-        <div class="todo-note" style="margin-top:6px;">${item.note}</div>
-        ${item.costMin>0 ? `<span class="todo-cost">฿${item.costMin.toLocaleString()}–${item.costMax.toLocaleString()}</span>` : ''}
-      </div>
-      ${canMark ? `<button class="mark-done-btn${isReady?' ready':''}" onclick="markDone('${carId}','${item.id}')">✓ ทำแล้ว @${curKm.toLocaleString()} กม. กดเพื่อบันทึก</button>` : ''}
-    </div>`;
-  }).join('');
-
-  document.getElementById('mainContent').innerHTML = `
-    <div class="km-bar">
-      <label>ไมล์ปัจจุบัน</label>
-      <input type="number" id="kmInput" value="${curKm||''}" placeholder="เช่น 85000">
-      <button onclick="updateKm()">อัพเดต</button>
-    </div>
-    ${hybridNote}
-    <div class="summary-row">
-      <div class="sum-card red"><div class="sum-num">${urgent}</div><div class="sum-label">ถึงกำหนด</div></div>
-      <div class="sum-card amber"><div class="sum-num">${soon}</div><div class="sum-label">ใกล้ถึง</div></div>
-      <div class="sum-card green"><div class="sum-num">${ok}</div><div class="sum-label">ปกติ</div></div>
-    </div>
-    <div class="section-label">รายการทั้งหมด — ${car.name}</div>
-    ${items}`;
-}
-
-function updateKm() {
-  const val = parseInt(document.getElementById('kmInput').value);
-  if (!val || val <= 0) return;
-  km[currentCar] = val;
-  save();
-  renderContent();
-}
-
-function markDone(carId, itemId) {
-  const curKm = km[carId];
-  if (!curKm) { alert('กรุณาใส่เลขไมล์ก่อน'); return; }
-  lastDone[`${carId}_${itemId}`] = curKm;
-  save();
-  renderContent();
-}
-
-// ============ LOG FORM ============
-function renderLog() {
-  const carOptions = Object.values(CAR_DATA).map(c =>
-    `<option value="${c.id}"${c.id===currentCar?' selected':''}>${c.name} (${c.plate})</option>`).join('');
-
-  const today = new Date().toISOString().split('T')[0];
-
-  document.getElementById('mainContent').innerHTML = `
-    <div class="section-label">บันทึกการซ่อมบำรุง</div>
-    <div class="card"><div class="card-body" style="padding-top:14px;">
-      <div class="form-section"><label class="form-label">รถ</label>
-        <select class="form-input" id="logCar">${carOptions}</select></div>
-      <div class="form-row">
-        <div class="form-section"><label class="form-label">วันที่</label>
-          <input class="form-input" type="date" id="logDate" value="${today}"></div>
-        <div class="form-section"><label class="form-label">เลขไมล์ (กม.)</label>
-          <input class="form-input" type="number" id="logKm" placeholder="85000"></div>
-      </div>
-      <div class="form-section"><label class="form-label">ประเภทงาน</label>
-        <select class="form-input" id="logType">
-          <option>เปลี่ยนถ่ายน้ำมันเครื่อง</option>
-          <option>เปลี่ยนไส้กรองน้ำมันเครื่อง</option>
-          <option>เปลี่ยนสายพาน/โซ่</option>
-          <option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option>
-          <option>เปลี่ยนยาง</option><option>ตั้งศูนย์ถ่วงล้อ</option>
-          <option>เบรก (ผ้า/จาน)</option><option>แบตเตอรี่</option>
-          <option>ระบบแอร์</option><option>ช่วงล่าง</option>
-          <option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option>
-        </select></div>
-      <div class="form-row">
-        <div class="form-section"><label class="form-label">สถานที่</label>
-          <select class="form-input" id="logPlace">
-            <option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option>
-            <option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option>
-          </select></div>
-        <div class="form-section"><label class="form-label">ชื่อร้าน/ศูนย์</label>
-          <input class="form-input" id="logShop" placeholder="เช่น สาขาเอกมัย"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-section"><label class="form-label">ค่าอะไหล่ (฿)</label>
-          <input class="form-input" type="number" id="logPart" placeholder="0"></div>
-        <div class="form-section"><label class="form-label">ค่าแรง (฿)</label>
-          <input class="form-input" type="number" id="logLabor" placeholder="0"></div>
-      </div>
-      <div class="form-section"><label class="form-label">ยี่ห้อ/เกรดน้ำมัน หรืออะไหล่</label>
-        <input class="form-input" id="logProduct" placeholder="เช่น Mobil 1 5W-30 Fully Synthetic"></div>
-      <div class="form-section"><label class="form-label">หมายเหตุ</label>
-        <textarea class="form-input" id="logNote" placeholder="รายละเอียดเพิ่มเติม..."></textarea></div>
-      <div id="logMsg" style="font-size:13px;color:var(--green);text-align:center;min-height:18px;margin-bottom:4px;"></div>
-      <button class="form-btn" onclick="saveLog()">💾 บันทึก</button>
-    </div></div>`;
-}
-
-function saveLog() {
-  const carId = document.getElementById('logCar').value;
-  const date = document.getElementById('logDate').value;
-  const kmVal = parseInt(document.getElementById('logKm').value);
-  if (!date || !kmVal) {
-    document.getElementById('logMsg').textContent = '⚠ กรุณากรอกวันที่และเลขไมล์';
-    document.getElementById('logMsg').style.color = 'var(--red)';
-    return;
+async function doSignup(){
+  const name=document.getElementById('sName').value.trim();
+  const email=document.getElementById('sEmail').value.trim();
+  const pass=document.getElementById('sPass').value;
+  if(!name||!email||!pass){authMsg('กรุณากรอกข้อมูลให้ครบ',true);return;}
+  const b=document.getElementById('sBtn');b.disabled=true;b.textContent='กำลังสมัคร...';
+  const r=await api('/auth/v1/signup','POST',{email,password:pass,data:{display_name:name}});
+  b.disabled=false;b.textContent='สมัครสมาชิก';
+  if(r.ok&&r.d.user){
+    authMsg('สมัครสำเร็จ! กรุณาตรวจสอบ email ยืนยัน แล้วเข้าสู่ระบบ',false);
+    authTab('login');
+  } else {
+    authMsg(r.d.msg||r.d.error_description||'สมัครไม่สำเร็จ',true);
   }
-  const entry = {
-    carId, date, km: kmVal,
-    type: document.getElementById('logType').value,
-    place: document.getElementById('logPlace').value,
-    shop: document.getElementById('logShop').value,
-    partCost: document.getElementById('logPart').value,
-    laborCost: document.getElementById('logLabor').value,
-    product: document.getElementById('logProduct').value,
-    note: document.getElementById('logNote').value,
-    ts: Date.now()
-  };
-  logs.push(entry);
-  if (!km[carId] || kmVal > km[carId]) { km[carId] = kmVal; }
-  save();
-  document.getElementById('logMsg').textContent = '✓ บันทึกเรียบร้อย!';
-  document.getElementById('logMsg').style.color = 'var(--green)';
-  setTimeout(() => renderLog(), 1200);
 }
 
-// ============ HISTORY ============
-function renderHistory() {
-  const carLogs = logs.filter(l => l.carId === currentCar).sort((a,b) => b.ts - a.ts);
-  const items = carLogs.length ? carLogs.map((l, i) => {
-    const total = (+l.partCost||0)+(+l.laborCost||0);
-    return `<div class="log-entry">
+async function doLogin(){
+  const email=document.getElementById('lEmail').value.trim();
+  const pass=document.getElementById('lPass').value;
+  if(!email||!pass){authMsg('กรุณากรอก email และ password',true);return;}
+  const b=document.getElementById('lBtn');b.disabled=true;b.textContent='กำลังเข้าสู่ระบบ...';
+  const r=await api('/auth/v1/token?grant_type=password','POST',{email,password:pass});
+  b.disabled=false;b.textContent='เข้าสู่ระบบ';
+  if(r.ok&&r.d.access_token){
+    sess=r.d;
+    uName=r.d.user?.user_metadata?.display_name||email.split('@')[0];
+    localStorage.setItem('cc_sess',JSON.stringify(sess));
+    await startApp();
+  } else {
+    authMsg(r.d.error_description||r.d.msg||'email หรือ password ไม่ถูกต้อง',true);
+  }
+}
+
+async function doLogout(){
+  if(!confirm('ออกจากระบบ?'))return;
+  if(sess)await api('/auth/v1/logout','POST',{},sess.access_token);
+  sess=null;uName='';
+  localStorage.removeItem('cc_sess');
+  document.getElementById('App').classList.remove('on');
+  document.getElementById('authWrap').style.display='flex';
+  KM={altis:0,estima:0,cx5:0};LD={};LOGS=[];CONTACTS=[];DOCS={};
+}
+
+// LOAD DATA
+async function loadAll(){
+  sync(true);
+  const tok=sess.access_token,uid=sess.user.id;
+  const [rk,rd,rl,rc]=await Promise.all([
+    api(`/rest/v1/car_km?user_id=eq.${uid}&select=*`,'GET',null,tok),
+    api(`/rest/v1/car_lastdone?user_id=eq.${uid}&select=*`,'GET',null,tok),
+    api(`/rest/v1/car_logs?user_id=eq.${uid}&select=*&order=created_at.desc`,'GET',null,tok),
+    api(`/rest/v1/car_docs?user_id=eq.${uid}&select=*`,'GET',null,tok),
+  ]);
+  if(rk.ok)rk.d.forEach(r=>KM[r.car_id]=r.km);
+  if(rd.ok)rd.d.forEach(r=>LD[r.item_key]=r.km);
+  if(rl.ok)LOGS=rl.d.map(r=>({id:r.id,carId:r.car_id,date:r.date,km:r.km,type:r.type,place:r.place,shop:r.shop,partCost:r.part_cost,laborCost:r.labor_cost,product:r.product,note:r.note,recordedBy:r.recorded_by,ts:new Date(r.created_at).getTime()}));
+  if(rc.ok)rc.d.forEach(r=>DOCS[r.doc_key]={expiry:r.expiry,note:r.note});
+  CONTACTS=JSON.parse(localStorage.getItem('cc_contacts')||'[]');
+  sync(false);
+}
+
+async function ups(table,body,tok){
+  return rpc(`/rest/v1/${table}`,'POST',body,tok,{Prefer:'resolution=merge-duplicates'});
+}
+
+async function startApp(){
+  document.getElementById('authWrap').style.display='none';
+  document.getElementById('App').classList.add('on');
+  document.getElementById('uBadge').textContent='👤 '+uName+' · ออก';
+  await loadAll();
+  render();
+}
+
+// STATUS
+function st(cid,item){
+  if(item.n===0)return'info';
+  const ck=KM[cid]||0;if(!ck)return'unknown';
+  const lk=LD[`${cid}_${item.id}`]||0;
+  const p=lk?((ck-lk)/item.n*100):(ck/item.n*100);
+  return p>=95?'urgent':p>=75?'soon':'ok';
+}
+function pct(cid,item){
+  if(!item.n||!KM[cid])return 0;
+  const lk=LD[`${cid}_${item.id}`]||0;
+  return Math.min(100,Math.round(lk?((KM[cid]-lk)/item.n*100):(KM[cid]/item.n*100)));
+}
+const SL={urgent:'⚠ ถึงกำหนด!',soon:'▲ ใกล้ถึง',ok:'✓ ปกติ',unknown:'? ยังไม่มีข้อมูล',info:'ℹ ไม่ต้องเปลี่ยน'};
+const SB={urgent:'bu',soon:'bs',ok:'bo',unknown:'bk',info:'bi'};
+const SC={urgent:'var(--red)',soon:'var(--amber)',ok:'var(--green)',unknown:'var(--hint)',info:'var(--blue)'};
+
+// NAVIGATION
+function goTab(t){
+  curTab=t;
+  document.querySelectorAll('.ti').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+t).classList.add('on');
+  render();
+}
+function goCar(id){
+  curCar=id;
+  document.querySelectorAll('.cpill').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll(`.cpill[data-c="${id}"]`).forEach(p=>p.classList.add('on'));
+  render();
+}
+function renderHeader(){
+  const pills=document.getElementById('cPills'),sub=document.getElementById('hSub');
+  if(curTab==='dashboard'){pills.style.display='none';sub.textContent='ระบบบำรุงรักษารถยนต์';}
+  else{
+    pills.style.display='flex';
+    pills.innerHTML=Object.values(CARS).map(c=>`<button class="cpill${c.id===curCar?' on':''}" data-c="${c.id}" onclick="goCar('${c.id}')">${c.name.replace('Toyota ','').replace('Mazda ','')}</button>`).join('');
+    sub.textContent={todo:'To-Do รายการซ่อม',log:'บันทึกการซ่อม',history:'ประวัติ & เอกสาร',contacts:'เบอร์ฉุกเฉิน'}[curTab]||'';
+  }
+}
+function render(){
+  renderHeader();
+  const el=document.getElementById('mainC');
+  if(curTab==='dashboard')rDash(el);
+  else if(curTab==='todo')rTodo(el);
+  else if(curTab==='log')rLog(el);
+  else if(curTab==='history')rHist(el);
+  else if(curTab==='contacts')rContacts(el);
+}
+
+// DASHBOARD
+function rDash(el){
+  const next=[];
+  Object.values(CARS).forEach(car=>{
+    car.sc.filter(i=>i.n>0).map(i=>({i,s:st(car.id,i),car}))
+    .filter(x=>x.s!=='ok').sort((a,b)=>({urgent:0,soon:1,unknown:2}[a.s]-{urgent:0,soon:1,unknown:2}[b.s]))
+    .slice(0,2).forEach(x=>next.push(x));
+  });
+
+  const nextH=next.length?next.map(({i,s,car})=>{
+    const ck=KM[car.id]||0,lk=LD[`${car.id}_${i.id}`]||0,nk=lk+i.n,rem=ck?nk-ck:null;
+    const ac=s==='urgent'?'var(--red)':s==='soon'?'var(--amber)':'var(--hint)';
+    return `<div style="background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--r);margin-bottom:8px;overflow:hidden;display:flex;box-shadow:var(--sh);">
+      <div style="width:4px;background:${ac};flex-shrink:0;"></div>
+      <div style="padding:10px 12px;flex:1;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div><div style="font-size:13px;font-weight:600;">${i.l}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px;">${car.name} · ${car.plate}</div></div>
+          <span class="badge ${SB[s]}">${SL[s]}</span>
+        </div>
+        ${rem!==null?`<div style="font-size:11px;color:${rem<=0?'var(--red)':'var(--muted)'};margin-top:4px;">${rem<=0?'เกินกำหนด '+Math.abs(rem).toLocaleString()+' กม.':'เหลืออีก '+rem.toLocaleString()+' กม.'}</div>`:'<div style="font-size:11px;color:var(--amber);margin-top:4px;">กรุณากรอกเลขไมล์ที่ To-Do</div>'}
+        ${i.cm>0?`<span class="tdc" style="margin-top:6px;">฿${i.cm.toLocaleString()}–${i.cx.toLocaleString()}</span>`:''}
+      </div>
+    </div>`;
+  }).join(''):`<div class="gc" style="padding:16px;text-align:center;font-size:13px;color:var(--muted);">✅ รถทุกคันอยู่ในสถานะปกติ</div>`;
+
+  const lastH=Object.values(CARS).map(car=>{
+    const cl=LOGS.filter(l=>l.carId===car.id).sort((a,b)=>b.ts-a.ts),last=cl[0];
+    if(!last)return `<div class="gc" style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-size:13px;font-weight:600;">${car.name}</div><div style="font-size:11px;color:var(--hint);margin-top:2px;">${car.plate}</div></div>
+      <button onclick="curCar='${car.id}';goTab('log')" style="padding:7px 14px;background:var(--blue-lt);color:var(--blue);border:none;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;">+ บันทึกแรก</button>
+    </div>`;
+    const tot=(+last.partCost||0)+(+last.laborCost||0);
+    return `<div class="gc" style="padding:12px 14px;cursor:pointer;" onclick="curCar='${car.id}';goTab('history')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:1px;">${car.name}${KM[car.id]?' · '+KM[car.id].toLocaleString()+' กม.':''}</div>
+          <div style="font-size:14px;font-weight:600;">${last.type}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${last.date}${last.shop?' · '+last.shop:''}${last.recordedBy?' · โดย '+last.recordedBy:''}</div>
+        </div>
+        ${tot?`<div style="font-size:13px;font-weight:700;color:var(--blue);flex-shrink:0;">฿${tot.toLocaleString()}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const strip=Object.values(CARS).map(car=>{
+    const u=car.sc.filter(i=>i.n>0&&st(car.id,i)==='urgent').length;
+    const s=car.sc.filter(i=>i.n>0&&st(car.id,i)==='soon').length;
+    const col=u?'var(--red)':s?'var(--amber)':KM[car.id]?'var(--green)':'var(--hint)';
+    const lbl=u?u+' ถึงกำหนด':s?s+' ใกล้ถึง':KM[car.id]?'ปกติ':'ยังไม่มีข้อมูล';
+    return `<div onclick="curCar='${car.id}';goTab('todo')" style="flex:1;background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:0.5px solid var(--gb);border-radius:var(--rs);padding:10px 6px;text-align:center;cursor:pointer;box-shadow:var(--sh);">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${car.name.replace('Toyota ','').replace('Mazda ','')}</div>
+      <div style="font-size:11px;font-weight:700;color:${col};">${lbl}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px;">${strip}</div>
+    <div class="sec">รายการที่ต้องดำเนินการ</div>${nextH}
+    <div class="sec" style="margin-top:18px;">งานล่าสุดที่ทำแล้ว — แต่ละคัน</div>${lastH}`;
+}
+
+// TODO
+function rTodo(el){
+  const car=CARS[curCar],cid=curCar,ck=KM[cid];
+  const u=car.sc.filter(i=>i.n>0&&st(cid,i)==='urgent').length;
+  const s=car.sc.filter(i=>i.n>0&&st(cid,i)==='soon').length;
+  const o=car.sc.filter(i=>i.n>0&&st(cid,i)==='ok').length;
+  const items=car.sc.map(item=>{
+    const S=st(cid,item),P=pct(cid,item);
+    const lk=LD[`${cid}_${item.id}`]||0,nk=lk+item.n,rem=ck?nk-ck:null;
+    const canMark=ck>0&&item.n>0,ready=S==='urgent'||S==='soon';
+    if(item.n===0)return`<div class="tdi"><div class="tda info"></div><div class="tdin">
+      <div class="tdr1"><div class="tdname">${item.l}</div><span class="badge bi">ไม่ต้องเปลี่ยน</span></div>
+      <div class="tdn">${item.note}</div>
+      ${item.cm>0?`<span class="tdc">฿${item.cm.toLocaleString()}–${item.cx.toLocaleString()}</span>`:''}
+    </div></div>`;
+    return`<div class="tdi"><div class="tda ${S}"></div><div class="tdin">
+      <div class="tdr1"><div class="tdname">${item.l}</div><span class="badge ${SB[S]}">${SL[S]}</span></div>
+      <div class="tdd">ทุก ${item.n.toLocaleString()} กม. · ${item.p}</div>
+      ${lk?`<div class="tdd">ล่าสุด: ${lk.toLocaleString()} → ครั้งถัดไป: ${nk.toLocaleString()} กม.</div>`:`<div class="tdd" style="color:var(--amber);">ยังไม่มีข้อมูลครั้งล่าสุด</div>`}
+      ${rem!==null?`<div style="font-size:11px;color:${rem<=0?'var(--red)':rem<item.n*.25?'var(--amber)':'var(--muted)'};margin-top:1px;">${rem<=0?'เกินกำหนด '+Math.abs(rem).toLocaleString()+' กม.':'เหลืออีก '+rem.toLocaleString()+' กม.'}</div>`:''}
+      ${P>0?`<div class="pw"><div class="pb" style="width:${P}%;background:${SC[S]};"></div></div><div style="font-size:10px;color:var(--hint);">${P}% ของรอบ</div>`:''}
+      <div class="tdn" style="margin-top:6px;">${item.note}</div>
+      ${item.cm>0?`<span class="tdc">฿${item.cm.toLocaleString()}–${item.cx.toLocaleString()}</span>`:''}
+    </div>
+    ${canMark?`<button class="mkbtn${ready?' ready':''}" onclick="markDone('${cid}','${item.id}')">✓ ทำแล้ว @${ck.toLocaleString()} กม. — แตะเพื่อบันทึก</button>`:''}
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="kmb"><label>ไมล์ปัจจุบัน</label>
+    <input type="number" id="kmInput" value="${ck||''}" placeholder="เช่น 85000">
+    <button onclick="updKm()">อัพเดต</button></div>
+    ${car.type==='hybrid'?`<div class="alert hybrid">⚡ Hybrid อายุ 18+ ปี — เข้าศูนย์โตโยต้าเท่านั้น</div>`:''}
+    <div class="srow"><div class="sc r"><div class="sn">${u}</div><div class="sl">ถึงกำหนด</div></div>
+    <div class="sc a"><div class="sn">${s}</div><div class="sl">ใกล้ถึง</div></div>
+    <div class="sc g"><div class="sn">${o}</div><div class="sl">ปกติ</div></div></div>
+    <div class="sec">รายการทั้งหมด — ${car.name}</div>${items}`;
+}
+
+async function updKm(){
+  const v=parseInt(document.getElementById('kmInput').value);
+  if(!v||v<=0)return;
+  KM[curCar]=v;sync(true);
+  const uid=sess.user.id,tok=sess.access_token;
+  await rpc('/rest/v1/car_km','POST',{user_id:uid,car_id:curCar,km:v},tok,{Prefer:'resolution=merge-duplicates'});
+  sync(false);render();
+}
+
+async function markDone(cid,iid){
+  const ck=KM[cid];if(!ck){alert('กรุณาใส่เลขไมล์ก่อน');return;}
+  const key=`${cid}_${iid}`;LD[key]=ck;sync(true);
+  const uid=sess.user.id,tok=sess.access_token;
+  await rpc('/rest/v1/car_lastdone','POST',{user_id:uid,item_key:key,km:ck},tok,{Prefer:'resolution=merge-duplicates'});
+  sync(false);render();
+}
+
+// LOG
+function rLog(el){
+  const today=new Date().toISOString().split('T')[0];
+  const copts=Object.values(CARS).map(c=>`<option value="${c.id}"${c.id===curCar?' selected':''}>${c.name} (${c.plate})</option>`).join('');
+  el.innerHTML=`<div class="sec">บันทึกการซ่อมบำรุง</div>
+  <div class="gc"><div class="gcb" style="padding-top:14px;">
+    <div class="fs"><label class="fl">รถ</label><select class="fi" id="logCar">${copts}</select></div>
+    <div class="fr2">
+      <div class="fs"><label class="fl">วันที่</label><input class="fi" type="date" id="logDate" value="${today}"></div>
+      <div class="fs"><label class="fl">เลขไมล์ (กม.)</label><input class="fi" type="number" id="logKm" placeholder="85000"></div>
+    </div>
+    <div class="fs"><label class="fl">บันทึกโดย</label><input class="fi" id="logBy" value="${uName}" placeholder="ชื่อผู้บันทึก"></div>
+    <div class="fs"><label class="fl">ประเภทงาน</label>
+      <select class="fi" id="logType">
+        <option>เปลี่ยนถ่ายน้ำมันเครื่อง</option><option>เปลี่ยนไส้กรองน้ำมันเครื่อง</option>
+        <option>เปลี่ยนสายพาน/โซ่</option><option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option>
+        <option>เปลี่ยนยาง</option><option>ตั้งศูนย์ถ่วงล้อ</option><option>เบรก (ผ้า/จาน)</option>
+        <option>แบตเตอรี่</option><option>ระบบแอร์</option><option>ช่วงล่าง</option>
+        <option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option>
+      </select></div>
+    <div class="fr2">
+      <div class="fs"><label class="fl">สถานที่</label>
+        <select class="fi" id="logPlace">
+          <option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option>
+          <option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option>
+        </select></div>
+      <div class="fs"><label class="fl">ชื่อร้าน</label><input class="fi" id="logShop" placeholder="สาขาเอกมัย"></div>
+    </div>
+    <div class="fr2">
+      <div class="fs"><label class="fl">ค่าอะไหล่ (฿)</label><input class="fi" type="number" id="logPart" placeholder="0"></div>
+      <div class="fs"><label class="fl">ค่าแรง (฿)</label><input class="fi" type="number" id="logLabor" placeholder="0"></div>
+    </div>
+    <div class="fs"><label class="fl">ยี่ห้อ/เกรดน้ำมัน</label><input class="fi" id="logProduct" placeholder="เช่น Mobil 1 5W-30"></div>
+    <div class="fs"><label class="fl">หมายเหตุ</label><textarea class="fi" id="logNote"></textarea></div>
+    <div id="logMsg" style="font-size:13px;color:var(--green);text-align:center;min-height:18px;margin-bottom:4px;"></div>
+    <button class="fbtn" onclick="saveLog()">💾 บันทึก</button>
+  </div></div>`;
+}
+
+async function saveLog(){
+  const cid=document.getElementById('logCar').value;
+  const date=document.getElementById('logDate').value;
+  const kv=parseInt(document.getElementById('logKm').value);
+  const msg=document.getElementById('logMsg');
+  if(!date||!kv){msg.textContent='⚠ กรุณากรอกวันที่และเลขไมล์';msg.style.color='var(--red)';return;}
+  msg.textContent='⟳ กำลังบันทึก...';msg.style.color='var(--muted)';
+  const uid=sess.user.id,tok=sess.access_token;
+  const body={user_id:uid,recorded_by:document.getElementById('logBy').value||uName,car_id:cid,date,km:kv,
+    type:document.getElementById('logType').value,place:document.getElementById('logPlace').value,
+    shop:document.getElementById('logShop').value,
+    part_cost:document.getElementById('logPart').value||null,
+    labor_cost:document.getElementById('logLabor').value||null,
+    product:document.getElementById('logProduct').value,note:document.getElementById('logNote').value};
+  const r=await rpc('/rest/v1/car_logs','POST',body,tok,{Prefer:'return=representation'});
+  const data=await r.json();
+  const newId=data[0]?.id;
+  LOGS.unshift({id:newId,carId:cid,date,km:kv,type:body.type,place:body.place,shop:body.shop,
+    partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,
+    recordedBy:body.recorded_by,ts:Date.now()});
+  if(!KM[cid]||kv>KM[cid]){KM[cid]=kv;await rpc('/rest/v1/car_km','POST',{user_id:uid,car_id:cid,km:kv},tok,{Prefer:'resolution=merge-duplicates'});}
+  msg.textContent='✅ บันทึกเรียบร้อย! ข้อมูล sync แล้ว';msg.style.color='var(--green)';
+  setTimeout(()=>rLog(document.getElementById('mainC')),1400);
+}
+
+// HISTORY
+function rHist(el){
+  const cl=LOGS.filter(l=>l.carId===curCar).sort((a,b)=>b.ts-a.ts);
+  const items=cl.length?cl.map(l=>{
+    const tot=(+l.partCost||0)+(+l.laborCost||0);
+    return`<div class="le">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div><div class="log-title">${l.type}</div>
-        <div class="log-meta">${l.date} · ${l.km.toLocaleString()} กม. · ${l.shop||l.place}</div></div>
-        <button class="delete-btn" onclick="deleteLog(${logs.indexOf(l)})">ลบ</button>
+        <div><div class="lt">${l.type}</div>
+        <div class="lm">${l.date} · ${l.km.toLocaleString()} กม.${l.shop?' · '+l.shop:''}${l.recordedBy?' · โดย '+l.recordedBy:''}</div></div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="editbtn" onclick="openEditLog('${l.id}')">✏️</button>
+          <button class="delbtn" onclick="delLog('${l.id}')">ลบ</button>
+        </div>
       </div>
       ${l.product?`<div style="font-size:12px;color:var(--muted);margin:3px 0;">${l.product}</div>`:''}
-      <div class="log-chips">
+      <div class="chips">
         ${l.partCost?`<span class="chip">อะไหล่ ฿${parseInt(l.partCost).toLocaleString()}</span>`:''}
         ${l.laborCost?`<span class="chip">ค่าแรง ฿${parseInt(l.laborCost).toLocaleString()}</span>`:''}
-        ${total?`<span class="chip" style="font-weight:600;">รวม ฿${total.toLocaleString()}</span>`:''}
+        ${tot?`<span class="chip" style="font-weight:700;">รวม ฿${tot.toLocaleString()}</span>`:''}
         ${l.note?`<span class="chip">${l.note}</span>`:''}
       </div>
     </div>`;
-  }).join('') : `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">ยังไม่มีประวัติสำหรับรถคันนี้</div></div>`;
+  }).join(''):`<div class="empty"><div class="ei">📋</div><div class="et">ยังไม่มีประวัติ</div></div>`;
 
-  // Documents section
-  const docTypes = ['ทะเบียนรถ','พ.ร.บ.','ประกันภัยชั้น 1','ประกันภัยชั้น 2/3'];
-  const docRows = docTypes.map(type => {
-    const key = `${currentCar}_${type}`;
-    const doc = docs[key] || {};
-    const isExpiring = doc.expiry && new Date(doc.expiry) < new Date(Date.now()+60*24*3600000);
-    return `<div class="doc-row">
-      <div>
-        <div class="doc-label">${type}</div>
-        ${doc.expiry?`<div class="doc-exp" style="color:${isExpiring?'var(--red)':'var(--muted)'};">${isExpiring?'⚠ ':''}หมดอายุ: ${doc.expiry}${doc.note?' · '+doc.note:''}</div>`:'<div class="doc-exp">ยังไม่บันทึก</div>'}
-      </div>
+  const dtypes=['ทะเบียนรถ','พ.ร.บ.','ประกันภัยชั้น 1','ประกันภัยชั้น 2/3'];
+  const drows=dtypes.map(type=>{
+    const k=`${curCar}_${type}`,doc=DOCS[k]||{};
+    const exp=doc.expiry&&new Date(doc.expiry)<new Date(Date.now()+60*24*3600000);
+    return`<div class="dr">
+      <div><div class="dl">${type}</div>
+      ${doc.expiry?`<div class="de" style="color:${exp?'var(--red)':'var(--muted)'};">${exp?'⚠ ':''}หมดอายุ: ${doc.expiry}${doc.note?' · '+doc.note:''}</div>`:'<div class="de">ยังไม่บันทึก</div>'}</div>
       <div style="display:flex;align-items:center;gap:8px;">
-        ${doc.expiry?`<span class="badge ${isExpiring?'badge-urgent':'badge-ok'}">${isExpiring?'ใกล้หมด':'ปกติ'}</span>`:''}
-        <button class="doc-edit-btn" onclick="openDocOverlay('${currentCar}','${type}')">แก้ไข</button>
+        ${doc.expiry?`<span class="badge ${exp?'bu':'bo'}">${exp?'ใกล้หมด':'ปกติ'}</span>`:''}
+        <button class="dedit" onclick="openDoc('${curCar}','${type}')">แก้ไข</button>
       </div>
     </div>`;
   }).join('');
 
-  document.getElementById('mainContent').innerHTML = `
-    <div class="section-label">เอกสารสำคัญ — ${CAR_DATA[currentCar].name}</div>
-    <div class="card"><div class="card-body" style="padding-top:12px;">${docRows}</div></div>
-    <div class="section-label">ประวัติการซ่อม — ${CAR_DATA[currentCar].name}</div>
-    ${items}`;
+  el.innerHTML=`<div class="sec">เอกสารสำคัญ — ${CARS[curCar].name}</div>
+    <div class="gc"><div class="gcb" style="padding-top:12px;">${drows}</div></div>
+    <div class="sec">ประวัติการซ่อม — ${CARS[curCar].name}</div>${items}`;
 }
 
-function deleteLog(idx) {
-  if (!confirm('ลบรายการนี้?')) return;
-  logs.splice(idx, 1);
-  save();
-  renderHistory();
+async function delLog(id){
+  if(!confirm('ลบรายการนี้?'))return;
+  sync(true);
+  await rpc(`/rest/v1/car_logs?id=eq.${id}`,'DELETE',null,sess.access_token);
+  LOGS=LOGS.filter(l=>l.id!==id);sync(false);
+  rHist(document.getElementById('mainC'));
 }
 
-// ============ CONTACTS ============
-function renderContacts() {
-  const emergency = EMERGENCY.map(c =>
-    `<div class="contact-card">
-      <div class="contact-info">
-        <div class="contact-type">${c.type}</div>
-        <div class="contact-name">${c.name}</div>
-      </div>
-      <a href="tel:${c.num}" class="call-btn">${c.num}</a>
-    </div>`).join('');
+function openEditLog(id){
+  const l=LOGS.find(x=>x.id===id);if(!l)return;
+  document.getElementById('elId').value=id;
+  document.getElementById('elCar').value=l.carId;
+  document.getElementById('elDate').value=l.date;
+  document.getElementById('elKm').value=l.km;
+  document.getElementById('elType').value=l.type;
+  document.getElementById('elPlace').value=l.place||'ศูนย์โตโยต้า';
+  document.getElementById('elShop').value=l.shop||'';
+  document.getElementById('elPart').value=l.partCost||'';
+  document.getElementById('elLabor').value=l.laborCost||'';
+  document.getElementById('elProduct').value=l.product||'';
+  document.getElementById('elNote').value=l.note||'';
+  document.getElementById('ovEditLog').classList.add('on');
+}
 
-  const myContacts = contacts.length ? contacts.map((c,i) =>
-    `<div class="contact-card">
-      <div class="contact-info">
-        <div class="contact-type">${c.type}</div>
-        <div class="contact-name">${c.name}</div>
-        ${c.note?`<div style="font-size:11px;color:var(--hint)">${c.note}</div>`:''}
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        <a href="tel:${c.phone}" class="call-btn">${c.phone}</a>
-        <button class="delete-btn" onclick="deleteContact(${i})">ลบ</button>
-      </div>
-    </div>`).join('')
-    : `<div class="empty" style="padding:20px;"><div class="empty-text">ยังไม่มีรายชื่อ</div></div>`;
+async function saveEditLog(){
+  const id=document.getElementById('elId').value;
+  const kv=parseInt(document.getElementById('elKm').value);
+  const date=document.getElementById('elDate').value;
+  if(!date||!kv){alert('กรุณากรอกวันที่และเลขไมล์');return;}
+  const body={car_id:document.getElementById('elCar').value,date,km:kv,
+    type:document.getElementById('elType').value,place:document.getElementById('elPlace').value,
+    shop:document.getElementById('elShop').value,
+    part_cost:document.getElementById('elPart').value||null,
+    labor_cost:document.getElementById('elLabor').value||null,
+    product:document.getElementById('elProduct').value,note:document.getElementById('elNote').value};
+  sync(true);
+  await rpc(`/rest/v1/car_logs?id=eq.${id}`,'PATCH',body,sess.access_token);
+  const i=LOGS.findIndex(l=>l.id===id);
+  if(i>=0)LOGS[i]={...LOGS[i],carId:body.car_id,date,km:kv,type:body.type,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note};
+  sync(false);closeOv('ovEditLog');rHist(document.getElementById('mainC'));
+}
 
-  document.getElementById('mainContent').innerHTML = `
-    <div class="section-label">เบอร์ฉุกเฉิน</div>
-    ${emergency}
-    <div class="section-label" style="display:flex;justify-content:space-between;align-items:center;">
-      <span>ศูนย์บริการ / ร้านช่าง</span>
-      <button onclick="document.getElementById('contactOverlay').classList.add('open')" style="font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;">+ เพิ่ม</button>
+// CONTACTS
+function rContacts(el){
+  const emH=EMG.map(c=>`<div class="ccard"><div><div class="ctype">${c.type}</div><div class="cname">${c.name}</div></div><a href="tel:${c.num}" class="cbtn">${c.num}</a></div>`).join('');
+  const myH=CONTACTS.length?CONTACTS.map((c,i)=>`<div class="ccard">
+    <div><div class="ctype">${c.type}</div><div class="cname">${c.name}</div>
+    ${c.note?`<div style="font-size:11px;color:var(--hint);">${c.note}</div>`:''}</div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+      <a href="tel:${c.phone}" class="cbtn">${c.phone}</a>
+      <button class="delbtn" onclick="delContact(${i})">ลบ</button>
     </div>
-    ${myContacts}`;
+  </div>`).join(''):`<div class="empty" style="padding:20px;"><div class="et">ยังไม่มีรายชื่อร้านช่าง</div></div>`;
+  el.innerHTML=`<div class="sec">เบอร์ฉุกเฉิน</div>${emH}
+    <div class="sec" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>ศูนย์บริการ / ร้านช่าง</span>
+      <button onclick="document.getElementById('ovContact').classList.add('on')" style="font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">+ เพิ่ม</button>
+    </div>${myH}`;
 }
 
-function saveContact() {
-  const name = document.getElementById('ctName').value.trim();
-  const phone = document.getElementById('ctPhone').value.trim();
-  if (!name || !phone) { alert('กรุณากรอกชื่อและเบอร์โทร'); return; }
-  contacts.push({
-    type: document.getElementById('ctType').value,
-    name, phone,
-    note: document.getElementById('ctNote').value
-  });
-  save();
-  closeContactOverlay();
-  renderContacts();
+function saveContact(){
+  const name=document.getElementById('ctName').value.trim();
+  const phone=document.getElementById('ctPhone').value.trim();
+  if(!name||!phone){alert('กรุณากรอกชื่อและเบอร์');return;}
+  CONTACTS.push({type:document.getElementById('ctType').value,name,phone,note:document.getElementById('ctNote').value});
+  localStorage.setItem('cc_contacts',JSON.stringify(CONTACTS));
+  closeOv('ovContact');rContacts(document.getElementById('mainC'));
+}
+function delContact(i){CONTACTS.splice(i,1);localStorage.setItem('cc_contacts',JSON.stringify(CONTACTS));rContacts(document.getElementById('mainC'));}
+
+// DOCS
+function openDoc(cid,type){
+  const doc=DOCS[`${cid}_${type}`]||{};
+  document.getElementById('dCarId').value=cid;
+  document.getElementById('dType').value=type;
+  document.getElementById('ovDocTitle').textContent=type;
+  document.getElementById('dExpiry').value=doc.expiry||'';
+  document.getElementById('dNote').value=doc.note||'';
+  document.getElementById('ovDoc').classList.add('on');
+}
+async function saveDoc(){
+  const cid=document.getElementById('dCarId').value,type=document.getElementById('dType').value;
+  const expiry=document.getElementById('dExpiry').value,note=document.getElementById('dNote').value;
+  const key=`${cid}_${type}`;DOCS[key]={expiry,note};sync(true);
+  const uid=sess.user.id,tok=sess.access_token;
+  await rpc('/rest/v1/car_docs','POST',{user_id:uid,doc_key:key,expiry,note},tok,{Prefer:'resolution=merge-duplicates'});
+  sync(false);closeOv('ovDoc');rHist(document.getElementById('mainC'));
 }
 
-function deleteContact(i) {
-  contacts.splice(i, 1);
-  save();
-  renderContacts();
+// OVERLAY
+function closeOv(id){document.getElementById(id).classList.remove('on');}
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('on');}));
+
+// INIT
+async function init(){
+  const stored=localStorage.getItem('cc_sess');
+  if(stored){
+    try{
+      const s=JSON.parse(stored);
+      const r=await api('/auth/v1/user','GET',null,s.access_token);
+      if(r.ok&&r.d.id){
+        sess=s;sess.user=r.d;
+        uName=r.d.user_metadata?.display_name||r.d.email.split('@')[0];
+        await startApp();return;
+      }
+    }catch(e){}
+    localStorage.removeItem('cc_sess');
+  }
 }
-
-function closeContactOverlay() {
-  document.getElementById('contactOverlay').classList.remove('open');
-  ['ctName','ctPhone','ctNote'].forEach(id => document.getElementById(id).value = '');
-}
-
-// ============ DOCS ============
-function openDocOverlay(carId, type) {
-  const key = `${carId}_${type}`;
-  const doc = docs[key] || {};
-  document.getElementById('docCarId').value = carId;
-  document.getElementById('docType').value = type;
-  document.getElementById('docOverlayTitle').textContent = type;
-  document.getElementById('docExpiry').value = doc.expiry || '';
-  document.getElementById('docNote').value = doc.note || '';
-  document.getElementById('docOverlay').classList.add('open');
-}
-
-function saveDoc() {
-  const carId = document.getElementById('docCarId').value;
-  const type = document.getElementById('docType').value;
-  docs[`${carId}_${type}`] = {
-    expiry: document.getElementById('docExpiry').value,
-    note: document.getElementById('docNote').value
-  };
-  save();
-  closeDocOverlay();
-  renderHistory();
-}
-
-function closeDocOverlay() {
-  document.getElementById('docOverlay').classList.remove('open');
-}
-
-// ============ MAIN RENDER ============
-function renderContent() {
-  renderHeader();
-  if (currentTab === 'dashboard') renderDashboard();
-  else if (currentTab === 'todo') renderTodo();
-  else if (currentTab === 'log') renderLog();
-  else if (currentTab === 'history') renderHistory();
-  else if (currentTab === 'contacts') renderContacts();
-}
-
-// Close overlays on backdrop click
-document.getElementById('contactOverlay').addEventListener('click', function(e){ if(e.target===this) closeContactOverlay(); });
-document.getElementById('docOverlay').addEventListener('click', function(e){ if(e.target===this) closeDocOverlay(); });
-
-renderContent();
+init();
 </script>
 </body>
 </html>
