@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Supabase Test</title>
+<style>body{font-family:monospace;padding:20px;background:#0F172A;color:#94A3B8;}
+input{width:100%;padding:10px;margin:6px 0;background:#1E293B;border:1px solid #334155;color:#F8FAFC;border-radius:6px;font-size:14px;}
+button{padding:12px 24px;background:#3ECF8E;color:#000;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin:6px 4px;}
+pre{background:#1E293B;padding:14px;border-radius:8px;white-space:pre-wrap;word-break:break-all;font-size:12px;margin-top:10px;border:1px solid #334155;}
+.ok{color:#3ECF8E;} .err{color:#FF453A;} .info{color:#0A84FF;}
+</style></head>
+<body>
+<h2 style="color:#F8FAFC">🔧 Supabase Connection Test</h2>
+<p style="color:#64748B;font-size:13px;">ทดสอบการเชื่อมต่อ Supabase และ login</p>
+
+<div style="background:#1E293B;padding:16px;border-radius:8px;margin:14px 0;">
+  <div style="color:#64748B;font-size:11px;margin-bottom:6px;">EMAIL</div>
+  <input type="email" id="email" value="k_ratchapon@hotmail.com">
+  <div style="color:#64748B;font-size:11px;margin:8px 0 6px;">PASSWORD</div>
+  <input type="password" id="pass" placeholder="ใส่ password ที่ตั้งไว้">
+</div>
+
+<button onclick="testPing()">1. Test Connection</button>
+<button onclick="testLogin()">2. Test Login</button>
+<button onclick="testSignup()">3. Test Signup (new user)</button>
+<button onclick="clearLog()">Clear</button>
+
+<pre id="log">กด "Test Connection" ก่อนเลยครับ...</pre>
+
+<script>
+const URL='https://svuiphbzceaatqodluvxl.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2dWlwaGJ6Y2VhdHFvZGx1dnhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MzI3ODUsImV4cCI6MjA4OTMwODc4NX0.0Ee2LfF8kwjatASFAzXINBRb46UHEX5sPdIHPxAuHZk';
+const H={'Content-Type':'application/json','apikey':KEY,'Authorization':'Bearer '+KEY};
+
+function log(msg,cls=''){
+  const el=document.getElementById('log');
+  const d=new Date().toLocaleTimeString();
+  el.innerHTML+='<span class="'+(cls||'')+'">['+d+'] '+msg+'</span>\n';
+}
+function clearLog(){document.getElementById('log').innerHTML='';}
+
+async function testPing(){
+  log('Testing connection to Supabase...','info');
+  try{
+    const r=await fetch(URL+'/rest/v1/',{headers:H});
+    log('HTTP Status: '+r.status,'info');
+    const t=await r.text();
+    log('Response: '+t.substring(0,200), r.ok?'ok':'err');
+  }catch(e){
+    log('FETCH ERROR: '+e.message,'err');
+    log('This usually means CORS or network issue','err');
+  }
+}
+
+async function testLogin(){
+  const email=document.getElementById('email').value;
+  const pass=document.getElementById('pass').value;
+  if(!pass){log('กรุณาใส่ password','err');return;}
+  log('Attempting login with: '+email,'info');
+  try{
+    const r=await fetch(URL+'/auth/v1/token?grant_type=password',{
+      method:'POST',
+      headers:H,
+      body:JSON.stringify({email,password:pass})
+    });
+    log('HTTP Status: '+r.status,'info');
+    const d=await r.json();
+    log('Response: '+JSON.stringify(d,null,2), r.ok?'ok':'err');
+    if(r.ok&&d.access_token){
+      log('✅ LOGIN SUCCESS! Token starts with: '+d.access_token.substring(0,30)+'...','ok');
+      log('User email: '+d.user?.email,'ok');
+    }
+  }catch(e){
+    log('FETCH ERROR: '+e.message,'err');
+  }
+}
+
+async function testSignup(){
+  const email=document.getElementById('email').value;
+  const pass=document.getElementById('pass').value;
+  if(!pass){log('กรุณาใส่ password','err');return;}
+  log('Attempting signup with: '+email,'info');
+  try{
+    const r=await fetch(URL+'/auth/v1/signup',{
+      method:'POST',
+      headers:H,
+      body:JSON.stringify({email,password:pass,data:{display_name:'คุณปอม'}})
+    });
+    log('HTTP Status: '+r.status,'info');
+    const d=await r.json();
+    log('Response: '+JSON.stringify(d,null,2), r.ok?'ok':'err');
+  }catch(e){
+    log('FETCH ERROR: '+e.message,'err');
+  }
+}
+</script>
+</body>
+</html>
