@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Car Care">
+<meta name="theme-color" content="#1C1C1E">
+<title>Car Care</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --blue:#0A84FF;--blue-lt:rgba(10,132,255,.15);
+  --green:#30D158;--green-lt:rgba(48,209,88,.15);
+  --amber:#FF9F0A;--amber-lt:rgba(255,159,10,.15);
+  --red:#FF453A;--red-lt:rgba(255,69,58,.15);
+  --purple:#BF5AF2;--purple-lt:rgba(191,90,242,.15);
+  --gray-lt:rgba(120,120,128,.12);
+  --glass:rgba(255,255,255,.72);--gb:rgba(255,255,255,.45);--gb2:rgba(255,255,255,.1);
+  --blur:saturate(180%) blur(20px);
+  --bg:linear-gradient(160deg,#E8F4FF 0%,#F0EBF8 50%,#E6F7F0 100%);
+  --text:#1C1C1E;--muted:#636366;--hint:#AEAEB2;
+  --r:16px;--rs:12px;--rx:10px;--sh:0 2px 8px rgba(0,0,0,.06);
+}
+@media(prefers-color-scheme:dark){:root{
+  --glass:rgba(44,44,46,.82);--gb:rgba(255,255,255,.1);
+  --bg:linear-gradient(160deg,#0D1B2A 0%,#1A0D2E 50%,#0A1F17 100%);
+  --text:#F2F2F7;--muted:#AEAEB2;--hint:#636366;
+  --blue-lt:rgba(10,132,255,.2);--green-lt:rgba(48,209,88,.2);
+  --amber-lt:rgba(255,159,10,.2);--red-lt:rgba(255,69,58,.2);--purple-lt:rgba(191,90,242,.2);--gray-lt:rgba(120,120,128,.18);
+}}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;}
+
+/* AUTH */
+.aw{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg);}
+.ac{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:24px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.12);}
+.a-logo{font-size:48px;text-align:center;margin-bottom:6px;}
+.a-title{font-size:26px;font-weight:700;text-align:center;letter-spacing:-.5px;margin-bottom:4px;}
+.a-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:28px;}
+.a-tabs{display:flex;background:var(--gray-lt);border-radius:var(--rx);padding:3px;margin-bottom:20px;}
+.a-tab{flex:1;padding:8px;text-align:center;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;color:var(--muted);transition:all .2s;}
+.a-tab.on{background:var(--glass);color:var(--text);box-shadow:var(--sh);}
+.af{margin-bottom:14px;}
+.al{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;display:block;}
+.ai{width:100%;padding:13px 14px;border:.5px solid rgba(120,120,128,.3);border-radius:var(--rx);background:rgba(255,255,255,.5);color:var(--text);font-size:16px;font-family:inherit;-webkit-appearance:none;}
+.ai:focus{outline:none;border-color:var(--blue);}
+.abtn{width:100%;padding:15px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px;box-shadow:0 4px 16px rgba(10,132,255,.4);}
+.abtn:active{opacity:.85;} .abtn:disabled{opacity:.5;cursor:not-allowed;}
+.amsg{font-size:13px;text-align:center;margin-top:10px;min-height:18px;line-height:1.4;}
+.amsg.err{color:var(--red);} .amsg.ok{color:var(--green);}
+
+/* APP */
+.app{display:none;flex-direction:column;height:100vh;max-width:430px;margin:0 auto;}
+.app.on{display:flex;}
+.hdr{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border-bottom:.5px solid var(--gb);padding:max(52px,env(safe-area-inset-top)) 20px 10px;flex-shrink:0;position:sticky;top:0;z-index:50;}
+.hdr-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;}
+.hdr-title{font-size:28px;font-weight:700;letter-spacing:-.5px;line-height:1;}
+.hdr-sub{font-size:13px;color:var(--muted);}
+.ubadge{font-size:11px;font-weight:600;padding:5px 11px;border-radius:20px;background:var(--blue-lt);color:var(--blue);cursor:pointer;white-space:nowrap;border:none;font-family:inherit;}
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 110px;}
+.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border-top:.5px solid var(--gb);display:flex;padding:10px 8px max(24px,env(safe-area-inset-bottom));z-index:100;gap:4px;}
+.ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;cursor:pointer;border:none;background:none;color:var(--hint);transition:all .2s cubic-bezier(.34,1.56,.64,1);border-radius:var(--rx);}
+.ti.on{color:var(--blue);}
+.ti.on .tiw{background:var(--blue-lt);transform:scale(1.08);}
+.tiw{width:44px;height:28px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.34,1.56,.64,1);border-radius:var(--rx);}
+.tic{font-size:20px;line-height:1;} .til{font-size:10px;font-weight:500;}
+
+/* CAR PILLS */
+.cpills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.cpills::-webkit-scrollbar{display:none;}
+.cpill{padding:6px 14px;border-radius:20px;border:.5px solid var(--gb);background:rgba(255,255,255,.3);font-size:13px;color:var(--muted);white-space:nowrap;cursor:pointer;transition:all .15s;flex-shrink:0;font-family:inherit;}
+.cpill.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+/* CAR COLOR CODING */
+/* altis=blue, estima=green, cx5=purple */
+.car-altis{--car-color:var(--blue);--car-lt:var(--blue-lt);}
+.car-estima{--car-color:var(--green);--car-lt:var(--green-lt);}
+.car-cx5{--car-color:var(--purple);--car-lt:var(--purple-lt);}
+
+/* CARDS */
+.gc{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--sh);}
+.gcb{padding:0 14px 14px;}
+.sec{font-size:13px;font-weight:600;color:var(--muted);margin:18px 0 8px;}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;}
+.bu{background:var(--red-lt);color:var(--red);}
+.bs{background:var(--amber-lt);color:var(--amber);}
+.bo{background:var(--green-lt);color:var(--green);}
+.bk{background:var(--gray-lt);color:var(--muted);}
+.bi{background:var(--blue-lt);color:var(--blue);}
+
+/* SUMMARY */
+.srow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.sc{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:var(--rs);padding:12px 8px;text-align:center;box-shadow:var(--sh);}
+.sn{font-size:26px;font-weight:700;letter-spacing:-.5px;}
+.sl{font-size:10px;color:var(--muted);margin-top:2px;font-weight:500;}
+.sc.r .sn{color:var(--red);} .sc.a .sn{color:var(--amber);} .sc.g .sn{color:var(--green);}
+
+/* PROGRESS */
+.pw{height:4px;background:var(--gray-lt);border-radius:2px;margin:6px 0 2px;overflow:hidden;}
+.pb{height:100%;border-radius:2px;transition:width .5s ease;}
+
+/* TODO */
+.tdi{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:var(--r);margin-bottom:8px;overflow:hidden;position:relative;box-shadow:var(--sh);}
+.tda{position:absolute;left:0;top:0;bottom:0;width:3px;}
+.tda.urgent{background:var(--red);} .tda.soon{background:var(--amber);}
+.tda.ok{background:var(--green);} .tda.unknown{background:var(--hint);} .tda.info{background:var(--blue);}
+.tdin{padding:12px 12px 12px 17px;}
+.tdr1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;}
+.tdname{font-size:15px;font-weight:600;}
+.tdd{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:2px;}
+.tdn{font-size:11px;color:var(--hint);line-height:1.5;margin-bottom:4px;}
+.tdc{font-size:11px;padding:3px 9px;background:var(--gray-lt);border-radius:20px;display:inline-block;color:var(--muted);font-weight:500;}
+
+/* KM BAR */
+.kmb{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:var(--r);padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;box-shadow:var(--sh);}
+.kmb label{font-size:13px;color:var(--muted);white-space:nowrap;flex-shrink:0;font-weight:500;}
+.kmb input{flex:1;font-size:16px;font-weight:600;padding:6px 10px;border:.5px solid rgba(120,120,128,.3);border-radius:var(--rx);background:rgba(255,255,255,.4);color:var(--text);font-family:inherit;-webkit-appearance:none;}
+.kmb input:focus{outline:none;border-color:var(--blue);}
+.kmb button{padding:8px 16px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+
+/* FORMS */
+.fs{margin-bottom:14px;}
+.fl{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.04em;}
+.fi{width:100%;padding:12px 14px;border:.5px solid rgba(120,120,128,.3);border-radius:var(--rx);background:rgba(255,255,255,.5);color:var(--text);font-size:15px;font-family:inherit;-webkit-appearance:none;}
+.fi:focus{outline:none;border-color:var(--blue);}
+textarea.fi{resize:vertical;line-height:1.6;}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fbtn{width:100%;padding:15px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 4px 16px rgba(10,132,255,.4);}
+.fbtn:active{opacity:.85;} .fbtn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* LOG ENTRIES */
+.le{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:var(--r);padding:13px 14px;margin-bottom:8px;box-shadow:var(--sh);}
+.lt{font-size:15px;font-weight:600;margin-bottom:3px;}
+.lm{font-size:12px;color:var(--muted);margin-bottom:7px;}
+.chips{display:flex;gap:5px;flex-wrap:wrap;}
+.chip{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--gray-lt);color:var(--muted);font-weight:500;}
+
+/* CONTACTS */
+.ccard{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:var(--r);padding:13px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--sh);}
+.ctype{font-size:10px;color:var(--hint);margin-bottom:2px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.cname{font-size:15px;font-weight:600;}
+a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radius:20px;font-size:13px;font-weight:600;text-decoration:none;}
+
+/* DOCS */
+.dr{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:.5px solid var(--gb);}
+.dr:last-child{border-bottom:none;}
+.dl{font-size:15px;font-weight:500;}
+.de{font-size:12px;color:var(--muted);margin-top:2px;}
+.dedit{padding:6px 13px;border:.5px solid rgba(120,120,128,.3);border-radius:20px;background:var(--gray-lt);font-size:12px;color:var(--muted);cursor:pointer;font-family:inherit;font-weight:500;}
+
+/* ALERTS */
+.alert{padding:11px 14px;border-radius:var(--rx);font-size:13px;line-height:1.5;margin-bottom:8px;display:flex;gap:8px;font-weight:500;}
+.alert.hybrid{background:var(--blue-lt);color:var(--blue);} .alert.danger{background:var(--red-lt);color:var(--red);}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--hint);}
+.ei{font-size:44px;margin-bottom:12px;} .et{font-size:15px;line-height:1.5;}
+
+/* OVERLAYS */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
+.ov.on{display:flex;}
+.ovs{background:var(--bg);border-radius:24px 24px 0 0;width:100%;max-width:430px;margin:0 auto;padding:16px 20px max(28px,env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto;}
+.ovh{width:36px;height:5px;background:rgba(120,120,128,.4);border-radius:3px;margin:0 auto 16px;}
+.ovt{font-size:19px;font-weight:700;margin-bottom:18px;letter-spacing:-.3px;}
+.cancelbtn{width:100%;padding:12px;background:transparent;border:none;color:var(--muted);font-size:15px;margin-top:6px;cursor:pointer;font-family:inherit;}
+
+/* MISC */
+.delbtn{padding:5px 11px;background:var(--red-lt);color:var(--red);border:none;border-radius:20px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;}
+.editbtn{padding:4px 10px;background:var(--blue-lt);color:var(--blue);border:none;border-radius:20px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;}
+#syncBar{position:fixed;top:max(58px,env(safe-area-inset-top));right:16px;background:var(--blue-lt);color:var(--blue);font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;z-index:300;display:none;}
+.photo-add{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--glass);border:1.5px dashed var(--gb);border-radius:var(--rx);cursor:pointer;font-size:14px;color:var(--muted);font-weight:500;width:100%;}
+
+/* HOME SCREEN SPECIFIC */
+.cost-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.cost-card{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:var(--rs);padding:14px;box-shadow:var(--sh);}
+.cost-yr{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;}
+.cost-amt{font-size:22px;font-weight:700;letter-spacing:-.5px;}
+.cost-cnt{font-size:11px;color:var(--muted);margin-top:2px;}
+.km-stat{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:var(--rs);padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--sh);}
+
+/* CAR CARD WITH COLOR STRIPE */
+.car-card{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--sh);display:flex;}
+.car-stripe{width:5px;flex-shrink:0;}
+.car-body{flex:1;padding:14px;}
+</style>
+</head>
+<body>
+<div id="syncBar">⟳ sync...</div>
+
+<!-- AUTH -->
+<div class="aw" id="authWrap">
+<div class="ac">
+  <div class="a-logo">🚗</div>
+  <div class="a-title">Car Care</div>
+  <div class="a-sub">ระบบบำรุงรักษารถยนต์</div>
+  <div id="faceIdSection" style="display:none;margin-bottom:16px;">
+    <button class="abtn" onclick="doFaceIdLogin()" style="background:linear-gradient(135deg,#1C1C1E,#3A3A3C);font-size:17px;">Face ID / Touch ID</button>
+    <div id="faceIdName" style="text-align:center;font-size:14px;font-weight:600;margin-top:8px;"></div>
+    <div style="text-align:center;margin-top:8px;"><span onclick="showPwdForm()" style="font-size:13px;color:var(--blue);cursor:pointer;">ใช้ password แทน</span></div>
+  </div>
+  <div id="authForms">
+    <div class="a-tabs"><div class="a-tab on" id="tabL" onclick="authTab('login')">เข้าสู่ระบบ</div><div class="a-tab" id="tabS" onclick="authTab('signup')">สมัครสมาชิก</div></div>
+    <div id="fLogin">
+      <div class="af"><label class="al">Email</label><input class="ai" type="email" id="lEmail" placeholder="email@example.com" autocomplete="email"></div>
+      <div class="af"><label class="al">Password</label><input class="ai" type="password" id="lPass" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="abtn" id="lBtn" onclick="doLogin()">เข้าสู่ระบบ</button>
+    </div>
+    <div id="fSignup" style="display:none;">
+      <div class="af"><label class="al">ชื่อแสดง</label><input class="ai" type="text" id="sName" placeholder="เช่น คุณปอม หรือ ภรรยา"></div>
+      <div class="af"><label class="al">Email</label><input class="ai" type="email" id="sEmail" placeholder="email@example.com" autocomplete="email"></div>
+      <div class="af"><label class="al">Password</label><input class="ai" type="password" id="sPass" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password"></div>
+      <button class="abtn" id="sBtn" onclick="doSignup()">สมัครสมาชิก</button>
+    </div>
+  </div>
+  <div class="amsg" id="authMsg"></div>
+</div>
+</div>
+
+<!-- APP -->
+<div class="app" id="App">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="hdr-title">🚗 Car Care</div><div class="hdr-sub" id="hSub">ระบบบำรุงรักษารถยนต์</div></div>
+      <button class="ubadge" id="uBadge" onclick="goTab('settings')">⚙️ ตั้งค่า</button>
+    </div>
+    <div class="cpills" id="cPills" style="display:none;"></div>
+  </div>
+  <div class="main" id="mainC"></div>
+  <div class="tabbar">
+    <button class="ti on" onclick="goTab('dashboard')" id="tab-dashboard"><div class="tiw"><span class="tic">🏠</span></div><span class="til">ภาพรวม</span></button>
+    <button class="ti" onclick="goTab('todo')" id="tab-todo"><div class="tiw"><span class="tic">🔧</span></div><span class="til">To-Do</span></button>
+    <button class="ti" onclick="goTab('log')" id="tab-log"><div class="tiw"><span class="tic">➕</span></div><span class="til">บันทึก</span></button>
+    <button class="ti" onclick="goTab('history')" id="tab-history"><div class="tiw"><span class="tic">📋</span></div><span class="til">ประวัติ</span></button>
+    <button class="ti" onclick="goTab('settings')" id="tab-settings"><div class="tiw"><span class="tic">⚙️</span></div><span class="til">ตั้งค่า</span></button>
+  </div>
+</div>
+
+<!-- OVERLAY: CONTACT -->
+<div class="ov" id="ovContact"><div class="ovs">
+  <div class="ovh"></div><div class="ovt">เพิ่มรายชื่อ</div>
+  <div class="fs"><label class="fl">ประเภท</label><select class="fi" id="ctType"><option>ศูนย์บริการ</option><option>ร้านช่าง</option><option>ปั๊มน้ำมัน</option><option>ประกันภัย</option><option>อื่นๆ</option></select></div>
+  <div class="fs"><label class="fl">ชื่อ</label><input class="fi" id="ctName" placeholder="ศูนย์โตโยต้า เอกมัย"></div>
+  <div class="fs"><label class="fl">เบอร์โทร</label><input class="fi" id="ctPhone" type="tel"></div>
+  <div class="fs"><label class="fl">หมายเหตุ</label><input class="fi" id="ctNote" placeholder="เวลาทำการ ฯลฯ"></div>
+  <button class="fbtn" onclick="saveContact()">บันทึก</button>
+  <button class="cancelbtn" onclick="closeOv('ovContact')">ยกเลิก</button>
+</div></div>
+
+<!-- OVERLAY: DOC -->
+<div class="ov" id="ovDoc"><div class="ovs">
+  <div class="ovh"></div><div class="ovt" id="ovDocTitle">แก้ไขเอกสาร</div>
+  <input type="hidden" id="dCarId"><input type="hidden" id="dType">
+  <div class="fs"><label class="fl">วันหมดอายุ</label><input class="fi" type="date" id="dExpiry"></div>
+  <div class="fs"><label class="fl">บริษัท / หมายเหตุ</label><input class="fi" id="dNote" placeholder="เช่น วิริยะประกันภัย"></div>
+  <button class="fbtn" onclick="saveDoc()">บันทึก</button>
+  <button class="cancelbtn" onclick="closeOv('ovDoc')">ยกเลิก</button>
+</div></div>
+
+<!-- OVERLAY: EDIT LOG -->
+<div class="ov" id="ovEditLog"><div class="ovs">
+  <div class="ovh"></div><div class="ovt">✏️ แก้ไขรายการ</div>
+  <input type="hidden" id="elId">
+  <div class="fs"><label class="fl">รถ</label><select class="fi" id="elCar"><option value="altis">Toyota Altis (ษล 3427)</option><option value="estima">Toyota Estima Hybrid (ฎจ 6302)</option><option value="cx5">Mazda CX-5 (3กษ 809)</option></select></div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">วันที่</label><input class="fi" type="date" id="elDate"></div>
+    <div class="fs"><label class="fl">เลขไมล์</label><input class="fi" type="number" id="elKm"></div>
+  </div>
+  <div class="fs"><label class="fl">ประเภทงาน</label><select class="fi" id="elType"><option>เปลี่ยนน้ำมันเครื่อง + ไส้กรอง</option><option>ไส้กรองอากาศ</option><option>ไส้กรองแอร์ (Cabin)</option><option>หัวเทียน</option><option>Timing Belt/Chain</option><option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option><option>น้ำหล่อเย็น</option><option>ผ้าเบรก</option><option>ยาง/สลับยาง</option><option>เปลี่ยนยางใหม่</option><option>แบตเตอรี่</option><option>ระบบแอร์</option><option>ช่วงล่าง</option><option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option></select></div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">สถานที่</label><select class="fi" id="elPlace"><option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option><option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option></select></div>
+    <div class="fs"><label class="fl">ชื่อร้าน</label><input class="fi" id="elShop"></div>
+  </div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">ค่าอะไหล่ (฿)</label><input class="fi" type="number" id="elPart"></div>
+    <div class="fs"><label class="fl">ค่าแรง (฿)</label><input class="fi" type="number" id="elLabor"></div>
+  </div>
+  <div class="fs"><label class="fl">ยี่ห้อ/เกรดน้ำมัน</label><textarea class="fi" id="elProduct" style="min-height:70px;"></textarea></div>
+  <div class="fs"><label class="fl">หมายเหตุ</label><textarea class="fi" id="elNote" style="min-height:80px;"></textarea></div>
+  <button class="fbtn" onclick="saveEditLog()">💾 บันทึกการแก้ไข</button>
+  <button class="cancelbtn" onclick="closeOv('ovEditLog')">ยกเลิก</button>
+</div></div>
+
+<!-- OVERLAY: QUICK LOG -->
+<div class="ov" id="ovQL"><div class="ovs">
+  <div class="ovh"></div><div class="ovt">📝 บันทึกการซ่อม</div>
+  <input type="hidden" id="qlCar"><input type="hidden" id="qlType">
+  <div id="qlInfo" style="background:var(--blue-lt);border-radius:var(--rx);padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--blue);"></div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">วันที่</label><input class="fi" type="date" id="qlDate"></div>
+    <div class="fs"><label class="fl">เลขไมล์</label><input class="fi" type="number" id="qlKm" placeholder="85000"></div>
+  </div>
+  <div class="fs"><label class="fl">บันทึกโดย</label><input class="fi" id="qlBy"></div>
+  <!-- Oil interval selector — shown only for oil type -->
+  <div id="qlOilInterval" style="display:none;background:var(--blue-lt);border-radius:var(--rx);padding:12px 14px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">รอบเปลี่ยนน้ำมันเครื่อง</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;" id="qlOilBtns"></div>
+    <div id="qlOilDisplay" style="font-size:12px;color:var(--blue);font-weight:500;"></div>
+  </div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">สถานที่</label><select class="fi" id="qlPlace"><option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option><option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option></select></div>
+    <div class="fs"><label class="fl">ชื่อร้าน</label><input class="fi" id="qlShop"></div>
+  </div>
+  <div class="fr2">
+    <div class="fs"><label class="fl">ค่าอะไหล่ (฿)</label><input class="fi" type="number" id="qlPart" placeholder="0"></div>
+    <div class="fs"><label class="fl">ค่าแรง (฿)</label><input class="fi" type="number" id="qlLabor" placeholder="0"></div>
+  </div>
+  <div class="fs"><label class="fl">ยี่ห้อ/เกรดน้ำมัน</label><textarea class="fi" id="qlProduct" style="min-height:70px;" placeholder="เช่น Mobil 1 5W-30"></textarea></div>
+  <div class="fs"><label class="fl">หมายเหตุ</label><textarea class="fi" id="qlNote" style="min-height:70px;"></textarea></div>
+  <div class="fs"><label class="fl">รูปภาพ</label>
+    <div id="qlPhotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;"></div>
+    <label class="photo-add">📷 แตะเพื่อเพิ่มรูป<input type="file" accept="image/*" multiple id="qlPhotoInput" style="display:none;" onchange="handlePhotos('ql',event)"></label>
+    <div style="font-size:11px;color:var(--hint);margin-top:4px;">รูปจะถูก resize เป็น 800px อัตโนมัติ</div>
+  </div>
+  <div id="qlMsg" style="font-size:13px;color:var(--green);text-align:center;min-height:18px;margin-bottom:4px;"></div>
+  <button class="fbtn" onclick="saveQL()">💾 บันทึก</button>
+  <button class="cancelbtn" onclick="closeOv('ovQL')">ยกเลิก</button>
+</div></div>
+
+<script>
+const SBURL='https://svuiphbzceatqodluvxl.supabase.co';
+const SBKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2dWlwaGJ6Y2VhdHFvZGx1dnhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MzI3ODUsImV4cCI6MjA4OTMwODc4NX0.0Ee2LfF8kwjatASFAzXINBRb46UHEX5sPdIHPxAuHZk';
+const BH={'Content-Type':'application/json','apikey':SBKEY};
+
+async function refreshToken(){
+  if(!sess?.refresh_token)return false;
+  try{
+    const r=await fetch(SBURL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:BH,body:JSON.stringify({refresh_token:sess.refresh_token})});
+    const d=await r.json();
+    if(r.ok&&d.access_token){sess.access_token=d.access_token;sess.refresh_token=d.refresh_token||sess.refresh_token;localStorage.setItem('cc_sess',JSON.stringify(sess));return true;}
+  }catch(e){}
+  return false;
+}
+async function sbFetch(path,method,body,tok){
+  const h={...BH,Authorization:'Bearer '+(tok||sess?.access_token||SBKEY)};
+  const r=await fetch(SBURL+path,{method:method||'GET',headers:h,body:body?JSON.stringify(body):null});
+  if(r.status===401&&sess?.refresh_token){const ok=await refreshToken();if(ok){const h2={...BH,Authorization:'Bearer '+sess.access_token};const r2=await fetch(SBURL+path,{method:method||'GET',headers:h2,body:body?JSON.stringify(body):null});const t2=await r2.text();try{return{ok:r2.ok,d:JSON.parse(t2),s:r2.status};}catch{return{ok:r2.ok,d:t2,s:r2.status};}}}
+  const t=await r.text();try{return{ok:r.ok,d:JSON.parse(t),s:r.status};}catch{return{ok:r.ok,d:t,s:r.status};}
+}
+async function sbPost(path,body,tok,extra){
+  const token=tok||sess?.access_token||SBKEY;
+  const h={...BH,Authorization:'Bearer '+token,...(extra||{})};
+  const r=await fetch(SBURL+path,{method:'POST',headers:h,body:body?JSON.stringify(body):null});
+  if(r.status===401&&sess?.refresh_token){const ok=await refreshToken();if(ok){const h2={...BH,Authorization:'Bearer '+sess.access_token,...(extra||{})};return fetch(SBURL+path,{method:'POST',headers:h2,body:body?JSON.stringify(body):null});}}
+  return r;
+}
+async function sbPatch(path,body,tok){
+  const token=tok||sess?.access_token||SBKEY;
+  const h={...BH,Authorization:'Bearer '+token};
+  const r=await fetch(SBURL+path,{method:'PATCH',headers:h,body:JSON.stringify(body)});
+  if(r.status===401&&sess?.refresh_token){const ok=await refreshToken();if(ok)return fetch(SBURL+path,{method:'PATCH',headers:{...BH,Authorization:'Bearer '+sess.access_token},body:JSON.stringify(body)});}
+  return r;
+}
+async function sbDelete(path,tok){
+  const token=tok||sess?.access_token||SBKEY;
+  const h={...BH,Authorization:'Bearer '+token};
+  const r=await fetch(SBURL+path,{method:'DELETE',headers:h});
+  if(r.status===401&&sess?.refresh_token){const ok=await refreshToken();if(ok)return fetch(SBURL+path,{method:'DELETE',headers:{...BH,Authorization:'Bearer '+sess.access_token}});}
+  return r;
+}
+async function upsert(table,body,tok){return sbPost('/rest/v1/'+table,body,tok,{Prefer:'resolution=merge-duplicates'});}
+
+// ══ CAR COLORS ══
+const CAR_COLOR={altis:'#0A84FF',estima:'#30D158',cx5:'#BF5AF2'};
+const CAR_COLOR_LT={altis:'rgba(10,132,255,.15)',estima:'rgba(48,209,88,.15)',cx5:'rgba(191,90,242,.15)'};
+
+// ══ CAR DATA ══
+const CARS={
+  altis:{id:'altis',name:'Toyota Altis',plate:'ษล 3427 กทม',year:2004,type:'sedan',sc:[
+    {id:'oil',l:'เปลี่ยนน้ำมันเครื่อง + ไส้กรอง',n:5000,days:180,p:'อู่/ปั๊มน้ำมัน',cm:400,cx:1200,note:'5W-30 mineral/semi-synthetic — ปรับรอบเปลี่ยนได้',customInterval:true},
+    {id:'airf',l:'ไส้กรองอากาศ',n:40000,days:730,p:'ศูนย์/อู่',cm:200,cx:500,note:'ตรวจทุก 20,000 กม. เปลี่ยนทุก 40,000 กม. หรือ 2 ปี'},
+    {id:'cab',l:'ไส้กรองแอร์ (Cabin)',n:20000,days:365,p:'ศูนย์/อู่',cm:200,cx:500,note:'ทุก 20,000 กม. หรือ 1 ปี'},
+    {id:'spk',l:'หัวเทียน Iridium',n:60000,days:0,p:'ศูนย์/อู่',cm:800,cx:1600,note:'Iridium 60,000 กม. (NGK IZFR5K หรือ Denso SK16R11)'},
+    {id:'tb',l:'Timing Belt',n:100000,days:0,p:'อู่ที่เชี่ยวชาญ',cm:3000,cx:7000,note:'⚠️ ปี 2004 ใช้ Timing BELT — ต้องเปลี่ยนทุก 100,000 กม. ถ้าขาดจะพังหนัก'},
+    {id:'geo',l:'น้ำมันเกียร์อัตโนมัติ',n:80000,days:0,p:'ศูนย์โตโยต้า',cm:1500,cx:3500,note:'Toyota T-IV ATF หรือ Dexron III'},
+    {id:'bro',l:'น้ำมันเบรก',n:0,days:730,p:'ศูนย์/อู่',cm:300,cx:700,note:'ทุก 2 ปี (time-based)'},
+    {id:'cool',l:'น้ำหล่อเย็น',n:80000,days:1460,p:'ศูนย์/อู่',cm:500,cx:1200,note:'Toyota Long Life Coolant — ทุก 4 ปี หรือ 80,000 กม.'},
+    {id:'brp',l:'ผ้าเบรก (ตรวจ)',n:20000,days:365,p:'ศูนย์/อู่',cm:1500,cx:4000,note:'ตรวจทุก 20,000 กม.'},
+    {id:'tir',l:'ยาง/สลับยาง',n:10000,days:0,p:'ร้านยาง',cm:300,cx:600,note:'สลับยางทุก 10,000 กม. ตั้งศูนย์ถ่วงล้อทุก 20,000 กม.'},
+    {id:'tyr',l:'เปลี่ยนยางใหม่',n:50000,days:1825,p:'ร้านยาง',cm:8000,cx:20000,note:'เปลี่ยนยางทุก 50,000 กม. หรือ 5 ปี อย่างใดถึงก่อน'},
+  ]},
+  estima:{id:'estima',name:'Toyota Estima Hybrid',plate:'ฎจ 6302 กทม',year:2006,type:'hybrid',sc:[
+    {id:'oil',l:'เปลี่ยนน้ำมันเครื่อง + ไส้กรอง',n:10000,days:365,p:'ศูนย์โตโยต้าเท่านั้น',cm:2200,cx:5000,note:'⚡ Full Synthetic 0W-20 Toyota Genuine เท่านั้น',customInterval:true},
+    {id:'hbat',l:'ตรวจสอบ HV Battery',n:20000,days:365,p:'ศูนย์โตโยต้าเท่านั้น',cm:500,cx:1500,note:'⚡ ทุก 20,000 กม. หรือ 1 ปี — ห้ามอู่ทั่วไปตรวจ'},
+    {id:'inv',l:'น้ำหล่อเย็น Inverter',n:0,days:1825,p:'ศูนย์โตโยต้าเท่านั้น',cm:2000,cx:5000,note:'⚡ ทุก 5 ปี — แยกจากน้ำหล่อเย็นเครื่องยนต์'},
+    {id:'airf',l:'ไส้กรองอากาศ',n:40000,days:730,p:'ศูนย์/อู่',cm:400,cx:900,note:'ตรวจทุก 20,000 กม. เปลี่ยนทุก 40,000 กม. หรือ 2 ปี'},
+    {id:'cab',l:'ไส้กรองแอร์ (Cabin)',n:20000,days:365,p:'ศูนย์/อู่',cm:400,cx:800,note:'ทุก 20,000 กม. หรือ 1 ปี'},
+    {id:'spk',l:'หัวเทียน V6 Iridium (6 หัว)',n:100000,days:0,p:'ศูนย์โตโยต้า',cm:3000,cx:6000,note:'6 หัว Toyota/Denso Iridium เท่านั้น'},
+    {id:'geo',l:'น้ำมันเกียร์ E-CVT',n:80000,days:0,p:'ศูนย์โตโยต้าเท่านั้น',cm:3000,cx:6000,note:'⚡ Toyota WS ATF เท่านั้น'},
+    {id:'bro',l:'น้ำมันเบรก',n:0,days:730,p:'ศูนย์/อู่',cm:500,cx:1200,note:'ทุก 2 ปี'},
+    {id:'cool',l:'น้ำหล่อเย็นเครื่องยนต์',n:160000,days:1825,p:'ศูนย์โตโยต้า',cm:1000,cx:2500,note:'Toyota Super Long Life Coolant สีชมพู เท่านั้น'},
+    {id:'12v',l:'แบตเตอรี่ 12V',n:0,days:1095,p:'ศูนย์/ร้านแบต',cm:2500,cx:5000,note:'⚡ ทุก 3-4 ปี'},
+    {id:'brp',l:'ผ้าเบรก (ตรวจ)',n:20000,days:365,p:'ศูนย์/อู่',cm:2000,cx:5000,note:'Regen Braking ทำให้สึกช้า แต่ต้องตรวจสม่ำเสมอ'},
+    {id:'tir',l:'ยาง/สลับยาง',n:10000,days:0,p:'ร้านยาง',cm:400,cx:800,note:'สลับยางทุก 10,000 กม. ตั้งศูนย์ถ่วงล้อทุก 20,000 กม.'},
+    {id:'tyr',l:'เปลี่ยนยางใหม่',n:50000,days:1825,p:'ร้านยาง',cm:8000,cx:20000,note:'เปลี่ยนยางทุก 50,000 กม. หรือ 5 ปี อย่างใดถึงก่อน — ตรวจดอกยาง < 1.6mm'},
+    {id:'tc',l:'Timing Chain',n:0,days:0,p:'—',cm:0,cx:0,note:'✅ ไม่ต้องเปลี่ยน'},
+  ]},
+  cx5:{id:'cx5',name:'Mazda CX-5',plate:'3กษ 809 กทม',year:2019,type:'suv',sc:[
+    {id:'oil',l:'เปลี่ยนน้ำมันเครื่อง + ไส้กรอง',n:10000,days:365,p:'ศูนย์มาสด้า/อู่',cm:1700,cx:4000,note:'Mazda Original Oil 0W-20 SKYACTIV',customInterval:true},
+    {id:'airf',l:'ไส้กรองอากาศ',n:40000,days:730,p:'ศูนย์/อู่',cm:400,cx:900,note:'ตรวจทุก 20,000 กม. เปลี่ยนทุก 40,000 กม. หรือ 2 ปี'},
+    {id:'cab',l:'ไส้กรองแอร์ (Cabin)',n:20000,days:365,p:'ศูนย์/อู่',cm:400,cx:800,note:'ทุก 20,000 กม. หรือ 1 ปี'},
+    {id:'spk',l:'หัวเทียน Iridium',n:120000,days:0,p:'ศูนย์มาสด้า',cm:3000,cx:7000,note:'Non-turbo: 120,000 กม. | Turbo 2.5T: 40,000 กม.'},
+    {id:'geo',l:'น้ำมันเกียร์ SKYACTIV',n:80000,days:0,p:'ศูนย์มาสด้า',cm:2500,cx:5500,note:'⚠️ Mazda ATF FZ เท่านั้น'},
+    {id:'bro',l:'น้ำมันเบรก',n:0,days:730,p:'ศูนย์/อู่',cm:500,cx:1000,note:'ทุก 2 ปี — DOT 3 หรือ DOT 4'},
+    {id:'cool',l:'น้ำหล่อเย็น (FL-22)',n:200000,days:3650,p:'ศูนย์มาสด้า',cm:1500,cx:3500,note:'⚠️ Mazda FL-22 เท่านั้น'},
+    {id:'brp',l:'ผ้าเบรก (ตรวจ)',n:20000,days:365,p:'ศูนย์/อู่',cm:2500,cx:6000,note:'ตรวจทุก 20,000 กม.'},
+    {id:'tir',l:'ยาง/สลับยาง',n:10000,days:0,p:'ร้านยาง',cm:400,cx:800,note:'สลับยางทุก 10,000 กม. ตั้งศูนย์ถ่วงล้อทุก 20,000 กม.'},
+    {id:'tyr',l:'เปลี่ยนยางใหม่',n:50000,days:1825,p:'ร้านยาง',cm:10000,cx:24000,note:'เปลี่ยนยางทุก 50,000 กม. หรือ 5 ปี อย่างใดถึงก่อน'},
+    {id:'tc',l:'Timing Chain',n:0,days:0,p:'—',cm:0,cx:0,note:'✅ SKYACTIV-G ใช้ Timing Chain ไม่ต้องเปลี่ยน'},
+    {id:'dif',l:'น้ำมัน Differential (AWD)',n:80000,days:0,p:'ศูนย์มาสด้า',cm:1500,cx:3000,note:'เฉพาะรุ่น AWD'},
+  ]},
+};
+const EMG=[{type:'ฉุกเฉิน',name:'กู้ชีพ/กู้ภัย',num:'1669'},{type:'ตำรวจ',name:'แจ้งเหตุ',num:'191'},{type:'ทางหลวง',name:'กรมทางหลวง',num:'1586'},{type:'ทางด่วน',name:'ศูนย์ควบคุม',num:'1543'},{type:'Toyota TH',name:'Toyota Customer',num:'02-386-2000'},{type:'Mazda TH',name:'Mazda Customer',num:'02-260-8000'}];
+
+// ══ STATE ══
+let sess=null,uName='',curCar='altis',curTab='dashboard';
+let KM={altis:0,estima:0,cx5:0},LD={},LOGS=[],CONTACTS=[],DOCS={};
+let syncTimer=null,logFormReady=false;
+const photoQ={log:[],ql:[]};
+const BIOMETRIC_KEY='cc_bio';
+const OIL_DEF={altis:5000,estima:10000,cx5:10000};
+function getOilN(cid){const s=localStorage.getItem('cc_oil_'+cid);return s?parseInt(s):OIL_DEF[cid];}
+function setOilN(cid,v){localStorage.setItem('cc_oil_'+cid,v);}
+function getN(cid,item){return item.customInterval?getOilN(cid):item.n;}
+function syncBar(v){document.getElementById('syncBar').style.display=v?'block':'none';}
+
+// ══ AUTH ══
+function authTab(t){
+  document.getElementById('tabL').classList.toggle('on',t==='login');
+  document.getElementById('tabS').classList.toggle('on',t==='signup');
+  document.getElementById('fLogin').style.display=t==='login'?'':'none';
+  document.getElementById('fSignup').style.display=t==='signup'?'':'none';
+  document.getElementById('authMsg').textContent='';
+}
+function showPwdForm(){document.getElementById('faceIdSection').style.display='none';document.getElementById('authForms').style.display='';}
+function authMsg(m,err){const e=document.getElementById('authMsg');e.textContent=m;e.className='amsg '+(err?'err':'ok');}
+
+async function doLogin(){
+  const email=document.getElementById('lEmail').value.trim();
+  const pass=document.getElementById('lPass').value;
+  if(!email||!pass){authMsg('กรุณากรอก email และ password',true);return;}
+  const b=document.getElementById('lBtn');b.disabled=true;b.textContent='กำลังเข้าสู่ระบบ...';
+  try{
+    const r=await sbFetch('/auth/v1/token?grant_type=password','POST',{email,password:pass});
+    b.disabled=false;b.textContent='เข้าสู่ระบบ';
+    if(r.ok&&r.d.access_token){
+      sess=r.d;uName=r.d.user?.user_metadata?.display_name||email.split('@')[0];
+      localStorage.setItem('cc_sess',JSON.stringify(sess));
+      await startApp();offerFaceId();
+    } else {authMsg(r.d.error_description||r.d.msg||'email หรือ password ไม่ถูกต้อง',true);}
+  }catch(e){b.disabled=false;b.textContent='เข้าสู่ระบบ';authMsg('❌ '+e.message,true);}
+}
+async function doSignup(){
+  const name=document.getElementById('sName').value.trim();
+  const email=document.getElementById('sEmail').value.trim();
+  const pass=document.getElementById('sPass').value;
+  if(!name||!email||!pass){authMsg('กรุณากรอกข้อมูลให้ครบ',true);return;}
+  const b=document.getElementById('sBtn');b.disabled=true;b.textContent='กำลังสมัคร...';
+  try{
+    const r=await sbFetch('/auth/v1/signup','POST',{email,password:pass,data:{display_name:name}});
+    b.disabled=false;b.textContent='สมัครสมาชิก';
+    if(r.ok&&r.d.user){authMsg('สมัครสำเร็จ! กรุณาเข้าสู่ระบบ',false);authTab('login');}
+    else{authMsg(r.d.msg||r.d.error_description||'สมัครไม่สำเร็จ',true);}
+  }catch(e){b.disabled=false;b.textContent='สมัครสมาชิก';authMsg('❌ '+e.message,true);}
+}
+async function doLogout(){
+  if(!confirm('ออกจากระบบ?'))return;
+  if(syncTimer)clearInterval(syncTimer);
+  if(sess)await sbFetch('/auth/v1/logout','POST',{},sess.access_token);
+  sess=null;uName='';logFormReady=false;localStorage.removeItem('cc_sess');
+  KM={altis:0,estima:0,cx5:0};LD={};LOGS=[];CONTACTS=[];DOCS={};
+  document.getElementById('App').classList.remove('on');
+  document.getElementById('authWrap').style.display='flex';
+  authTab('login');
+}
+
+// ══ FACE ID ══
+async function offerFaceId(){
+  if(localStorage.getItem(BIOMETRIC_KEY))return;
+  try{
+    const avail=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    if(!avail)return;
+    if(!confirm('ต้องการใช้ Face ID / Touch ID ในครั้งถัดไปไหม?'))return;
+    const challenge=new Uint8Array(32);crypto.getRandomValues(challenge);
+    const cred=await navigator.credentials.create({publicKey:{challenge,rp:{name:'Car Care',id:location.hostname},user:{id:new TextEncoder().encode(sess.user.id),name:sess.user.email,displayName:uName},pubKeyCredParams:[{alg:-7,type:'public-key'},{alg:-257,type:'public-key'}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},timeout:60000,attestation:'none'}});
+    const credId=btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
+    localStorage.setItem(BIOMETRIC_KEY,JSON.stringify({name:uName,email:sess.user.email,uid:sess.user.id,token:sess.access_token,refresh:sess.refresh_token,credId}));
+    alert('✅ ตั้งค่า Face ID สำเร็จ!');
+  }catch(e){}
+}
+async function doFaceIdLogin(){
+  const saved=JSON.parse(localStorage.getItem(BIOMETRIC_KEY)||'null');
+  if(!saved){showPwdForm();return;}
+  authMsg('กำลังยืนยัน Face ID...',false);
+  try{
+    const challenge=new Uint8Array(32);crypto.getRandomValues(challenge);
+    const bin=atob(saved.credId);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+    await navigator.credentials.get({publicKey:{challenge,timeout:60000,userVerification:'required',allowCredentials:[{id:buf.buffer,type:'public-key',transports:['internal']}]}});
+    const r=await sbFetch('/auth/v1/user','GET',null,saved.token);
+    if(r.ok&&r.d.id){
+      sess={access_token:saved.token,refresh_token:saved.refresh,user:r.d};uName=saved.name;
+      localStorage.setItem('cc_sess',JSON.stringify(sess));await startApp();
+    }else{authMsg('Session หมดอายุ กรุณา login ด้วย password',true);localStorage.removeItem(BIOMETRIC_KEY);showPwdForm();}
+  }catch(e){authMsg('Face ID ไม่สำเร็จ กรุณาใช้ password แทน',true);}
+}
+async function initFaceIdUI(){
+  const saved=localStorage.getItem(BIOMETRIC_KEY);if(!saved)return;
+  try{const avail=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();if(!avail)return;const data=JSON.parse(saved);document.getElementById('faceIdSection').style.display='block';document.getElementById('faceIdName').textContent='👤 '+data.name;document.getElementById('authForms').style.display='none';}catch(e){}
+}
+
+// ══ DATA ══
+async function loadAll(){
+  syncBar(true);
+  const tok=sess.access_token,uid=sess.user.id;
+  const [rk,rd,rl,rc]=await Promise.all([
+    sbFetch('/rest/v1/car_km?user_id=eq.'+uid+'&select=*','GET',null,tok),
+    sbFetch('/rest/v1/car_lastdone?user_id=eq.'+uid+'&select=*','GET',null,tok),
+    sbFetch('/rest/v1/car_logs?user_id=eq.'+uid+'&select=*&order=created_at.desc','GET',null,tok),
+    sbFetch('/rest/v1/car_docs?user_id=eq.'+uid+'&select=*','GET',null,tok),
+  ]);
+  if(rk.ok)rk.d.forEach(r=>KM[r.car_id]=r.km);
+  if(rd.ok)rd.d.forEach(r=>LD[r.item_key]=r.km);
+  if(rl.ok)LOGS=rl.d.map(r=>({id:r.id,carId:r.car_id,date:r.date,km:r.km,type:r.type,place:r.place,shop:r.shop,partCost:r.part_cost,laborCost:r.labor_cost,product:r.product,note:r.note,recordedBy:r.recorded_by,photos:r.photos||'[]',ts:new Date(r.created_at).getTime()}));
+  if(rc.ok)rc.d.forEach(r=>DOCS[r.doc_key]={expiry:r.expiry,note:r.note});
+  CONTACTS=JSON.parse(localStorage.getItem('cc_contacts')||'[]');
+  syncBar(false);
+}
+
+async function startApp(){
+  document.getElementById('authWrap').style.display='none';
+  document.getElementById('App').classList.add('on');
+  document.getElementById('uBadge').textContent='⚙️ '+uName;
+  await loadAll();render();
+  if(syncTimer)clearInterval(syncTimer);
+  syncTimer=setInterval(async()=>{if(curTab==='log')return;if(sess){const payload=JSON.parse(atob(sess.access_token.split('.')[1]));if(payload.exp*1000-Date.now()<600000)await refreshToken();}await loadAll();render();},30000);
+  document.addEventListener('visibilitychange',async()=>{if(document.visibilityState==='visible'&&sess&&curTab!=='log'){await loadAll();render();}});
+}
+
+// ══ STATUS ══
+function getLastSvcDate(cid,item){const log=LOGS.filter(l=>l.carId===cid&&l.type===item.l).sort((a,b)=>b.ts-a.ts)[0];return log?new Date(log.date):null;}
+
+function stCalc(cid,item){
+  const n=getN(cid,item);
+  if(n===0&&(!item.days||item.days===0))return{s:'info',kmPct:0,timePct:0,rem:null,daysLeft:null};
+  const ck=KM[cid]||0,lk=LD[''+cid+'_'+item.id]||0;
+  const lastDate=getLastSvcDate(cid,item);
+  let timePct=0,daysLeft=null;
+  if(item.days>0&&lastDate){const d=Math.floor((Date.now()-lastDate.getTime())/86400000);timePct=d/item.days*100;daysLeft=item.days-d;}
+  let kmPct=0,rem=null;
+  if(n>0&&lk>0&&ck>0){rem=lk+n-ck;kmPct=Math.max(0,(ck-lk)/n*100);}
+  if(n>0&&!lk&&!lastDate)return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
+  if(n===0&&item.days>0&&!lastDate)return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
+  if(n>0&&lk>0&&!ck)return{s:'unknown',kmPct:0,timePct,rem:null,daysLeft};
+  const mx=Math.max(timePct,kmPct);
+  const s=mx>=95?'urgent':mx>=75?'soon':'ok';
+  return{s,kmPct,timePct,rem,daysLeft};
+}
+function st(cid,item){return stCalc(cid,item).s;}
+function pct(cid,item){const c=stCalc(cid,item);return Math.min(100,Math.round(Math.max(c.kmPct,c.timePct)));}
+
+const SL={urgent:'⚠ ถึงกำหนด!',soon:'▲ ใกล้ถึง',ok:'✓ ปกติ',unknown:'? ยังไม่มีข้อมูล',info:'ℹ ไม่ต้องเปลี่ยน'};
+const SB={urgent:'bu',soon:'bs',ok:'bo',unknown:'bk',info:'bi'};
+const SC={urgent:'var(--red)',soon:'var(--amber)',ok:'var(--green)',unknown:'var(--hint)',info:'var(--blue)'};
+const SORT_ORDER={urgent:0,soon:1,unknown:2,ok:3,info:4};
+
+// ══ NAVIGATION ══
+function goTab(t){
+  if(t!=='log')logFormReady=false;
+  curTab=t;
+  document.querySelectorAll('.ti').forEach(b=>b.classList.remove('on'));
+  const tb=document.getElementById('tab-'+t);if(tb)tb.classList.add('on');
+  render();
+}
+function goCar(id){
+  curCar=id;
+  document.querySelectorAll('.cpill').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.cpill[data-c="'+id+'"]').forEach(p=>p.classList.add('on'));
+  if(curTab==='log'){const sel=document.getElementById('logCar');if(sel)sel.value=id;renderHdr();return;}
+  render();
+}
+function renderHdr(){
+  const pills=document.getElementById('cPills'),sub=document.getElementById('hSub');
+  if(curTab==='dashboard'||curTab==='settings'){
+    pills.style.display='none';
+    sub.textContent=curTab==='settings'?'ตั้งค่า & ข้อมูล':'ภาพรวมและค่าใช้จ่าย';
+  }else{
+    pills.style.display='flex';
+    pills.innerHTML=Object.values(CARS).map(c=>'<button class="cpill'+(c.id===curCar?' on':'')+'" data-c="'+c.id+'" onclick="goCar(\''+c.id+'\')" style="border-color:'+CAR_COLOR[c.id]+(c.id===curCar?';background:'+CAR_COLOR[c.id]+';color:#fff':'')+'">'+(c.name.replace('Toyota ','').replace('Mazda ',''))+'</button>').join('');
+    sub.textContent={todo:'To-Do รายการซ่อม',log:'บันทึกการซ่อม',history:'ประวัติ & เอกสาร'}[curTab]||'';
+  }
+}
+function render(){
+  renderHdr();
+  const el=document.getElementById('mainC');
+  if(curTab==='dashboard')rDash(el);
+  else if(curTab==='todo')rTodo(el);
+  else if(curTab==='log'){if(!logFormReady){rLog(el);logFormReady=true;}}
+  else if(curTab==='history')rHist(el);
+  else if(curTab==='settings')rSettings(el);
+}
+
+// ══ DASHBOARD ══
+function rDash(el){
+  const now=new Date();
+  const thisYear=now.getFullYear();
+  const lastYear=thisYear-1;
+
+  function carYearCost(cid,yr){
+    return LOGS.filter(l=>l.carId===cid&&l.date&&l.date.startsWith(yr+'')).reduce((s,l)=>s+(+l.partCost||0)+(+l.laborCost||0),0);
+  }
+  function carYearKm(cid,yr){
+    const logs=LOGS.filter(l=>l.carId===cid&&l.date&&l.date.startsWith(yr+'')&&l.km>0);
+    if(!logs.length)return null;
+    const kms=logs.map(l=>l.km);
+    return{min:Math.min(...kms),max:Math.max(...kms)};
+  }
+  const cyTotal=Object.keys(CARS).reduce((s,c)=>s+carYearCost(c,thisYear),0);
+  const lyTotal=Object.keys(CARS).reduce((s,c)=>s+carYearCost(c,lastYear),0);
+
+  // Build cost breakdown per car
+  let costRows='';
+  Object.values(CARS).forEach(function(car){
+    const cy2=carYearCost(car.id,thisYear);
+    const ly2=carYearCost(car.id,lastYear);
+    const col=CAR_COLOR[car.id];
+    costRows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid var(--gb);">'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+      '<div style="width:10px;height:10px;border-radius:50%;background:'+col+';flex-shrink:0;"></div>'+
+      '<span style="font-size:12px;color:var(--muted);">'+car.name.replace('Toyota ','').replace('Mazda ','')+'</span></div>'+
+      '<div style="display:flex;gap:16px;">'+
+      '<span style="font-size:13px;font-weight:700;color:'+col+';">฿'+cy2.toLocaleString()+'</span>'+
+      '<span style="font-size:12px;color:var(--hint);">฿'+ly2.toLocaleString()+'</span>'+
+      '</div></div>';
+  });
+
+  // Build km breakdown per car
+  let kmRows='';
+  Object.values(CARS).forEach(function(car){
+    const k=carYearKm(car.id,thisYear);
+    const col=CAR_COLOR[car.id];
+    const km=k?(k.max-k.min):0;
+    kmRows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid var(--gb);">'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+      '<div style="width:10px;height:10px;border-radius:50%;background:'+col+';flex-shrink:0;"></div>'+
+      '<span style="font-size:12px;color:var(--muted);">'+car.name.replace('Toyota ','').replace('Mazda ','')+'</span></div>'+
+      '<div>'+
+      '<span style="font-size:13px;font-weight:700;color:'+col+';">'+km.toLocaleString()+' กม.</span>'+
+      (k?'<span style="color:var(--hint);margin-left:6px;font-size:11px;">'+k.min.toLocaleString()+'→'+k.max.toLocaleString()+'</span>':
+         '<span style="color:var(--hint);margin-left:6px;font-size:11px;">ยังไม่มีข้อมูล</span>')+
+      '</div></div>';
+  });
+
+  // Upcoming items
+  const upcoming=[];
+  Object.values(CARS).forEach(function(car){
+    car.sc.forEach(function(item){
+      const calc=stCalc(car.id,item);
+      if(calc.s==='urgent'||calc.s==='soon'||calc.s==='unknown') upcoming.push({car,item,calc});
+    });
+  });
+  upcoming.sort((a,b)=>SORT_ORDER[a.calc.s]-SORT_ORDER[b.calc.s]);
+
+  // Legend
+  let legend='';
+  Object.values(CARS).forEach(function(car){
+    legend+='<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:11px;color:var(--muted);">'+
+      '<span style="width:8px;height:8px;border-radius:50%;background:'+CAR_COLOR[car.id]+';display:inline-block;"></span>'+
+      car.name.replace('Toyota ','').replace('Mazda ','')+'</span>';
+  });
+
+  // Build HTML (no inline onclick with complex quotes)
+  el.innerHTML=
+    '<div style="font-size:11px;color:var(--hint);margin:4px 0 10px;">'+legend+'</div>'+
+    '<div class="sec" style="margin-top:4px;">💰 ค่าใช้จ่ายซ่อมบำรุง</div>'+
+    '<div class="gc"><div style="padding:14px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px;">'+
+        '<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px;">ปีนี้ ('+thisYear+')</div>'+
+        '<div style="font-size:24px;font-weight:700;color:var(--blue);">฿'+cyTotal.toLocaleString()+'</div></div>'+
+        '<div style="text-align:right;"><div style="font-size:11px;color:var(--muted);margin-bottom:2px;">ปีที่แล้ว ('+lastYear+')</div>'+
+        '<div style="font-size:18px;font-weight:600;color:var(--muted);">฿'+lyTotal.toLocaleString()+'</div></div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--hint);margin-bottom:6px;">แยกตามรถ · ปีนี้ / ปีที่แล้ว</div>'+
+      (costRows||'<div style="font-size:12px;color:var(--hint);">ยังไม่มีข้อมูล</div>')+
+    '</div></div>'+
+    '<div class="sec">📏 ไมล์ที่ใช้ปีนี้ ('+thisYear+')</div>'+
+    '<div class="gc"><div style="padding:14px;">'+
+      '<div style="font-size:11px;color:var(--hint);margin-bottom:8px;">แยกตามรถ · ระยะทาง / ช่วงไมล์</div>'+
+      kmRows+
+    '</div></div>'+
+    '<div class="sec" id="upcomingHdr">🔧 รายการที่ต้องดำเนินการ / ยังไม่มีข้อมูล</div>'+
+    '<div id="upcomingList"></div>'+
+    '<div class="sec" style="display:flex;justify-content:space-between;align-items:center;">'+
+      '<span>งานล่าสุด — แต่ละคัน</span>'+
+      '<button id="addNewBtn" style="font-size:12px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">➕ บันทึกใหม่</button>'+
+    '</div>'+
+    '<div id="lastServiceList"></div>';
+
+  // Attach button onclick (no inline string quoting issues)
+  document.getElementById('addNewBtn').onclick=function(){goTab('log');};
+
+  // Build upcoming cards
+  const upList=document.getElementById('upcomingList');
+  if(!upcoming.length){
+    upList.innerHTML='<div class="gc" style="padding:16px;text-align:center;font-size:13px;color:var(--muted);">✅ ไม่มีรายการที่ต้องดำเนินการในขณะนี้</div>';
+  }else{
+    upcoming.slice(0,8).forEach(function(x){
+      const car=x.car,item=x.item,calc=x.calc;
+      const col=CAR_COLOR[car.id];
+      const ac=calc.s==='urgent'?'var(--red)':calc.s==='soon'?'var(--amber)':'var(--hint)';
+      let sub='';
+      if(calc.rem!==null) sub=calc.rem<=0?'เกินกำหนด '+Math.abs(calc.rem).toLocaleString()+' กม.':'เหลืออีก '+calc.rem.toLocaleString()+' กม.';
+      else if(calc.daysLeft!==null) sub=calc.daysLeft<=0?'เกินกำหนด '+Math.abs(calc.daysLeft)+' วัน':'อีก '+calc.daysLeft+' วัน';
+      else sub='กรุณากรอกเลขไมล์ที่ To-Do';
+      const d=document.createElement('div');
+      d.style.cssText='background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:var(--r);margin-bottom:8px;overflow:hidden;display:flex;box-shadow:var(--sh);cursor:pointer;';
+      d.innerHTML='<div style="width:4px;background:'+col+';flex-shrink:0;"></div>'+
+        '<div style="padding:10px 12px;flex:1;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+        '<div><div style="font-size:13px;font-weight:600;">'+item.l+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:1px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+col+';margin-right:4px;vertical-align:middle;"></span>'+car.name+' · '+car.plate+'</div></div>'+
+        '<span class="badge '+SB[calc.s]+'">'+SL[calc.s]+'</span></div>'+
+        '<div style="font-size:11px;font-weight:600;color:'+ac+';margin-top:4px;">'+sub+'</div>'+
+        '</div>';
+      (function(cid){d.onclick=function(){curCar=cid;goTab('todo');};})(car.id);
+      upList.appendChild(d);
+    });
+  }
+
+  // Build last service cards
+  const lastList=document.getElementById('lastServiceList');
+  Object.values(CARS).forEach(function(car){
+    const cl=LOGS.filter(l=>l.carId===car.id).sort((a,b)=>b.ts-a.ts),last=cl[0];
+    const col=CAR_COLOR[car.id],lt=CAR_COLOR_LT[car.id];
+    const card=document.createElement('div');
+    card.className='car-card';
+    card.style.marginBottom='10px';
+    if(!last){
+      card.innerHTML='<div class="car-stripe" style="background:'+col+'"></div>'+
+        '<div class="car-body"><div style="font-size:11px;color:var(--muted);margin-bottom:6px;">'+car.name+' · '+car.plate+'</div>'+
+        '<div id="firstLogBtn_'+car.id+'" style="width:100%;padding:10px;background:'+col+';color:#fff;border:none;border-radius:var(--rx);font-size:13px;font-weight:600;cursor:pointer;text-align:center;">➕ บันทึกการซ่อมครั้งแรก</div></div>';
+      lastList.appendChild(card);
+      (function(cid){document.getElementById('firstLogBtn_'+cid).onclick=function(){curCar=cid;goTab('log');};})(car.id);
+      return;
+    }
+    const tot=(+last.partCost||0)+(+last.laborCost||0);
+    const urg=car.sc.filter(i=>st(car.id,i)==='urgent').length;
+    const sn2=car.sc.filter(i=>st(car.id,i)==='soon').length;
+    const unk=car.sc.filter(i=>st(car.id,i)==='unknown').length;
+    const badge=urg?'<span class="badge bu">'+urg+' ถึงกำหนด</span>':sn2?'<span class="badge bs">'+sn2+' ใกล้ถึง</span>':unk?'<span class="badge bk">'+unk+' ไม่มีข้อมูล</span>':'<span class="badge bo">ปกติ</span>';
+    card.style.cursor='pointer';
+    card.innerHTML='<div class="car-stripe" style="background:'+col+'"></div>'+
+      '<div class="car-body">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:11px;color:var(--muted);margin-bottom:2px;">'+car.name+(KM[car.id]?' · '+KM[car.id].toLocaleString()+' กม.':'')+'</div>'+
+      '<div style="font-size:14px;font-weight:600;">'+last.type+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:1px;">'+last.date+(last.shop?' · '+last.shop:'')+(last.recordedBy?' · '+last.recordedBy:'')+'</div></div>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">'+badge+(tot?'<div style="font-size:13px;font-weight:700;color:'+col+';">฿'+tot.toLocaleString()+'</div>':'')+'</div></div>'+
+      '<div id="newLogBtn_'+car.id+'" style="width:100%;padding:8px;background:'+lt+';color:'+col+';border:none;border-radius:var(--rx);font-size:12px;font-weight:600;cursor:pointer;text-align:center;margin-top:8px;">➕ บันทึกรายการใหม่</div>'+
+      '</div>';
+    (function(cid){
+      card.onclick=function(){curCar=cid;goTab('history');};
+      document.getElementById('newLogBtn_'+cid) && (function(){
+        // Button click handler set after appendChild
+      })();
+    })(car.id);
+    lastList.appendChild(card);
+    // Set button onclick after append
+    (function(cid){
+      const btn=document.getElementById('newLogBtn_'+cid);
+      if(btn) btn.onclick=function(e){e.stopPropagation();curCar=cid;goTab('log');};
+    })(car.id);
+  });
+}
+
+// ══ TODO ══
+function rTodo(el){
+  const car=CARS[curCar],cid=curCar,ck=KM[cid];
+  const oilN=getOilN(cid);
+  const sorted=[...car.sc].sort((a,b)=>SORT_ORDER[st(cid,a)]-SORT_ORDER[st(cid,b)]);
+  const u=sorted.filter(i=>st(cid,i)==='urgent').length;
+  const s=sorted.filter(i=>st(cid,i)==='soon').length;
+  const o=sorted.filter(i=>st(cid,i)==='ok').length;
+  const col=CAR_COLOR[cid];
+
+  const items=sorted.map(item=>{
+    const calc=stCalc(cid,item);
+    const S=calc.s,P=pct(cid,item);
+    const n=getN(cid,item);
+    const lk=LD[''+cid+'_'+item.id]||0;
+    const lastLog=LOGS.filter(l=>l.carId===cid&&l.type===item.l).sort((a,b)=>b.ts-a.ts)[0];
+    const photos=lastLog?JSON.parse(lastLog.photos||'[]'):[];
+    const photoRow=photos.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 2px;">'+(photos.map((_,i)=>'<div id="tdph_'+lastLog.id+'_'+i+'" style="width:56px;height:56px;background:var(--gray-lt);border-radius:8px;overflow:hidden;flex-shrink:0;">⏳</div>').join(''))+'</div>':'';
+
+    let remLines='';
+    if(lk>0&&ck>0&&n>0){const nk=lk+n,rem=nk-ck;const rc2=rem<=0?'var(--red)':rem<n*.25?'var(--amber)':'var(--text)';remLines+='<div class="tdd">ล่าสุด: '+lk.toLocaleString()+' กม.</div><div style="font-size:13px;font-weight:700;color:'+rc2+';margin-top:2px;">ครั้งถัดไป: '+nk.toLocaleString()+' กม. ('+(rem<=0?'เกินกำหนด '+Math.abs(rem).toLocaleString():'เหลืออีก '+rem.toLocaleString())+' กม.)</div>';}
+    else if(!lk&&!getLastSvcDate(cid,item)){remLines+='<div class="tdd" style="color:var(--amber);font-weight:600;">ยังไม่มีข้อมูลครั้งล่าสุด</div>';}
+    if(item.days>0&&calc.daysLeft!==null){const dColor=calc.daysLeft<=0?'var(--red)':calc.daysLeft<item.days*.25?'var(--amber)':'var(--muted)';const ld=getLastSvcDate(cid,item);remLines+='<div style="font-size:12px;color:'+dColor+';margin-top:2px;">⏱ '+(calc.daysLeft<=0?'เกินกำหนด '+Math.abs(calc.daysLeft)+' วัน':'อีก '+calc.daysLeft+' วัน')+(ld?' ('+ld.toLocaleDateString('th-TH')+')':'')+'</div>';}
+    else if(item.days>0&&!getLastSvcDate(cid,item)){remLines+='<div style="font-size:12px;color:var(--amber);margin-top:2px;">⏱ ไม่มีข้อมูลวันที่บริการ</div>';}
+
+    const intStr=n>0&&item.days>0?'ทุก '+n.toLocaleString()+' กม. หรือ '+(item.days>=365?Math.round(item.days/365)+' ปี':item.days+' วัน')+' · '+item.p:n>0?'ทุก '+n.toLocaleString()+' กม. · '+item.p:item.days>0?'ทุก '+(item.days>=365?Math.round(item.days/365)+' ปี':item.days+' วัน')+' · '+item.p:'';
+    const canMark=ck>0;
+    const isInfo=S==='info';
+
+    if(isInfo)return '<div class="tdi"><div class="tda info"></div><div class="tdin"><div class="tdr1"><div class="tdname">'+item.l+'</div><span class="badge bi">ไม่ต้องเปลี่ยน</span></div><div class="tdn">'+item.note+'</div>'+(item.cm>0?'<span class="tdc">฿'+item.cm.toLocaleString()+'–'+item.cx.toLocaleString()+'</span>':'')+photoRow+'</div></div>';
+
+    const custBtn=item.customInterval?'<div style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span style="font-size:11px;color:var(--muted);">รอบเปลี่ยน:</span>'+[3000,5000,7000,10000].map(v=>'<button onclick="setOilN(\''+cid+'\','+v+');render()" style="padding:3px 10px;border-radius:20px;border:.5px solid '+(n===v?col:'var(--gb)')+';background:'+(n===v?col:'var(--gray-lt)')+';color:'+(n===v?'#fff':'var(--muted)')+';font-size:11px;font-family:inherit;cursor:pointer;font-weight:'+(n===v?'700':'400')+';">'+v.toLocaleString()+'</button>').join('')+'</div>':'';
+
+    return '<div class="tdi"><div class="tda '+S+'"></div><div class="tdin"><div class="tdr1"><div class="tdname">'+item.l+(item.customInterval?' <span style="font-size:10px;color:var(--blue);background:var(--blue-lt);padding:1px 6px;border-radius:10px;">'+n.toLocaleString()+' กม.</span>':'')+'</div><span class="badge '+SB[S]+'">'+SL[S]+'</span></div><div class="tdd">'+intStr+'</div>'+remLines+(P>0?'<div class="pw" style="margin-top:6px;"><div class="pb" style="width:'+P+'%;background:'+SC[S]+';"></div></div><div style="font-size:10px;color:var(--hint);">'+P+'% ของรอบ</div>':'')+custBtn+'<div class="tdn" style="margin-top:6px;">'+item.note+'</div>'+(item.cm>0?'<span class="tdc">฿'+item.cm.toLocaleString()+'–'+item.cx.toLocaleString()+'</span>':'')+photoRow+'</div><div style="display:flex;border-top:.5px solid var(--gb);"><button style="flex:1;padding:11px 6px;background:var(--green-lt);border:none;border-right:.5px solid var(--gb);font-size:12px;color:var(--green);cursor:pointer;font-family:inherit;font-weight:600;" onclick="openQL(\''+cid+'\',\''+item.id+'\',\''+item.l+'\')">📝 บันทึกงานนี้</button><button style="flex:1;padding:11px 6px;background:var(--gray-lt);border:none;font-size:12px;color:'+(canMark?'var(--muted)':'var(--hint)')+';cursor:pointer;font-family:inherit;font-weight:500;" onclick="markDone(\''+cid+'\',\''+item.id+'\')" '+(canMark?'':'disabled')+'>'+(canMark?'✓ ทำแล้ว @'+ck.toLocaleString()+' กม.':'ใส่ไมล์ก่อน')+'</button>'+(lk||getLastSvcDate(cid,item)?'<button style="padding:11px 8px;background:var(--red-lt);border:none;border-left:.5px solid var(--gb);font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;font-weight:600;" onclick="resetTodo(\''+cid+'\',\''+item.id+'\')" title="รีเซ็ต">↺</button>':'')+'</div></div>';
+  }).join('');
+
+  el.innerHTML='<div class="kmb"><label>ไมล์ปัจจุบัน</label><input type="number" id="kmInput" value="'+(ck||'')+'" placeholder="เช่น 85000"><button onclick="updKm()">อัพเดต</button></div>'+(car.type==='hybrid'?'<div class="alert hybrid">⚡ Hybrid อายุ 18+ ปี — เข้าศูนย์โตโยต้าเท่านั้น</div>':'')+
+    '<div class="srow"><div class="sc r"><div class="sn">'+u+'</div><div class="sl">ถึงกำหนด</div></div><div class="sc a"><div class="sn">'+s+'</div><div class="sl">ใกล้ถึง</div></div><div class="sc g"><div class="sn">'+o+'</div><div class="sl">ปกติ</div></div></div>'+
+    '<div id="todoDocSection"></div>'+
+    '<div class="sec" style="display:flex;justify-content:space-between;"><span>รายการซ่อมบำรุง — '+car.name+'</span><span style="font-size:11px;color:var(--hint);">เรียงตามความเร่งด่วน ↓</span></div>'+items;
+
+  // Build doc expiry cards (ทะเบียน/พรบ/ประกัน)
+  const docSection=document.getElementById('todoDocSection');
+  const dtypes=['ทะเบียนรถ','พ.ร.บ.','ประกันภัยชั้น 1','ประกันภัยชั้น 2/3'];
+  const today2=new Date();today2.setHours(0,0,0,0);
+  let docCards='';
+  dtypes.forEach(function(type){
+    const k=cid+'_'+type,doc=DOCS[k]||{};
+    if(!doc.expiry)return; // skip if not recorded
+    const expDate=new Date(doc.expiry);expDate.setHours(0,0,0,0);
+    const daysLeft=Math.floor((expDate-today2)/86400000);
+    const isUrgent=daysLeft<=30,isSoon=daysLeft<=90;
+    if(daysLeft>90)return; // only show within 90 days
+    const statusColor=isUrgent?'var(--red)':isSoon?'var(--amber)':'var(--green)';
+    const statusBg=isUrgent?'bu':isSoon?'bs':'bo';
+    const statusText=isUrgent?(daysLeft<=0?'หมดแล้ว! '+Math.abs(daysLeft)+' วัน':'⚠ เหลือ '+daysLeft+' วัน'):'▲ เหลือ '+daysLeft+' วัน';
+    // Get insurance emergency number if available
+    const insContact=CONTACTS.find(c=>(c.type==='ประกันภัย'||c.note&&c.note.includes(type.replace('ประกัน','').trim()))&&doc.note&&doc.note.includes(c.name));
+    const insPhone=insContact?insContact.phone:'';
+    docCards+='<div class="tdi"><div class="tda '+(isUrgent?'urgent':isSoon?'soon':'ok')+'"></div><div class="tdin">'+
+      '<div class="tdr1">'+
+      '<div><div class="tdname">'+type+'</div>'+
+      (doc.note?'<div style="font-size:11px;color:var(--muted);margin-top:1px;">'+doc.note+'</div>':'')+
+      '</div>'+
+      '<span class="badge '+statusBg+'">'+statusText+'</span>'+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-top:2px;">หมดอายุ: <span style="font-weight:600;color:'+statusColor+';">'+doc.expiry+'</span></div>'+
+      '</div>'+
+      '<div style="display:flex;border-top:.5px solid var(--gb);">'+
+      '<button style="flex:1;padding:10px 6px;background:var(--blue-lt);border:none;border-right:.5px solid var(--gb);font-size:12px;color:var(--blue);cursor:pointer;font-family:inherit;font-weight:600;" onclick="openDoc(\''+cid+'\',\''+type+'\')">✏️ อัพเดตวันหมดอายุ</button>'+
+      (insPhone?'<a href="tel:'+insPhone+'" style="flex:1;padding:10px 6px;background:var(--green-lt);border:none;font-size:12px;color:var(--green);cursor:pointer;font-family:inherit;font-weight:600;text-align:center;text-decoration:none;">📞 โทร '+insPhone+'</a>':
+       '<button style="flex:1;padding:10px 6px;background:var(--gray-lt);border:none;font-size:12px;color:var(--muted);cursor:pointer;font-family:inherit;" onclick="goTab(\'settings\')">⚙️ เพิ่มเบอร์ประกัน</button>')+
+      '</div></div>';
+  });
+  if(docCards){
+    docSection.innerHTML='<div class="sec" style="display:flex;justify-content:space-between;align-items:center;"><span>📄 เอกสาร / ต่ออายุ</span><button onclick="goTab(\'history\')" style="font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;">ดูทั้งหมด ›</button></div>'+docCards;
+  }
+
+  sorted.forEach(item=>{
+    const ll=LOGS.filter(l=>l.carId===cid&&l.type===item.l).sort((a,b)=>b.ts-a.ts)[0];
+    if(!ll)return;
+    JSON.parse(ll.photos||'[]').forEach((path,i)=>autoLoadThumb('tdph_'+ll.id+'_'+i,path));
+  });
+}
+
+async function updKm(){
+  const v=parseInt(document.getElementById('kmInput').value);if(!v||v<=0)return;
+  KM[curCar]=v;syncBar(true);await upsert('car_km',{user_id:sess.user.id,car_id:curCar,km:v},sess.access_token);syncBar(false);render();
+}
+async function markDone(cid,iid){
+  const ck=KM[cid];if(!ck){alert('กรุณาใส่เลขไมล์ก่อน');return;}
+  const key=cid+'_'+iid;LD[key]=ck;syncBar(true);await upsert('car_lastdone',{user_id:sess.user.id,item_key:key,km:ck},sess.access_token);syncBar(false);render();
+}
+async function resetTodo(cid,iid){
+  if(!confirm("รีเซ็ตรายการนี้ กลับเป็นยังไม่ได้ทำ ไหม? (ประวัติการซ่อมยังอยู่)"))return;
+  const key=cid+'_'+iid;const uid=sess.user.id,tok=sess.access_token;
+  syncBar(true);delete LD[key];await sbDelete('/rest/v1/car_lastdone?user_id=eq.'+uid+'&item_key=eq.'+key,tok);syncBar(false);render();
+}
+
+// ══ PHOTOS ══
+function handlePhotos(prefix,event){
+  Array.from(event.target.files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=800;let w=img.width,h=img.height;
+        if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+        const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        photoQ[prefix].push({dataUrl:canvas.toDataURL('image/jpeg',.75),name:Date.now()+'_'+Math.random().toString(36).slice(2)+'.jpg'});
+        renderPhotoPreview(prefix);
+      };img.src=e.target.result;
+    };reader.readAsDataURL(file);
+  });
+}
+function renderPhotoPreview(prefix){
+  const el=document.getElementById(prefix+'PhotoPreview');if(!el)return;
+  el.innerHTML=photoQ[prefix].map((p,i)=>'<div style="position:relative;"><img src="'+p.dataUrl+'" style="width:72px;height:72px;object-fit:cover;border-radius:10px;border:.5px solid var(--gb);"><button onclick="photoQ[\''+prefix+'\'].splice('+i+',1);renderPhotoPreview(\''+prefix+'\')" style="position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:12px;cursor:pointer;line-height:1;">×</button></div>').join('');
+}
+async function uploadPhotos(prefix,logId){
+  const tok=sess.access_token,uid=sess.user.id,paths=[];
+  for(const p of photoQ[prefix]){
+    const blob=await(await fetch(p.dataUrl)).blob();
+    const path=uid+'/'+logId+'/'+p.name;
+    const r=await fetch(SBURL+'/storage/v1/object/car-photos/'+path,{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'image/jpeg','x-upsert':'true'},body:blob});
+    if(r.ok)paths.push(path);
+    else if(r.status===401){const ok=await refreshToken();if(ok){const r2=await fetch(SBURL+'/storage/v1/object/car-photos/'+path,{method:'POST',headers:{'Authorization':'Bearer '+sess.access_token,'Content-Type':'image/jpeg','x-upsert':'true'},body:blob});if(r2.ok)paths.push(path);}}
+  }
+  if(paths.length&&logId){
+    await sbPatch('/rest/v1/car_logs?id=eq.'+logId,{photos:JSON.stringify(paths)},sess.access_token);
+    const idx=LOGS.findIndex(l=>l.id===logId);if(idx>=0)LOGS[idx].photos=JSON.stringify(paths);
+  }
+  photoQ[prefix]=[];return paths;
+}
+async function autoLoadThumb(elId,path){
+  const el=document.getElementById(elId);
+  if(!el||el.querySelector('img'))return;
+  try{
+    const r=await sbPost('/storage/v1/object/sign/car-photos/'+path,{expiresIn:3600},sess.access_token);
+    if(!r.ok){el.textContent='⚠';return;}
+    const d=await r.json();
+    const url=d.signedURL?SBURL+'/storage/v1'+d.signedURL:null;
+    if(url){
+      const el2=document.getElementById(elId);
+      if(el2){
+        const img=document.createElement('img');
+        img.src=url;
+        img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;';
+        img.onclick=()=>window.open(url,'_blank');
+        el2.innerHTML='';
+        el2.appendChild(img);
+      }
+    }else{el.textContent='❌';}
+  }catch(e){const el2=document.getElementById(elId);if(el2)el2.textContent='!';}
+}
+
+// ══ LOG FORM ══
+function rLog(el){
+  const today=new Date().toISOString().split('T')[0];
+  const cid=curCar;
+  const oilN=getOilN(cid);
+  const copts=Object.values(CARS).map(c=>'<option value="'+c.id+'"'+(c.id===cid?' selected':'')+'>'+c.name+' ('+c.plate+')</option>').join('');
+  const oilBtns=[3000,5000,7000,10000].map(v=>'<button type="button" onclick="setOilN(document.getElementById(\'logCar\').value,'+v+');document.getElementById(\'oilIntervalDisplay\').textContent=\'รอบปัจจุบัน: '+v.toLocaleString()+' กม.\';document.querySelectorAll(\'.oilbtn\').forEach(b=>b.style.background=b.dataset.v==\''+v+'\'?\'var(--blue)\':\'var(--gray-lt)\');document.querySelectorAll(\'.oilbtn\').forEach(b=>b.style.color=b.dataset.v==\''+v+'\'?\'#fff\':\'var(--muted)\');" class="oilbtn" data-v="'+v+'" style="padding:5px 12px;border-radius:20px;border:.5px solid var(--gb);background:'+(oilN===v?'var(--blue)':'var(--gray-lt)')+';color:'+(oilN===v?'#fff':'var(--muted)')+';font-size:12px;font-family:inherit;cursor:pointer;font-weight:'+(oilN===v?'700':'400')+';">'+v.toLocaleString()+'</button>').join('');
+  el.innerHTML='<div class="sec">บันทึกการซ่อมบำรุง</div><div class="gc"><div class="gcb" style="padding-top:14px;"><div class="fs"><label class="fl">รถ</label><select class="fi" id="logCar" onchange="updateLogCarInterval()">'+copts+'</select></div><div class="fr2"><div class="fs"><label class="fl">วันที่</label><input class="fi" type="date" id="logDate" value="'+today+'"></div><div class="fs"><label class="fl">เลขไมล์ (กม.)</label><input class="fi" type="number" id="logKm" placeholder="85000"></div></div><div class="fs"><label class="fl">บันทึกโดย</label><input class="fi" id="logBy" value="'+uName+'"></div><div class="fs"><label class="fl">ประเภทงาน</label><select class="fi" id="logType"><option>เปลี่ยนน้ำมันเครื่อง + ไส้กรอง</option><option>ไส้กรองอากาศ</option><option>ไส้กรองแอร์ (Cabin)</option><option>หัวเทียน</option><option>Timing Belt/Chain</option><option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option><option>น้ำหล่อเย็น</option><option>ผ้าเบรก</option><option>ยาง/สลับยาง</option><option>เปลี่ยนยางใหม่</option><option>แบตเตอรี่</option><option>ระบบแอร์</option><option>ช่วงล่าง</option><option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option></select></div>'+
+    '<div id="logOilInterval" style="background:var(--blue-lt);border-radius:var(--rx);padding:12px 14px;margin-bottom:14px;"><div style="font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">รอบเปลี่ยนน้ำมันเครื่อง</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">'+oilBtns+'</div><div id="oilIntervalDisplay" style="font-size:12px;color:var(--blue);font-weight:500;">รอบปัจจุบัน: '+oilN.toLocaleString()+' กม.</div></div>'+
+    '<div class="fr2"><div class="fs"><label class="fl">สถานที่</label><select class="fi" id="logPlace"><option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option><option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option></select></div><div class="fs"><label class="fl">ชื่อร้าน</label><input class="fi" id="logShop" placeholder="สาขา..."></div></div><div class="fr2"><div class="fs"><label class="fl">ค่าอะไหล่ (฿)</label><input class="fi" type="number" id="logPart" placeholder="0"></div><div class="fs"><label class="fl">ค่าแรง (฿)</label><input class="fi" type="number" id="logLabor" placeholder="0"></div></div><div class="fs"><label class="fl">ยี่ห้อ/เกรดน้ำมัน</label><textarea class="fi" id="logProduct" style="min-height:70px;" placeholder="เช่น Mobil 1 5W-30 Fully Synthetic"></textarea></div><div class="fs"><label class="fl">หมายเหตุ</label><textarea class="fi" id="logNote" style="min-height:80px;"></textarea></div><div class="fs"><label class="fl">รูปภาพ</label><div id="logPhotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;"></div><label class="photo-add">📷 แตะเพื่อเพิ่มรูป<input type="file" accept="image/*" multiple id="logPhotoInput" style="display:none;" onchange="handlePhotos(\'log\',event)"></label><div style="font-size:11px;color:var(--hint);margin-top:4px;">รูปจะถูก resize เป็น 800px อัตโนมัติ</div></div><div id="logMsg" style="font-size:13px;color:var(--green);text-align:center;min-height:18px;margin-bottom:4px;"></div><button class="fbtn" id="logSaveBtn" onclick="saveLog()">💾 บันทึก</button></div></div>';
+  // After innerHTML is set, attach event listener directly (more reliable than inline onchange)
+  const logTypeEl=document.getElementById('logType');
+  if(logTypeEl){
+    logTypeEl.onchange=toggleLogOilInterval;
+    // Initial state: first option is oil, so box is visible by default (correct)
+  }
+}
+function toggleLogOilInterval(){
+  const type=document.getElementById('logType')?.value||'';
+  const box=document.getElementById('logOilInterval');
+  if(box) box.style.display=type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง'?'block':'none';
+}
+function updateLogCarInterval(){
+  const cid=document.getElementById('logCar').value;
+  curCar=cid;
+  // Update car pills
+  document.querySelectorAll('.cpill').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.cpill[data-c="'+cid+'"]').forEach(p=>p.classList.add('on'));
+  // Update oil interval display
+  const n=getOilN(cid);
+  const disp=document.getElementById('oilIntervalDisplay');
+  if(disp)disp.textContent='รอบปัจจุบัน: '+n.toLocaleString()+' กม.';
+  document.querySelectorAll('.oilbtn').forEach(b=>{
+    const active=parseInt(b.dataset.v)===n;
+    b.style.background=active?'var(--blue)':'var(--gray-lt)';
+    b.style.color=active?'#fff':'var(--muted)';
+    b.style.fontWeight=active?'700':'400';
+  });
+}
+async function saveLog(){
+  const cid=document.getElementById('logCar').value;
+  const date=document.getElementById('logDate').value;
+  const kv=parseInt(document.getElementById('logKm').value);
+  const msg=document.getElementById('logMsg'),btn=document.getElementById('logSaveBtn');
+  if(!date||!kv){msg.textContent='⚠ กรุณากรอกวันที่และเลขไมล์';msg.style.color='var(--red)';return;}
+  msg.textContent='⟳ กำลังบันทึก...';msg.style.color='var(--muted)';if(btn)btn.disabled=true;
+  try{
+    const uid=sess.user.id,tok=sess.access_token;
+    const body={user_id:uid,recorded_by:document.getElementById('logBy').value||uName,car_id:cid,date,km:kv,type:document.getElementById('logType').value,place:document.getElementById('logPlace').value,shop:document.getElementById('logShop').value,part_cost:document.getElementById('logPart').value||null,labor_cost:document.getElementById('logLabor').value||null,product:document.getElementById('logProduct').value,note:document.getElementById('logNote').value};
+    const r=await sbPost('/rest/v1/car_logs',body,tok,{Prefer:'return=representation'});
+    if(!r.ok){const e=await r.text();msg.textContent='❌ '+e.substring(0,100);msg.style.color='var(--red)';if(btn)btn.disabled=false;return;}
+    const data=await r.json();const newId=data[0]?.id;
+    if(photoQ.log.length){msg.textContent='⟳ กำลัง upload รูป...';await uploadPhotos('log',newId);}
+    LOGS.unshift({id:newId,carId:cid,date,km:kv,type:body.type,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,recordedBy:body.recorded_by,ts:Date.now(),photos:'[]'});
+    if(!KM[cid]||kv>KM[cid]){KM[cid]=kv;await upsert('car_km',{user_id:uid,car_id:cid,km:kv},tok);}
+    msg.textContent='✅ บันทึกเรียบร้อย!';msg.style.color='var(--green)';
+    setTimeout(()=>{['logKm','logShop','logPart','logLabor','logProduct','logNote'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});document.getElementById('logDate').value=new Date().toISOString().split('T')[0];photoQ.log=[];const pp=document.getElementById('logPhotoPreview');if(pp)pp.innerHTML='';msg.textContent='';if(btn)btn.disabled=false;},1200);
+  }catch(e){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';if(btn)btn.disabled=false;}
+}
+
+// ══ QUICK LOG ══
+function openQL(cid,iid,label){
+  const car=CARS[cid];
+  const item=car.sc.find(i=>i.id===iid);
+  const isOil=item&&item.customInterval;
+
+  document.getElementById('qlCar').value=cid;
+  document.getElementById('qlType').value=label;
+  document.getElementById('qlInfo').innerHTML='<strong>'+label+'</strong><br><span style="font-size:11px;opacity:.8;">'+car.name+' · '+car.plate+'</span>';
+  document.getElementById('qlDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('qlKm').value=KM[cid]||'';
+  document.getElementById('qlBy').value=uName;
+  document.getElementById('qlPlace').value=cid==='cx5'?'ศูนย์มาสด้า':'ศูนย์โตโยต้า';
+  ['qlShop','qlPart','qlLabor','qlProduct','qlNote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('qlMsg').textContent='';
+
+  // Show oil interval selector only for oil items
+  const oilBox=document.getElementById('qlOilInterval');
+  if(isOil){
+    oilBox.style.display='block';
+    const n=getOilN(cid);
+    const btnsEl=document.getElementById('qlOilBtns');
+    btnsEl.innerHTML='';
+    [3000,5000,7000,10000].forEach(function(v){
+      const b=document.createElement('button');
+      b.type='button';
+      b.textContent=v.toLocaleString();
+      b.style.cssText='padding:5px 14px;border-radius:20px;border:.5px solid var(--gb);font-size:12px;font-family:inherit;cursor:pointer;font-weight:'+(n===v?'700':'400')+';background:'+(n===v?'var(--blue)':'var(--gray-lt)')+';color:'+(n===v?'#fff':'var(--muted)');
+      b.onclick=function(){
+        setOilN(cid,v);
+        document.getElementById('qlOilDisplay').textContent='รอบปัจจุบัน: '+v.toLocaleString()+' กม.';
+        btnsEl.querySelectorAll('button').forEach(function(btn){
+          const active=parseInt(btn.textContent.replace(',',''))===v;
+          btn.style.background=active?'var(--blue)':'var(--gray-lt)';
+          btn.style.color=active?'#fff':'var(--muted)';
+          btn.style.fontWeight=active?'700':'400';
+        });
+      };
+      btnsEl.appendChild(b);
+    });
+    document.getElementById('qlOilDisplay').textContent='รอบปัจจุบัน: '+n.toLocaleString()+' กม.';
+  } else {
+    oilBox.style.display='none';
+  }
+
+  photoQ.ql=[];renderPhotoPreview('ql');
+  document.getElementById('ovQL').classList.add('on');
+}
+async function saveQL(){
+  const cid=document.getElementById('qlCar').value,date=document.getElementById('qlDate').value,kv=parseInt(document.getElementById('qlKm').value);
+  const msg=document.getElementById('qlMsg');
+  if(!date||!kv){msg.textContent='⚠ กรุณากรอกวันที่และเลขไมล์';msg.style.color='var(--red)';return;}
+  msg.textContent='⟳ กำลังบันทึก...';msg.style.color='var(--muted)';
+  try{
+    const uid=sess.user.id,tok=sess.access_token,label=document.getElementById('qlType').value;
+    const body={user_id:uid,recorded_by:document.getElementById('qlBy').value||uName,car_id:cid,date,km:kv,type:label,place:document.getElementById('qlPlace').value,shop:document.getElementById('qlShop').value,part_cost:document.getElementById('qlPart').value||null,labor_cost:document.getElementById('qlLabor').value||null,product:document.getElementById('qlProduct').value,note:document.getElementById('qlNote').value};
+    const r=await sbPost('/rest/v1/car_logs',body,tok,{Prefer:'return=representation'});
+    if(!r.ok){const e=await r.text();msg.textContent='❌ '+e.substring(0,100);msg.style.color='var(--red)';return;}
+    const data=await r.json();const newId=data[0]?.id;
+    if(photoQ.ql.length){msg.textContent='⟳ upload รูป...';await uploadPhotos('ql',newId);}
+    LOGS.unshift({id:newId,carId:cid,date,km:kv,type:label,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,recordedBy:body.recorded_by,ts:Date.now(),photos:'[]'});
+    if(!KM[cid]||kv>KM[cid]){KM[cid]=kv;await upsert('car_km',{user_id:uid,car_id:cid,km:kv},tok);}
+    const itemId=CARS[cid].sc.find(i=>i.l===label)?.id;
+    if(itemId){const key=cid+'_'+itemId;LD[key]=kv;await upsert('car_lastdone',{user_id:uid,item_key:key,km:kv},tok);}
+    msg.textContent='✅ บันทึกสำเร็จ!';msg.style.color='var(--green)';
+    setTimeout(()=>{closeOv('ovQL');render();},800);
+  }catch(e){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';}
+}
+
+// ══ HISTORY ══
+function rHist(el){
+  const cl=LOGS.filter(l=>l.carId===curCar).sort((a,b)=>b.ts-a.ts);
+  const col=CAR_COLOR[curCar];
+  const items=cl.length?cl.map(l=>{
+    const tot=(+l.partCost||0)+(+l.laborCost||0);
+    const photos=JSON.parse(l.photos||'[]');
+    return '<div class="le" style="border-left:3px solid '+col+'"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div class="lt">'+l.type+'</div><div class="lm">'+l.date+' · '+l.km.toLocaleString()+' กม.'+(l.shop?' · '+l.shop:'')+(l.recordedBy?' · โดย '+l.recordedBy:'')+'</div></div><div style="display:flex;gap:6px;flex-shrink:0;"><button class="editbtn" onclick="openEditLog(\''+l.id+'\')">✏️</button><button class="delbtn" onclick="delLog(\''+l.id+'\')">ลบ</button></div></div>'+(l.product?'<div style="font-size:12px;color:var(--muted);margin:4px 0;line-height:1.5;">'+l.product+'</div>':'')+'<div class="chips" style="margin-top:4px;">'+(l.partCost?'<span class="chip">อะไหล่ ฿'+parseInt(l.partCost).toLocaleString()+'</span>':'')+(l.laborCost?'<span class="chip">ค่าแรง ฿'+parseInt(l.laborCost).toLocaleString()+'</span>':'')+(tot?'<span class="chip" style="font-weight:700;">รวม ฿'+tot.toLocaleString()+'</span>':'')+(l.note?'<span class="chip">'+l.note+'</span>':'')+'</div>'+(photos.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">'+(photos.map((_,i)=>'<div id="hph_'+l.id+'_'+i+'" style="width:72px;height:72px;background:var(--gray-lt);border-radius:10px;overflow:hidden;flex-shrink:0;">⏳</div>').join(''))+'</div>':'')+'</div>';
+  }).join(''):'<div class="empty"><div class="ei">📋</div><div class="et">ยังไม่มีประวัติ</div></div>';
+
+  const dtypes=['ทะเบียนรถ','พ.ร.บ.','ประกันภัยชั้น 1','ประกันภัยชั้น 2/3'];
+  const drows=dtypes.map(type=>{
+    const k=curCar+'_'+type,doc=DOCS[k]||{};
+    const exp=doc.expiry&&new Date(doc.expiry)<new Date(Date.now()+60*24*3600000);
+    return '<div class="dr"><div><div class="dl">'+type+'</div>'+(doc.expiry?'<div class="de" style="color:'+(exp?'var(--red)':'var(--muted)')+';">'+(exp?'⚠ ':'')+'หมดอายุ: '+doc.expiry+(doc.note?' · '+doc.note:'')+'</div>':'<div class="de">ยังไม่บันทึก</div>')+'</div><div style="display:flex;align-items:center;gap:8px;">'+(doc.expiry?'<span class="badge '+(exp?'bu':'bo')+'">'+(exp?'ใกล้หมด':'ปกติ')+'</span>':'')+'<button class="dedit" onclick="openDoc(\''+curCar+'\',\''+type+'\')">แก้ไข</button></div></div>';
+  }).join('');
+
+  el.innerHTML='<div class="sec">เอกสารสำคัญ — '+CARS[curCar].name+'</div><div class="gc"><div class="gcb" style="padding-top:12px;">'+drows+'</div></div><div class="sec">ประวัติการซ่อม — '+CARS[curCar].name+'</div>'+items;
+  cl.forEach(l=>{JSON.parse(l.photos||'[]').forEach((path,i)=>autoLoadThumb('hph_'+l.id+'_'+i,path));});
+}
+
+async function delLog(id){
+  if(!confirm('ลบรายการนี้?'))return;
+  syncBar(true);
+  const log=LOGS.find(l=>l.id===id);
+  await sbDelete('/rest/v1/car_logs?id=eq.'+id,sess.access_token);
+  LOGS=LOGS.filter(l=>l.id!==id);
+  if(log){const car=CARS[log.carId];if(car){const item=car.sc.find(i=>i.l===log.type);if(item){const key=log.carId+'_'+item.id;if(LD[key]===log.km){const rem=LOGS.filter(l=>l.carId===log.carId&&l.type===log.type).sort((a,b)=>b.km-a.km);const uid=sess.user.id,tok=sess.access_token;if(rem.length){LD[key]=rem[0].km;await sbFetch('/rest/v1/car_lastdone?user_id=eq.'+uid+'&item_key=eq.'+key,'PATCH',{km:rem[0].km},tok);}else{delete LD[key];await sbDelete('/rest/v1/car_lastdone?user_id=eq.'+uid+'&item_key=eq.'+key,tok);}}}}}
+  syncBar(false);rHist(document.getElementById('mainC'));
+}
+
+function openEditLog(id){
+  const l=LOGS.find(x=>x.id===id);if(!l)return;
+  document.getElementById('elId').value=id;document.getElementById('elCar').value=l.carId;document.getElementById('elDate').value=l.date;document.getElementById('elKm').value=l.km;
+  const setOpt=(sid,val)=>{const sel=document.getElementById(sid);const opt=Array.from(sel.options).find(o=>o.value===val||o.text===val);if(opt)sel.value=opt.value||opt.text;else{const o=document.createElement('option');o.value=val;o.text=val;sel.add(o);sel.value=val;}};
+  setOpt('elType',l.type||'');setOpt('elPlace',l.place||'ศูนย์โตโยต้า');
+  document.getElementById('elShop').value=l.shop||'';document.getElementById('elPart').value=l.partCost||'';document.getElementById('elLabor').value=l.laborCost||'';document.getElementById('elProduct').value=l.product||'';document.getElementById('elNote').value=l.note||'';
+  document.getElementById('ovEditLog').classList.add('on');
+}
+async function saveEditLog(){
+  const id=document.getElementById('elId').value,kv=parseInt(document.getElementById('elKm').value),date=document.getElementById('elDate').value;
+  if(!date||!kv){alert('กรุณากรอกวันที่และเลขไมล์');return;}
+  const body={car_id:document.getElementById('elCar').value,date,km:kv,type:document.getElementById('elType').value,place:document.getElementById('elPlace').value,shop:document.getElementById('elShop').value,part_cost:document.getElementById('elPart').value||null,labor_cost:document.getElementById('elLabor').value||null,product:document.getElementById('elProduct').value,note:document.getElementById('elNote').value};
+  syncBar(true);await sbPatch('/rest/v1/car_logs?id=eq.'+id,body,sess.access_token);
+  const i=LOGS.findIndex(l=>l.id===id);if(i>=0)LOGS[i]={...LOGS[i],carId:body.car_id,date,km:kv,type:body.type,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note};
+  syncBar(false);closeOv('ovEditLog');rHist(document.getElementById('mainC'));
+}
+
+// ══ DOCS ══
+function openDoc(cid,type){const doc=DOCS[cid+'_'+type]||{};document.getElementById('dCarId').value=cid;document.getElementById('dType').value=type;document.getElementById('ovDocTitle').textContent=type;document.getElementById('dExpiry').value=doc.expiry||'';document.getElementById('dNote').value=doc.note||'';document.getElementById('ovDoc').classList.add('on');}
+async function saveDoc(){
+  const cid=document.getElementById('dCarId').value,type=document.getElementById('dType').value,expiry=document.getElementById('dExpiry').value,note=document.getElementById('dNote').value;
+  const key=cid+'_'+type;DOCS[key]={expiry,note};syncBar(true);
+  await upsert('car_docs',{user_id:sess.user.id,doc_key:key,expiry,note},sess.access_token);
+  syncBar(false);closeOv('ovDoc');rHist(document.getElementById('mainC'));
+}
+
+// ══ SETTINGS ══
+function rSettings(el){
+  const emH=EMG.map(c=>'<div class="ccard"><div><div class="ctype">'+c.type+'</div><div class="cname">'+c.name+'</div></div><a href="tel:'+c.num+'" class="cbtn">'+c.num+'</a></div>').join('');
+
+  // Split contacts: insurance vs others
+  const insContacts=CONTACTS.filter(c=>c.type==='ประกันภัย');
+  const otherContacts=CONTACTS.filter(c=>c.type!=='ประกันภัย');
+
+  function buildContactCard(c,i){
+    const realIdx=CONTACTS.indexOf(c);
+    return '<div class="ccard"><div><div class="ctype">'+c.type+'</div><div class="cname">'+c.name+'</div>'+(c.note?'<div style="font-size:11px;color:var(--hint);">'+c.note+'</div>':'')+'</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;"><a href="tel:'+c.phone+'" class="cbtn">'+c.phone+'</a><button class="delbtn" onclick="delContact('+realIdx+')">ลบ</button></div></div>';
+  }
+
+  const insH=insContacts.length?insContacts.map(buildContactCard).join(''):'<div style="padding:14px;text-align:center;font-size:13px;color:var(--hint);">ยังไม่มีข้อมูลประกัน<br><span style="font-size:11px;">กดปุ่ม + เพิ่ม เพื่อบันทึกเบอร์ฉุกเฉินประกัน</span></div>';
+  const shopH=otherContacts.length?otherContacts.map(buildContactCard).join(''):'<div class="empty" style="padding:20px;"><div class="et">ยังไม่มีรายชื่อร้านช่าง</div></div>';
+
+  el.innerHTML=
+    '<div class="sec">👤 โปรไฟล์</div><div class="gc" style="padding:16px;"><div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;"><div style="width:52px;height:52px;border-radius:50%;background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div><div><div style="font-size:17px;font-weight:700;" id="profileNameDisplay">'+uName+'</div><div style="font-size:12px;color:var(--muted);">'+(sess?.user?.email||'')+'</div></div></div><div class="fs"><label class="fl">แก้ไขชื่อแสดง</label><input class="fi" id="newDisplayName" value="'+uName+'" placeholder="เช่น คุณปอม หรือ ภรรยา"></div><div id="profileMsg" style="font-size:13px;text-align:center;min-height:16px;margin-bottom:6px;"></div><button onclick="saveDisplayName()" style="width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">💾 บันทึกชื่อ</button></div>'+
+
+    '<div class="sec">💾 สำรองข้อมูล</div><div class="gc" style="padding:16px;"><div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6;">ข้อมูลอยู่ใน Supabase cloud อยู่แล้ว แนะนำ backup เพิ่มเติมเป็น JSON file</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;"><div style="background:var(--gray-lt);padding:10px;border-radius:var(--rx);text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--blue);">'+LOGS.length+'</div><div style="font-size:11px;color:var(--muted);">รายการซ่อม</div></div><div style="background:var(--gray-lt);padding:10px;border-radius:var(--rx);text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--green);">'+Object.keys(DOCS).length+'</div><div style="font-size:11px;color:var(--muted);">เอกสาร</div></div></div><button onclick="doBackup()" style="width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">📥 Download Backup (JSON)</button><label style="width:100%;padding:13px;background:var(--amber-lt);color:var(--amber);border:.5px solid rgba(255,159,10,.3);border-radius:var(--rx);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">📤 Restore จาก Backup<input type="file" accept=".json" style="display:none;" onchange="doRestore(event)"></label><div id="backupMsg" style="font-size:13px;text-align:center;margin-top:8px;min-height:18px;"></div></div>'+
+
+    '<div class="sec">📞 เบอร์ฉุกเฉิน</div>'+emH+
+
+    '<div class="sec" style="display:flex;justify-content:space-between;align-items:center;">'+
+      '<span>🛡️ ประกันภัย — เบอร์ฉุกเฉิน</span>'+
+      '<button onclick="openAddContact(\'ประกันภัย\')" style="font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">+ เพิ่ม</button>'+
+    '</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin:-4px 0 8px;line-height:1.5;">บันทึกเบอร์โทรประกัน — จะแสดงในหน้า To-Do เมื่อใกล้หมดอายุ</div>'+
+    insH+
+
+    '<div class="sec" style="display:flex;justify-content:space-between;align-items:center;">'+
+      '<span>🔧 ศูนย์บริการ / ร้านช่าง</span>'+
+      '<button onclick="openAddContact(\'ศูนย์บริการ\')" style="font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">+ เพิ่ม</button>'+
+    '</div>'+shopH+
+
+    '<div style="margin-top:24px;"><button onclick="doLogout()" style="width:100%;padding:14px;background:var(--red-lt);color:var(--red);border:.5px solid rgba(255,69,58,.3);border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">🚪 ออกจากระบบ</button></div>';
+}
+async function saveDisplayName(){
+  const newName=document.getElementById('newDisplayName').value.trim();
+  const msg=document.getElementById('profileMsg');
+  if(!newName){msg.textContent='⚠ กรุณาใส่ชื่อ';msg.style.color='var(--red)';return;}
+  msg.textContent='⟳ กำลังบันทึก...';msg.style.color='var(--muted)';
+  try{const r=await fetch(SBURL+'/auth/v1/user',{method:'PUT',headers:{...BH,'Authorization':'Bearer '+sess.access_token},body:JSON.stringify({data:{display_name:newName}})});if(r.ok){uName=newName;if(sess.user)sess.user.user_metadata={...sess.user.user_metadata,display_name:newName};localStorage.setItem('cc_sess',JSON.stringify(sess));document.getElementById('uBadge').textContent='⚙️ '+uName;document.getElementById('profileNameDisplay').textContent=uName;msg.textContent='✅ เปลี่ยนชื่อสำเร็จ!';msg.style.color='var(--green)';}else{msg.textContent='❌ บันทึกไม่สำเร็จ';msg.style.color='var(--red)';}}catch(e){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';}
+}
+function openAddContact(defaultType){
+  document.getElementById('ctType').value=defaultType||'ศูนย์บริการ';
+  document.getElementById('ctName').value='';
+  document.getElementById('ctPhone').value='';
+  document.getElementById('ctNote').value='';
+  document.getElementById('ovContact').classList.add('on');
+}
+function saveContact(){
+  const name=document.getElementById('ctName').value.trim(),phone=document.getElementById('ctPhone').value.trim();
+  if(!name||!phone){alert('กรุณากรอกชื่อและเบอร์');return;}
+  CONTACTS.push({type:document.getElementById('ctType').value,name,phone,note:document.getElementById('ctNote').value});
+  localStorage.setItem('cc_contacts',JSON.stringify(CONTACTS));
+  closeOv('ovContact');
+  rSettings(document.getElementById('mainC'));
+}
+function delContact(i){CONTACTS.splice(i,1);localStorage.setItem('cc_contacts',JSON.stringify(CONTACTS));rSettings(document.getElementById('mainC'));}
+
+// ══ BACKUP / RESTORE ══
+async function doBackup(){
+  const msg=document.getElementById('backupMsg');if(msg)msg.textContent='⟳ กำลังเตรียม...';
+  try{const backup={version:2,exported_at:new Date().toISOString(),user_email:sess?.user?.email||'',data:{logs:LOGS,km:KM,lastdone:LD,docs:DOCS,contacts:CONTACTS}};const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='carcare_backup_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(url);if(msg){msg.textContent='✅ Backup สำเร็จ! '+LOGS.length+' รายการ';msg.style.color='var(--green)';}}catch(e){if(msg){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';}}
+}
+async function doRestore(event){
+  const msg=document.getElementById('backupMsg');const file=event.target.files[0];if(!file)return;
+  if(!confirm('Restore จะ merge ขอมูลจากไฟลเขากับขอมูลปจจุบัน ดำเนินการตอไหม?'))return;
+  if(msg){msg.textContent='⟳ กำลัง restore...';msg.style.color='var(--muted)';}
+  try{const backup=JSON.parse(await file.text());if(!backup.data)throw new Error('ไฟล์ไม่ถูกต้อง');const{logs,km,lastdone,docs,contacts}=backup.data;const tok=sess.access_token,uid=sess.user.id;let restored=0;if(logs&&logs.length){const existing=new Set(LOGS.map(l=>l.id));for(const l of logs.filter(l=>l.id&&!existing.has(l.id))){const r=await sbPost('/rest/v1/car_logs',{id:l.id,user_id:uid,recorded_by:l.recordedBy||'restore',car_id:l.carId,date:l.date,km:l.km,type:l.type,place:l.place,shop:l.shop,part_cost:l.partCost,labor_cost:l.laborCost,product:l.product,note:l.note,photos:l.photos||'[]'},tok,{Prefer:'resolution=ignore-duplicates'});if(r.ok)restored++;}}if(km)for(const[carId,v]of Object.entries(km))if(v>0&&(!KM[carId]||v>KM[carId])){KM[carId]=v;await upsert('car_km',{user_id:uid,car_id:carId,km:v},tok);}if(lastdone)for(const[key,v]of Object.entries(lastdone))if(!LD[key]||v>LD[key]){LD[key]=v;await upsert('car_lastdone',{user_id:uid,item_key:key,km:v},tok);}if(docs)for(const[key,doc]of Object.entries(docs))if(doc.expiry&&!DOCS[key]?.expiry){DOCS[key]=doc;await upsert('car_docs',{user_id:uid,doc_key:key,expiry:doc.expiry,note:doc.note||''},tok);}if(contacts&&contacts.length){const en=new Set(CONTACTS.map(c=>c.name));CONTACTS=[...CONTACTS,...contacts.filter(c=>!en.has(c.name))];localStorage.setItem('cc_contacts',JSON.stringify(CONTACTS));}if(msg){msg.textContent='✅ Restore สำเร็จ! '+restored+' รายการ';msg.style.color='var(--green)';}setTimeout(()=>render(),1500);}catch(e){if(msg){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';}}
+  event.target.value='';
+}
+
+// ══ OVERLAY ══
+function closeOv(id){document.getElementById(id).classList.remove('on');}
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('on');}));
+
+// ══ INIT ══
+async function init(){
+  const hash=window.location.hash;
+  if(hash&&hash.includes('access_token')){const params=new URLSearchParams(hash.replace('#',''));const tok=params.get('access_token');if(tok){const r=await sbFetch('/auth/v1/user','GET',null,tok);if(r.ok&&r.d.id){sess={access_token:tok,refresh_token:params.get('refresh_token'),user:r.d};uName=r.d.user_metadata?.display_name||r.d.email.split('@')[0];localStorage.setItem('cc_sess',JSON.stringify(sess));history.replaceState(null,'',location.pathname);await startApp();return;}}}
+  const stored=localStorage.getItem('cc_sess');
+  if(stored){try{const s=JSON.parse(stored);const r=await sbFetch('/auth/v1/user','GET',null,s.access_token);if(r.ok&&r.d.id){sess=s;sess.user=r.d;uName=r.d.user_metadata?.display_name||r.d.email.split('@')[0];await startApp();return;}}catch(e){}localStorage.removeItem('cc_sess');}
+  initFaceIdUI();
+}
+init();
+</script>
+</body>
+</html>
