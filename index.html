@@ -779,9 +779,27 @@ function rTodo(el){
   const car=CARS[curCar],cid=curCar,ck=KM[cid];
   const oilN=getOilN(cid);
   const sorted=[...car.sc].sort((a,b)=>SORT_ORDER[st(cid,a)]-SORT_ORDER[st(cid,b)]);
-  const u=sorted.filter(i=>st(cid,i)==='urgent').length;
-  const s=sorted.filter(i=>st(cid,i)==='soon').length;
-  const o=sorted.filter(i=>st(cid,i)==='ok').length;
+
+  // Count maintenance items
+  let u=sorted.filter(i=>st(cid,i)==='urgent').length;
+  let s=sorted.filter(i=>st(cid,i)==='soon').length;
+  let o=sorted.filter(i=>st(cid,i)==='ok').length;
+  // unknown items = no data yet — shown separately but counted in summary
+  const unk=sorted.filter(i=>st(cid,i)==='unknown').length;
+
+  // Also count doc expiry items
+  const dtypes2=['ทะเบียนรถ','พ.ร.บ.','ประกันภัยชั้น 1','ประกันภัยชั้น 2/3'];
+  const todayRef=new Date();todayRef.setHours(0,0,0,0);
+  dtypes2.forEach(function(type){
+    const doc=DOCS[cid+'_'+type]||{};
+    if(!doc.expiry)return;
+    const expDate=new Date(doc.expiry);expDate.setHours(0,0,0,0);
+    const daysLeft=Math.floor((expDate-todayRef)/86400000);
+    if(daysLeft<=30) u++;
+    else if(daysLeft<=90) s++;
+    else o++;
+  });
+
   const col=CAR_COLOR[cid];
 
   const items=sorted.map(item=>{
@@ -811,7 +829,7 @@ function rTodo(el){
   }).join('');
 
   el.innerHTML='<div class="kmb"><label>ไมล์ปัจจุบัน</label><input type="number" id="kmInput" value="'+(ck||'')+'" placeholder="เช่น 85000"><button onclick="updKm()">อัพเดต</button></div>'+(car.type==='hybrid'?'<div class="alert hybrid">⚡ Hybrid อายุ 18+ ปี — เข้าศูนย์โตโยต้าเท่านั้น</div>':'')+
-    '<div class="srow"><div class="sc r"><div class="sn">'+u+'</div><div class="sl">ถึงกำหนด</div></div><div class="sc a"><div class="sn">'+s+'</div><div class="sl">ใกล้ถึง</div></div><div class="sc g"><div class="sn">'+o+'</div><div class="sl">ปกติ</div></div></div>'+
+    '<div class="srow" style="grid-template-columns:1fr 1fr 1fr 1fr;"><div class="sc r"><div class="sn">'+u+'</div><div class="sl">ถึงกำหนด</div></div><div class="sc a"><div class="sn">'+s+'</div><div class="sl">ใกล้ถึง</div></div><div class="sc g"><div class="sn">'+o+'</div><div class="sl">ปกติ</div></div><div class="sc" style="background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);box-shadow:var(--sh);"><div class="sn" style="font-size:22px;color:var(--muted);">'+unk+'</div><div class="sl">ไม่มีข้อมูล</div></div></div>'+
     '<div id="todoDocSection"></div>'+
     '<div class="sec" style="display:flex;justify-content:space-between;"><span>รายการซ่อมบำรุง — '+car.name+'</span><span style="font-size:11px;color:var(--hint);">เรียงตามความเร่งด่วน ↓</span></div>'+items;
 
