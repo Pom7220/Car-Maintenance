@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -1281,13 +1280,20 @@ function rSettings(el){
   const shopH=otherContacts.length?otherContacts.map(buildContactCard).join(''):'<div class="empty" style="padding:20px;"><div class="et">ยังไม่มีรายชื่อร้านช่าง</div></div>';
 
   el.innerHTML=
-    '<div class="sec">👤 โปรไฟล์</div><div class="gc" style="padding:16px;"><div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;"><div style="width:52px;height:52px;border-radius:50%;background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div><div><div style="font-size:17px;font-weight:700;" id="profileNameDisplay">'+uName+'</div><div style="font-size:12px;color:var(--muted);">'+(sess?.user?.email||'')+'</div></div></div><div class="fs"><label class="fl">แก้ไขชื่อแสดง</label><input class="fi" id="newDisplayName" value="'+uName+'" placeholder="เช่น คุณปอม หรือ ภรรยา"></div><div id="profileMsg" style="font-size:13px;text-align:center;min-height:16px;margin-bottom:6px;"></div><button onclick="saveDisplayName()" style="width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">💾 บันทึกชื่อ</button></div>'+
-
-    '<div class="sec">🔒 เปลี่ยน Password</div><div class="gc" style="padding:16px;">'+
+    '<div class="sec">👤 โปรไฟล์ & ความปลอดภัย</div><div class="gc" style="padding:16px;">'+
+    '<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;"><div style="width:52px;height:52px;border-radius:50%;background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div><div><div style="font-size:17px;font-weight:700;" id="profileNameDisplay">'+uName+'</div><div style="font-size:12px;color:var(--muted);">'+(sess?.user?.email||'')+'</div></div></div>'+
+    '<div class="fs"><label class="fl">แก้ไขชื่อแสดง</label><input class="fi" id="newDisplayName" value="'+uName+'" placeholder="เช่น คุณปอม หรือ ภรรยา"></div>'+
+    '<div id="profileMsg" style="font-size:13px;text-align:center;min-height:16px;margin-bottom:6px;"></div>'+
+    '<button onclick="saveDisplayName()" style="width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">💾 บันทึกชื่อ</button>'+
+    '<div style="margin-top:16px;border-top:.5px solid var(--gb);padding-top:14px;">'+
+    '<button onclick="toggleChangePwd()" style="width:100%;padding:10px;background:var(--gray-lt);color:var(--muted);border:none;border-radius:var(--rx);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;display:flex;justify-content:space-between;align-items:center;" id="changePwdToggle">'+
+    '<span>🔒 เปลี่ยน Password</span><span id="changePwdArrow" style="font-size:12px;">›</span></button>'+
+    '<div id="changePwdForm" style="display:none;margin-top:12px;">'+
     '<div class="fs"><label class="fl">Password ใหม่</label><input class="fi" type="password" id="cpPass" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password"></div>'+
-    '<div class="fs"><label class="fl">ยืนยัน Password ใหม่</label><input class="fi" type="password" id="cpPass2" placeholder="••••••••" autocomplete="new-password"></div>'+
+    '<div class="fs"><label class="fl">ยืนยัน Password</label><input class="fi" type="password" id="cpPass2" placeholder="••••••••" autocomplete="new-password"></div>'+
     '<div id="cpMsg" style="font-size:13px;text-align:center;min-height:16px;margin-bottom:6px;"></div>'+
-    '<button id="cpBtn" onclick="doChangePassword()" style="width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">🔒 เปลี่ยน Password</button></div>'+
+    '<button id="cpBtn" onclick="doChangePassword()" style="width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">บันทึก Password ใหม่</button>'+
+    '</div></div></div>'+
 
     '<div class="sec">💾 สำรองข้อมูล</div><div class="gc" style="padding:16px;"><div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6;">ข้อมูลอยู่ใน Supabase cloud อยู่แล้ว แนะนำ backup เพิ่มเติมเป็น JSON file</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;"><div style="background:var(--gray-lt);padding:10px;border-radius:var(--rx);text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--blue);">'+LOGS.length+'</div><div style="font-size:11px;color:var(--muted);">รายการซ่อม</div></div><div style="background:var(--gray-lt);padding:10px;border-radius:var(--rx);text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--green);">'+Object.keys(DOCS).length+'</div><div style="font-size:11px;color:var(--muted);">เอกสาร</div></div></div><button onclick="doBackup()" style="width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">📥 Download Backup (JSON)</button><label style="width:100%;padding:13px;background:var(--amber-lt);color:var(--amber);border:.5px solid rgba(255,159,10,.3);border-radius:var(--rx);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">📤 Restore จาก Backup<input type="file" accept=".json" style="display:none;" onchange="doRestore(event)"></label><div id="backupMsg" style="font-size:13px;text-align:center;margin-top:8px;min-height:18px;"></div></div>'+
 
@@ -1363,6 +1369,13 @@ async function doResetPassword(tok){
 }
 
 // ── CHANGE PASSWORD (from Settings) ──
+function toggleChangePwd(){
+  const form=document.getElementById('changePwdForm');
+  const arrow=document.getElementById('changePwdArrow');
+  const isOpen=form.style.display!=='none';
+  form.style.display=isOpen?'none':'block';
+  arrow.textContent=isOpen?'›':'∨';
+}
 async function doChangePassword(){
   const p1=document.getElementById('cpPass').value;
   const p2=document.getElementById('cpPass2').value;
