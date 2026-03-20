@@ -196,6 +196,7 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
   <div class="a-logo">🚗</div>
   <div class="a-title">Car Care</div>
   <div class="a-sub">ระบบบำรุงรักษารถยนต์</div>
+  <div style="text-align:center;font-size:11px;color:var(--hint);margin-top:-20px;margin-bottom:20px;font-weight:500;letter-spacing:.03em;">v2.5.0 · 20 Mar 2026</div>
   <div id="faceIdSection" style="display:none;margin-bottom:16px;">
     <button class="abtn" onclick="doFaceIdLogin()" style="background:linear-gradient(135deg,#1C1C1E,#3A3A3C);font-size:17px;">Face ID / Touch ID</button>
     <div id="faceIdName" style="text-align:center;font-size:14px;font-weight:600;margin-top:8px;"></div>
@@ -720,6 +721,7 @@ async function loadAll(){
   if(ra.ok&&ra.d.length) ALLOWED_CARS=ra.d.map(r=>r.car_id);
   else ALLOWED_CARS=Object.keys(CARS); // fallback: see all built-in cars
   IS_ADMIN=!!(radmin&&radmin.ok&&radmin.d&&radmin.d.length>0);
+  console.log('[CarCare] IS_ADMIN=',IS_ADMIN,'radmin=',radmin?.d);
   if(rk.ok)rk.d.forEach(r=>{KM[r.car_id]=r.km;if(r.updated_at)KM_UPDATED[r.car_id]=new Date(r.updated_at);});
   if(rd.ok)rd.d.forEach(r=>LD[r.key]=r.km);
   if(rl.ok)LOGS=rl.d.map(r=>({id:r.id,carId:r.car_id,date:r.date,km:r.km,type:r.type,place:r.place,shop:r.shop,partCost:r.part_cost,laborCost:r.labor_cost,product:r.product,note:r.note,recordedBy:r.recorded_by,photos:r.photos||'[]',ts:new Date(r.created_at).getTime()}));
@@ -1671,9 +1673,13 @@ async function saveDoc(){
 }
 
 // ══ SETTINGS ══
+function isAdminUser(){
+  // Check both IS_ADMIN flag (from DB) and email fallback
+  return IS_ADMIN || (sess&&sess.user&&sess.user.email==='k_ratchapon@hotmail.com');
+}
 function rSettings(el){
   // Show admin panel if admin
-  if(IS_ADMIN){
+  if(isAdminUser()){
     const adminBtn='<div class="sec">👑 Admin Panel</div>'+
       '<div class="gc" style="padding:16px;">'+
       '<div style="font-size:13px;color:var(--muted);margin-bottom:12px;">จัดการสิทธิ์การเข้าถึงรถของแต่ละ User</div>'+
