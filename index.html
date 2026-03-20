@@ -426,10 +426,89 @@ const CARS={
     {id:'dif',l:'น้ำมัน Differential (AWD)',n:80000,days:0,p:'ศูนย์มาสด้า',cm:1500,cx:3000,note:'เฉพาะรุ่น AWD'},
   ]},
 };
+
+// ══ CAR TEMPLATES — Maintenance schedules by brand/type ══
+const CAR_TEMPLATES={
+  // ─── EV template (BYD / AION / BMW i-Series) ───
+  ev:{
+    sc:[
+      {id:'cab',l:'ไส้กรองแอร์ (Cabin)',n:20000,days:365,p:'ศูนย์',cm:400,cx:1000,note:'ทุก 20,000 กม. หรือ 1 ปี'},
+      {id:'bro',l:'น้ำมันเบรก',n:0,days:730,p:'ศูนย์',cm:500,cx:1000,note:'ทุก 2 ปี — Regen Braking ช่วยลด wear'},
+      {id:'brp',l:'ผ้าเบรก (ตรวจ)',n:20000,days:365,p:'ศูนย์',cm:2000,cx:5000,note:'Regen Braking ทำให้สึกช้า'},
+      {id:'tir',l:'ยาง/สลับยาง',n:10000,days:0,p:'ร้านยาง',cm:400,cx:800,note:'EV หนักกว่า — ยางสึกเร็วกว่า สลับทุก 10,000 กม.'},
+      {id:'tyr',l:'เปลี่ยนยางใหม่',n:40000,days:1460,p:'ร้านยาง',cm:10000,cx:30000,note:'EV ทำให้ยางสึกเร็วกว่ารถน้ำมัน ~20%'},
+      {id:'cool_ev',l:'น้ำหล่อเย็น Power Unit',n:60000,days:1460,p:'ศูนย์',cm:2000,cx:5000,note:'ทุก 4 ปี หรือ 60,000 กม.'},
+      {id:'svc',l:'เข้าศูนย์ตรวจ (Annual)',n:30000,days:730,p:'ศูนย์',cm:2000,cx:5000,note:'ทุก 30,000 กม. หรือ 2 ปี — ตรวจระบบ BMS, software update, torque check'},
+      {id:'bat',l:'ตรวจ EV Battery Health',n:0,days:365,p:'ศูนย์',cm:500,cx:1500,note:'ตรวจสภาพแบตฯ ทุก 1 ปี — ดู State of Health (SOH)'},
+    ]
+  },
+  // ─── PHEV template ───
+  phev:{
+    sc:[
+      {id:'oil',l:'เปลี่ยนน้ำมันเครื่อง + ไส้กรอง',n:10000,days:365,p:'ศูนย์',cm:2000,cx:5000,note:'ทุก 10,000 กม. หรือ 1 ปี (ใช้น้ำมันน้อยกว่า ICE)',customInterval:true},
+      {id:'cab',l:'ไส้กรองแอร์ (Cabin)',n:20000,days:365,p:'ศูนย์',cm:400,cx:1000,note:'ทุก 20,000 กม. หรือ 1 ปี'},
+      {id:'bro',l:'น้ำมันเบรก',n:0,days:730,p:'ศูนย์',cm:500,cx:1000,note:'ทุก 2 ปี'},
+      {id:'brp',l:'ผ้าเบรก (ตรวจ)',n:20000,days:365,p:'ศูนย์',cm:2000,cx:5000,note:'Regen Braking ช่วยลด wear'},
+      {id:'cool_ev',l:'น้ำหล่อเย็น Power Unit',n:0,days:1825,p:'ศูนย์',cm:2000,cx:5000,note:'ทุก 5 ปี'},
+      {id:'svc',l:'เข้าศูนย์ตรวจ',n:20000,days:365,p:'ศูนย์',cm:2000,cx:5000,note:'ทุก 20,000 กม. หรือ 1 ปี'},
+      {id:'tir',l:'ยาง/สลับยาง',n:10000,days:0,p:'ร้านยาง',cm:400,cx:800,note:'ทุก 10,000 กม.'},
+      {id:'tyr',l:'เปลี่ยนยางใหม่',n:50000,days:1825,p:'ร้านยาง',cm:10000,cx:24000,note:'ทุก 50,000 กม. หรือ 5 ปี'},
+    ]
+  },
+  // ─── BMW petrol/diesel (ICE) ───
+  bmw_ice:{
+    sc:[
+      {id:'oil',l:'เปลี่ยนน้ำมันเครื่อง + ไส้กรอง',n:20000,days:365,p:'ศูนย์ BMW เท่านั้น',cm:4000,cx:10000,note:'BMW Longlife-04 หรือ LL-17 FE+ เท่านั้น — ห้ามใช้น้ำมันทั่วไป',customInterval:true},
+      {id:'airf',l:'ไส้กรองอากาศ',n:40000,days:730,p:'ศูนย์ BMW',cm:1500,cx:3500,note:'ทุก 40,000 กม. หรือ 2 ปี'},
+      {id:'cab',l:'ไส้กรองแอร์ (Cabin)',n:20000,days:365,p:'ศูนย์ BMW',cm:800,cx:2000,note:'ทุก 20,000 กม. หรือ 1 ปี'},
+      {id:'spk',l:'หัวเทียน',n:60000,days:0,p:'ศูนย์ BMW',cm:4000,cx:12000,note:'OEM BMW Iridium เท่านั้น — ห้ามใช้ยี่ห้ออื่น'},
+      {id:'geo',l:'น้ำมันเกียร์ ZF 8HP',n:0,days:0,p:'ศูนย์ BMW',cm:5000,cx:12000,note:'ℹ️ BMW ระบุ "sealed for life" แต่ผู้เชี่ยวชาญแนะนำเปลี่ยนทุก 80,000-100,000 กม.'},
+      {id:'bro',l:'น้ำมันเบรก',n:0,days:730,p:'ศูนย์ BMW',cm:800,cx:2000,note:'ทุก 2 ปี — BMW DOT 4'},
+      {id:'cool',l:'น้ำหล่อเย็น',n:0,days:1825,p:'ศูนย์ BMW',cm:2000,cx:5000,note:'BMW Coolant ทุก 5 ปี'},
+      {id:'brp',l:'ผ้าเบรก (ตรวจ)',n:20000,days:365,p:'ศูนย์ BMW',cm:5000,cx:15000,note:'ผ้าเบรก BMW แพงกว่าทั่วไป 2-3 เท่า'},
+      {id:'tir',l:'ยาง/สลับยาง',n:10000,days:0,p:'ร้านยาง',cm:500,cx:1000,note:'BMW แนะนำใช้ยาง Run-Flat (RFT)'},
+      {id:'tyr',l:'เปลี่ยนยางใหม่',n:40000,days:1460,p:'ร้านยาง',cm:15000,cx:40000,note:'ยาง Run-Flat แพงกว่ายางปกติ 2-3 เท่า'},
+    ]
+  },
+  // ─── BMW EV (i-Series) ───
+  bmw_ev:{
+    sc:[
+      {id:'cab',l:'ไส้กรองแอร์ (Cabin)',n:20000,days:365,p:'ศูนย์ BMW',cm:800,cx:2000,note:'ทุก 20,000 กม. หรือ 1 ปี'},
+      {id:'bro',l:'น้ำมันเบรก',n:0,days:730,p:'ศูนย์ BMW',cm:800,cx:2000,note:'ทุก 2 ปี — BMW DOT 4'},
+      {id:'brp',l:'ผ้าเบรก (ตรวจ)',n:20000,days:365,p:'ศูนย์ BMW',cm:5000,cx:15000,note:'Regen Braking ช่วยลด wear มาก'},
+      {id:'cool_ev',l:'น้ำหล่อเย็น Power Unit',n:0,days:1825,p:'ศูนย์ BMW',cm:2000,cx:5000,note:'ทุก 5 ปี'},
+      {id:'svc',l:'BSI Annual Service',n:30000,days:730,p:'ศูนย์ BMW เท่านั้น',cm:3000,cx:8000,note:'BMW BSI ครอบคลุม 4 ปี/80,000 กม. — Software OTA update, ตรวจ battery health'},
+      {id:'bat',l:'ตรวจ Battery Health',n:0,days:365,p:'ศูนย์ BMW',cm:500,cx:2000,note:'ตรวจ SOH ทุก 1 ปี'},
+      {id:'tir',l:'ยาง/สลับยาง',n:10000,days:0,p:'ร้านยาง',cm:500,cx:1000,note:'EV หนัก — ยาง Run-Flat สึกเร็ว'},
+      {id:'tyr',l:'เปลี่ยนยางใหม่',n:35000,days:1460,p:'ร้านยาง',cm:15000,cx:40000,note:'EV+RFT ยางสึกเร็วกว่ามาก'},
+    ]
+  },
+};
+
+// ─── BRAND CONFIG: which template to use ───
+const BRAND_TEMPLATES={
+  'BYD':    {ev:'ev',   phev:'phev', ice:'ev'},
+  'AION':   {ev:'ev',   phev:'phev'},
+  'BMW':    {ev:'bmw_ev', phev:'phev', ice:'bmw_ice'},
+  'Toyota': {ev:'ev',   hybrid:'ev',  phev:'phev', ice:'altis'},
+  'Mazda':  {ev:'ev',   ice:'cx5'},
+  'Honda':  {ev:'ev',   ice:'bmw_ice'},
+  'Mercedes':{ev:'bmw_ev', phev:'phev', ice:'bmw_ice'},
+};
+
+// ─── Build maintenance schedule from template ───
+function buildScFromTemplate(brand, carType){
+  const brandMap=BRAND_TEMPLATES[brand]||{};
+  const tmplKey=brandMap[carType]||'ev';
+  const tmpl=CAR_TEMPLATES[tmplKey];
+  if(tmpl) return tmpl.sc.map(i=>({...i}));
+  return CAR_TEMPLATES['ev'].sc.map(i=>({...i})); // fallback to EV
+}
+
 const EMG=[{type:'ฉุกเฉิน',name:'กู้ชีพ/กู้ภัย',num:'1669'},{type:'ตำรวจ',name:'แจ้งเหตุ',num:'191'},{type:'ทางหลวง',name:'กรมทางหลวง',num:'1586'},{type:'ทางด่วน',name:'ศูนย์ควบคุม',num:'1543'},{type:'Toyota TH',name:'Toyota Customer',num:'02-386-2000'},{type:'Mazda TH',name:'Mazda Customer',num:'02-260-8000'}];
 
 // ══ STATE ══
-let sess=null,uName='',curCar='altis',curTab='dashboard';
+let sess=null,uName='',curCar='altis',curTab='dashboard',ALLOWED_CARS=null;
 let KM={altis:0,estima:0,cx5:0},KM_UPDATED={},KM_RATE={},LD={},LOGS=[],CONTACTS=[],DOCS={};
 let syncTimer=null,logFormReady=false;
 const photoQ={log:[],ql:[]};
@@ -629,12 +708,16 @@ async function initFaceIdUI(){
 async function loadAll(){
   syncBar(true);
   const tok=sess.access_token,uid=sess.user.id;
-  const [rk,rd,rl,rc]=await Promise.all([
+  const [rk,rd,rl,rc,ra]=await Promise.all([
     sbFetch('/rest/v1/car_km?user_id=eq.'+uid+'&select=*','GET',null,tok),
     sbFetch('/rest/v1/car_lastdone?user_id=eq.'+uid+'&select=*','GET',null,tok),
     sbFetch('/rest/v1/car_logs?user_id=eq.'+uid+'&select=*&order=created_at.desc','GET',null,tok),
     sbFetch('/rest/v1/car_docs?user_id=eq.'+uid+'&select=*','GET',null,tok),
+    sbFetch('/rest/v1/car_access?user_id=eq.'+uid+'&select=car_id,role','GET',null,tok),
   ]);
+  // Update allowed cars list
+  if(ra.ok&&ra.d.length) ALLOWED_CARS=ra.d.map(r=>r.car_id);
+  else ALLOWED_CARS=Object.keys(CARS); // fallback: see all built-in cars
   if(rk.ok)rk.d.forEach(r=>{KM[r.car_id]=r.km;if(r.updated_at)KM_UPDATED[r.car_id]=new Date(r.updated_at);});
   if(rd.ok)rd.d.forEach(r=>LD[r.key]=r.km);
   if(rl.ok)LOGS=rl.d.map(r=>({id:r.id,carId:r.car_id,date:r.date,km:r.km,type:r.type,place:r.place,shop:r.shop,partCost:r.part_cost,laborCost:r.labor_cost,product:r.product,note:r.note,recordedBy:r.recorded_by,photos:r.photos||'[]',ts:new Date(r.created_at).getTime()}));
@@ -647,6 +730,26 @@ async function loadAll(){
     }
   });
   CONTACTS=JSON.parse(localStorage.getItem('cc_contacts')||'[]');
+  // Load user-added cars from DB
+  const ruc=await sbFetch('/rest/v1/user_cars?user_id=eq.'+uid+'&select=*','GET',null,tok);
+  if(ruc.ok&&ruc.d.length){
+    ruc.d.forEach(r=>{
+      if(!CARS[r.car_id]){
+        CARS[r.car_id]={
+          id:r.car_id,
+          name:r.brand+' '+r.model+' '+r.year,
+          type:r.car_type||'ice',
+          plate:r.plate||'',
+          engine:r.engine||'',
+          color:r.color_hex||'#636366',
+          sc:buildScFromTemplate(r.brand,r.car_type||'ev')
+        };
+        CAR_COLOR[r.car_id]=r.color_hex||'#636366';
+        CAR_COLOR_LT[r.car_id]=(r.color_hex||'#636366')+'26';
+        if(!KM[r.car_id]) KM[r.car_id]=0;
+      }
+    });
+  }
   syncBar(false);
 }
 
@@ -654,10 +757,25 @@ async function startApp(){
   document.getElementById('authWrap').style.display='none';
   document.getElementById('App').classList.add('on');
   document.getElementById('uBadge').textContent='⚙️ '+uName;
-  await loadAll();render();
+  await loadAll();
+  // Set curCar to first allowed car
+  const allowed=ALLOWED_CARS||Object.keys(CARS);
+  if(!allowed.includes(curCar)) curCar=allowed[0]||'altis';
+  // Init KM/KM_RATE for user cars too
+  render();
   if(syncTimer)clearInterval(syncTimer);
-  syncTimer=setInterval(async()=>{if(curTab==='log')return;if(sess){const payload=JSON.parse(atob(sess.access_token.split('.')[1]));if(payload.exp*1000-Date.now()<600000)await refreshToken();}await loadAll();render();},30000);
-  document.addEventListener('visibilitychange',async()=>{if(document.visibilityState==='visible'&&sess&&curTab!=='log'){await loadAll();render();}});
+  syncTimer=setInterval(async()=>{if(curTab==='log')return;if(sess){const payload=JSON.parse(atob(sess.access_token.split('.')[1]));if(payload.exp*1000-Date.now()<600000)await refreshToken();}await loadAll();
+  // Set curCar to first allowed car
+  const allowed=ALLOWED_CARS||Object.keys(CARS);
+  if(!allowed.includes(curCar)) curCar=allowed[0]||'altis';
+  // Init KM/KM_RATE for user cars too
+  render();},30000);
+  document.addEventListener('visibilitychange',async()=>{if(document.visibilityState==='visible'&&sess&&curTab!=='log'){await loadAll();
+  // Set curCar to first allowed car
+  const allowed=ALLOWED_CARS||Object.keys(CARS);
+  if(!allowed.includes(curCar)) curCar=allowed[0]||'altis';
+  // Init KM/KM_RATE for user cars too
+  render();}});
 }
 
 // ══ STATUS ══
@@ -789,7 +907,8 @@ function renderHdr(){
     sub.textContent=curTab==='settings'?'ตั้งค่า & ข้อมูล':'ภาพรวมและค่าใช้จ่าย';
   }else{
     pills.style.display='flex';
-    pills.innerHTML=Object.values(CARS).map(c=>'<button class="cpill'+(c.id===curCar?' on':'')+'" data-c="'+c.id+'" onclick="goCar(\''+c.id+'\')" style="border-color:'+CAR_COLOR[c.id]+(c.id===curCar?';background:'+CAR_COLOR[c.id]+';color:#fff':'')+'">'+(c.name.replace('Toyota ','').replace('Mazda ',''))+'</button>').join('');
+    pills.innerHTML=Object.values(CARS).filter(c=>!ALLOWED_CARS||ALLOWED_CARS.includes(c.id)).map(c=>'<button class="cpill'+(c.id===curCar?' on':'')+'" data-c="'+c.id+'" onclick="goCar(\''+c.id+'\')" style="border-color:'+CAR_COLOR[c.id]+(c.id===curCar?';background:'+CAR_COLOR[c.id]+';color:#fff':'')+'">'+(c.name.replace('Toyota ','').replace('Mazda ',''))+'</button>').join('')+
+    '<button onclick="openAddCar()" style="padding:6px 12px;border-radius:20px;border:.5px dashed var(--muted);background:transparent;font-size:13px;color:var(--muted);cursor:pointer;font-family:inherit;flex-shrink:0;">+ เพิ่มรถ</button>';
     sub.textContent={todo:'To-Do รายการซ่อม',log:'บันทึกการซ่อม',history:'ประวัติ & เอกสาร'}[curTab]||'';
   }
 }
@@ -1699,6 +1818,124 @@ function openAddContact(defaultType){
   document.getElementById('ctPhone').value='';
   document.getElementById('ctNote').value='';
   document.getElementById('ovContact').classList.add('on');
+}
+// ══ ADD CAR ══
+const BRAND_LIST=['Toyota','Honda','Mazda','BMW','Mercedes','BYD','AION','Isuzu','Mitsubishi','Nissan','Ford','Chevrolet','MG','Haval','Changan','Neta','อื่นๆ'];
+const CAR_TYPE_LIST=[{v:'ice',l:'น้ำมัน (ICE)'},{v:'hybrid',l:'Hybrid (HEV)'},{v:'phev',l:'Plug-in Hybrid (PHEV)'},{v:'ev',l:'ไฟฟ้า (EV)'}];
+const AION_MODELS=['Y Plus','V','UT','ES','HT'];
+const BYD_MODELS=['Dolphin','Atto 3','Seal','Seal U (DM-i)','Han','Tang','Sea Lion 7','Sea Lion 6'];
+const BMW_ICE=['2 Series','5 Series','7 Series','X1','X3','X5','X7','M2','M4','M5'];
+const BMW_EV=['i4','i5','i7','iX','iX2','iX3'];
+const BRAND_MODELS={'BYD':{'ev':BYD_MODELS,'phev':['Seal U (DM-i)','Tang DM-i'],'ice':[]},'AION':{'ev':AION_MODELS},'BMW':{'ice':BMW_ICE,'ev':BMW_EV,'phev':['5 Series 530e','X5 50e']}};
+const PALETTE=['#0A84FF','#30D158','#BF5AF2','#FF9F0A','#FF453A','#64D2FF','#FFD60A','#FF6B35'];
+
+function openAddCar(){
+  let ov=document.getElementById('ovAddCar');
+  if(!ov){
+    ov=document.createElement('div');ov.id='ovAddCar';ov.className='ov';
+    ov.innerHTML=
+      '<div class="ovs" style="max-height:88vh;">'+
+      '<div class="ovh"></div>'+
+      '<div class="ovt">🚗 เพิ่มรถคันใหม่</div>'+
+      '<div class="fs"><label class="fl">ยี่ห้อ *</label>'+
+      '<select class="fi" id="acBrand" onchange="acBrandChange()">'+
+      '<option value="">-- เลือกยี่ห้อ --</option>'+
+      BRAND_LIST.map(b=>'<option>'+b+'</option>').join('')+
+      '</select></div>'+
+      '<div class="fs"><label class="fl">รุ่น *</label><input class="fi" id="acModel" placeholder="เช่น Atto 3, Corolla, X3"></div>'+
+      '<div class="fs"><label class="fl">ปี (พ.ศ.) *</label><input class="fi" type="number" id="acYear" placeholder="เช่น 2567" min="2540" max="2570"></div>'+
+      '<div class="fs"><label class="fl">ประเภท *</label>'+
+      '<select class="fi" id="acType">'+CAR_TYPE_LIST.map(t=>'<option value="'+t.v+'">'+t.l+'</option>').join('')+'</select></div>'+
+      '<div class="fs"><label class="fl">ทะเบียน</label><input class="fi" id="acPlate" placeholder="เช่น กข 1234 กทม"></div>'+
+      '<div class="fs"><label class="fl">สีรถ</label>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;" id="acPalette">'+
+      PALETTE.map((c,i)=>'<div onclick="acPickColor(\''+c+'\')" id="acp'+i+'" style="width:32px;height:32px;border-radius:50%;background:'+c+';cursor:pointer;border:3px solid '+(i===0?'var(--text)':'transparent')+';"></div>').join('')+
+      '</div></div>'+
+      '<div id="acMsg" style="font-size:13px;color:var(--red);min-height:16px;text-align:center;margin-bottom:6px;"></div>'+
+      '<button class="fbtn" id="acSaveBtn" onclick="saveNewCar()">➕ เพิ่มรถ</button>'+
+      '<button class="cancelbtn" onclick="document.getElementById(\'ovAddCar\').classList.remove(\'on\')">ยกเลิก</button>'+
+      '</div>';
+    ov.onclick=function(e){if(e.target===ov)ov.classList.remove('on');};
+    document.body.appendChild(ov);
+  }
+  ov._color=PALETTE[0];
+  document.getElementById('acBrand').value='';
+  document.getElementById('acModel').value='';
+  document.getElementById('acYear').value=new Date().getFullYear()+543;
+  document.getElementById('acType').value='ev';
+  document.getElementById('acPlate').value='';
+  document.getElementById('acMsg').textContent='';
+  ov.classList.add('on');
+}
+function acBrandChange(){
+  const brand=document.getElementById('acBrand').value;
+  const type=document.getElementById('acType').value;
+  const models=BRAND_MODELS[brand]?.[type]||BRAND_MODELS[brand]?.['ev']||[];
+  const modelEl=document.getElementById('acModel');
+  if(models.length){modelEl.value=models[0];}
+  // Set default type for brand
+  if(brand==='BYD'||brand==='AION') document.getElementById('acType').value='ev';
+  if(brand==='BMW'){/* keep user choice */}
+}
+function acPickColor(c){
+  document.getElementById('ovAddCar')._color=c;
+  document.querySelectorAll('#acPalette div').forEach((el,i)=>{
+    el.style.border='3px solid '+(PALETTE[i]===c?'var(--text)':'transparent');
+  });
+}
+async function saveNewCar(){
+  const brand=document.getElementById('acBrand').value.trim();
+  const model=document.getElementById('acModel').value.trim();
+  const yearVal=parseInt(document.getElementById('acYear').value);
+  const type=document.getElementById('acType').value;
+  const plate=document.getElementById('acPlate').value.trim();
+  const msg=document.getElementById('acMsg');
+  const ov=document.getElementById('ovAddCar');
+
+  if(!brand||!model){msg.textContent='กรุณาเลือกยี่ห้อและรุ่น';return;}
+  if(!yearVal||yearVal<2540||yearVal>2570){msg.textContent='กรุณาใส่ปี พ.ศ. ให้ถูกต้อง';return;}
+
+  const btn=document.getElementById('acSaveBtn');
+  btn.disabled=true;btn.textContent='กำลังบันทึก...';
+
+  const uid=sess.user.id,tok=sess.access_token;
+  const color=ov._color||'#636366';
+  // Generate unique car_id
+  const carId=(brand+'_'+model).toLowerCase().replace(/[^a-z0-9]/g,'_').substring(0,20)+'_'+Date.now().toString(36);
+
+  try{
+    // 1. Save to user_cars
+    const r1=await sbPost('/rest/v1/user_cars',{
+      user_id:uid,car_id:carId,brand,model,year:yearVal,
+      plate:plate||null,car_type:type,color_hex:color
+    },tok,{Prefer:'return=minimal'});
+    if(!r1.ok){msg.textContent='❌ บันทึกรถไม่สำเร็จ';btn.disabled=false;btn.textContent='➕ เพิ่มรถ';return;}
+
+    // 2. Grant access to this user (owner)
+    await sbPost('/rest/v1/car_access',{user_id:uid,car_id:carId,role:'owner'},tok,{Prefer:'return=minimal'});
+
+    // 3. Init KM row
+    await sbPost('/rest/v1/car_km',{user_id:uid,car_id:carId,km:0},tok,{Prefer:'resolution=merge-duplicates'});
+
+    // 4. Add to local CARS object immediately
+    const sc=buildScFromTemplate(brand,type);
+    CARS[carId]={id:carId,name:brand+' '+model+' '+yearVal,type,plate,engine:'',color,sc};
+    CAR_COLOR[carId]=color;
+    CAR_COLOR_LT[carId]=color+'26';
+    KM[carId]=0;
+    if(!ALLOWED_CARS) ALLOWED_CARS=[];
+    ALLOWED_CARS.push(carId);
+
+    ov.classList.remove('on');
+    btn.disabled=false;btn.textContent='➕ เพิ่มรถ';
+    curCar=carId;
+    curTab='todo';
+    render();
+    alert('✅ เพิ่มรถสำเร็จ! กรุณาใส่ไมล์ปัจจุบันเพื่อเริ่มใช้งาน');
+  }catch(e){
+    msg.textContent='❌ '+e.message;
+    btn.disabled=false;btn.textContent='➕ เพิ่มรถ';
+  }
 }
 function resetFaceId(){
   if(!confirm('รีเซ็ต Face ID? ระบบจะถามตั้งค่าใหม่ในครั้ง login ถัดไป'))return;
