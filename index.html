@@ -636,7 +636,7 @@ async function loadAll(){
     sbFetch('/rest/v1/car_docs?user_id=eq.'+uid+'&select=*','GET',null,tok),
   ]);
   if(rk.ok)rk.d.forEach(r=>{KM[r.car_id]=r.km;if(r.updated_at)KM_UPDATED[r.car_id]=new Date(r.updated_at);});
-  if(rd.ok)rd.d.forEach(r=>LD[r.item_key]=r.km);
+  if(rd.ok)rd.d.forEach(r=>LD[r.key]=r.km);
   if(rl.ok)LOGS=rl.d.map(r=>({id:r.id,carId:r.car_id,date:r.date,km:r.km,type:r.type,place:r.place,shop:r.shop,partCost:r.part_cost,laborCost:r.labor_cost,product:r.product,note:r.note,recordedBy:r.recorded_by,photos:r.photos||'[]',ts:new Date(r.created_at).getTime()}));
   if(rc.ok)rc.d.forEach(r=>{
     if(r.doc_key.endsWith('_kmrate')){
@@ -1296,12 +1296,12 @@ async function updKm(){
 }
 async function markDone(cid,iid){
   const ck=KM[cid];if(!ck){alert('กรุณาใส่เลขไมล์ก่อน');return;}
-  const key=cid+'_'+iid;LD[key]=ck;syncBar(true);await upsert('car_lastdone',{user_id:sess.user.id,item_key:key,km:ck},sess.access_token);syncBar(false);render();
+  const key=cid+'_'+iid;LD[key]=ck;syncBar(true);await upsert('car_lastdone',{user_id:sess.user.id,key:key,km:ck},sess.access_token);syncBar(false);render();
 }
 async function resetTodo(cid,iid){
   if(!confirm("รีเซ็ตรายการนี้ กลับเป็นยังไม่ได้ทำ ไหม? (ประวัติการซ่อมยังอยู่)"))return;
   const key=cid+'_'+iid;const uid=sess.user.id,tok=sess.access_token;
-  syncBar(true);delete LD[key];await sbDelete('/rest/v1/car_lastdone?user_id=eq.'+uid+'&item_key=eq.'+key,tok);syncBar(false);render();
+  syncBar(true);delete LD[key];await sbDelete('/rest/v1/car_lastdone?user_id=eq.'+uid+'&key=eq.'+key,tok);syncBar(false);render();
 }
 
 // ══ PHOTOS ══
@@ -1485,7 +1485,7 @@ async function saveQL(){
     LOGS.unshift({id:newId,carId:cid,date,km:kv,type:label,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,recordedBy:body.recorded_by,ts:Date.now(),photos:'[]'});
     if(!KM[cid]||kv>KM[cid]){KM[cid]=kv;await upsert('car_km',{user_id:uid,car_id:cid,km:kv},tok);}
     const itemId=CARS[cid].sc.find(i=>i.l===label)?.id;
-    if(itemId){const key=cid+'_'+itemId;LD[key]=kv;await upsert('car_lastdone',{user_id:uid,item_key:key,km:kv},tok);}
+    if(itemId){const key=cid+'_'+itemId;LD[key]=kv;await upsert('car_lastdone',{user_id:uid,key:key,km:kv},tok);}
     msg.textContent='✅ บันทึกสำเร็จ!';msg.style.color='var(--green)';
     setTimeout(()=>{closeOv('ovQL');render();},800);
   }catch(e){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';}
@@ -1518,7 +1518,7 @@ async function delLog(id){
   const log=LOGS.find(l=>l.id===id);
   await sbDelete('/rest/v1/car_logs?id=eq.'+id,sess.access_token);
   LOGS=LOGS.filter(l=>l.id!==id);
-  if(log){const car=CARS[log.carId];if(car){const item=car.sc.find(i=>i.l===log.type);if(item){const key=log.carId+'_'+item.id;if(LD[key]===log.km){const rem=LOGS.filter(l=>l.carId===log.carId&&l.type===log.type).sort((a,b)=>b.km-a.km);const uid=sess.user.id,tok=sess.access_token;if(rem.length){LD[key]=rem[0].km;await sbFetch('/rest/v1/car_lastdone?user_id=eq.'+uid+'&item_key=eq.'+key,'PATCH',{km:rem[0].km},tok);}else{delete LD[key];await sbDelete('/rest/v1/car_lastdone?user_id=eq.'+uid+'&item_key=eq.'+key,tok);}}}}}
+  if(log){const car=CARS[log.carId];if(car){const item=car.sc.find(i=>i.l===log.type);if(item){const key=log.carId+'_'+item.id;if(LD[key]===log.km){const rem=LOGS.filter(l=>l.carId===log.carId&&l.type===log.type).sort((a,b)=>b.km-a.km);const uid=sess.user.id,tok=sess.access_token;if(rem.length){LD[key]=rem[0].km;await sbFetch('/rest/v1/car_lastdone?user_id=eq.'+uid+'&key=eq.'+key,'PATCH',{km:rem[0].km},tok);}else{delete LD[key];await sbDelete('/rest/v1/car_lastdone?user_id=eq.'+uid+'&key=eq.'+key,tok);}}}}}
   syncBar(false);rHist(document.getElementById('mainC'));
 }
 
@@ -1727,7 +1727,7 @@ async function doRestore(event){
   const msg=document.getElementById('backupMsg');const file=event.target.files[0];if(!file)return;
   if(!confirm('Restore จะ merge ขอมูลจากไฟลเขากับขอมูลปจจุบัน ดำเนินการตอไหม?'))return;
   if(msg){msg.textContent='⟳ กำลัง restore...';msg.style.color='var(--muted)';}
-  try{const backup=JSON.parse(await file.text());if(!backup.data)throw new Error('ไฟล์ไม่ถูกต้อง');const{logs,km,lastdone,docs,contacts}=backup.data;const tok=sess.access_token,uid=sess.user.id;let restored=0;if(logs&&logs.length){const existing=new Set(LOGS.map(l=>l.id));for(const l of logs.filter(l=>l.id&&!existing.has(l.id))){const r=await sbPost('/rest/v1/car_logs',{id:l.id,user_id:uid,recorded_by:l.recordedBy||'restore',car_id:l.carId,date:l.date,km:l.km,type:l.type,place:l.place,shop:l.shop,part_cost:l.partCost,labor_cost:l.laborCost,product:l.product,note:l.note,photos:l.photos||'[]'},tok,{Prefer:'resolution=ignore-duplicates'});if(r.ok)restored++;}}if(km)for(const[carId,v]of Object.entries(km))if(v>0&&(!KM[carId]||v>KM[carId])){KM[carId]=v;await upsert('car_km',{user_id:uid,car_id:carId,km:v},tok);}if(lastdone)for(const[key,v]of Object.entries(lastdone))if(!LD[key]||v>LD[key]){LD[key]=v;await upsert('car_lastdone',{user_id:uid,item_key:key,km:v},tok);}if(docs)for(const[key,doc]of Object.entries(docs))if(doc.expiry&&!DOCS[key]?.expiry){DOCS[key]=doc;await upsert('car_docs',{user_id:uid,doc_key:key,expiry:doc.expiry,note:doc.note||''},tok);}if(contacts&&contacts.length){const en=new Set(CONTACTS.map(c=>c.name));CONTACTS=[...CONTACTS,...contacts.filter(c=>!en.has(c.name))];localStorage.setItem('cc_contacts',JSON.stringify(CONTACTS));}if(msg){msg.textContent='✅ Restore สำเร็จ! '+restored+' รายการ';msg.style.color='var(--green)';}setTimeout(()=>render(),1500);}catch(e){if(msg){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';}}
+  try{const backup=JSON.parse(await file.text());if(!backup.data)throw new Error('ไฟล์ไม่ถูกต้อง');const{logs,km,lastdone,docs,contacts}=backup.data;const tok=sess.access_token,uid=sess.user.id;let restored=0;if(logs&&logs.length){const existing=new Set(LOGS.map(l=>l.id));for(const l of logs.filter(l=>l.id&&!existing.has(l.id))){const r=await sbPost('/rest/v1/car_logs',{id:l.id,user_id:uid,recorded_by:l.recordedBy||'restore',car_id:l.carId,date:l.date,km:l.km,type:l.type,place:l.place,shop:l.shop,part_cost:l.partCost,labor_cost:l.laborCost,product:l.product,note:l.note,photos:l.photos||'[]'},tok,{Prefer:'resolution=ignore-duplicates'});if(r.ok)restored++;}}if(km)for(const[carId,v]of Object.entries(km))if(v>0&&(!KM[carId]||v>KM[carId])){KM[carId]=v;await upsert('car_km',{user_id:uid,car_id:carId,km:v},tok);}if(lastdone)for(const[key,v]of Object.entries(lastdone))if(!LD[key]||v>LD[key]){LD[key]=v;await upsert('car_lastdone',{user_id:uid,key:key,km:v},tok);}if(docs)for(const[key,doc]of Object.entries(docs))if(doc.expiry&&!DOCS[key]?.expiry){DOCS[key]=doc;await upsert('car_docs',{user_id:uid,doc_key:key,expiry:doc.expiry,note:doc.note||''},tok);}if(contacts&&contacts.length){const en=new Set(CONTACTS.map(c=>c.name));CONTACTS=[...CONTACTS,...contacts.filter(c=>!en.has(c.name))];localStorage.setItem('cc_contacts',JSON.stringify(CONTACTS));}if(msg){msg.textContent='✅ Restore สำเร็จ! '+restored+' รายการ';msg.style.color='var(--green)';}setTimeout(()=>render(),1500);}catch(e){if(msg){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';}}
   event.target.value='';
 }
 
