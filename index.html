@@ -704,7 +704,17 @@ function getKmpmInfo(cid){
 async function setKmPerMonth(cid,v){
   KM_RATE[cid]=v;
   const uid=sess.user.id,tok=sess.access_token,key=cid+'_kmrate';
-  await upsert('car_docs',{user_id:uid,doc_key:key,expiry:'',note:String(v)},tok);
+  // PATCH with return=representation to check if row existed
+  const rp=await fetch(SBURL+'/rest/v1/car_docs?user_id=eq.'+uid+'&doc_key=eq.'+key,{
+    method:'PATCH',
+    headers:{...BH,Authorization:'Bearer '+tok,Prefer:'return=representation'},
+    body:JSON.stringify({note:String(v)})
+  });
+  const patched=await rp.json().catch(()=>[]);
+  if(!Array.isArray(patched)||patched.length===0){
+    // No row matched — INSERT new row
+    await sbPost('/rest/v1/car_docs',{user_id:uid,doc_key:key,expiry:null,note:String(v)},tok,{Prefer:'return=minimal'});
+  }
 }
 async function doResetKmpm(cid){await clearKmPerMonth(cid);render();}
 async function clearKmPerMonth(cid){
@@ -737,7 +747,12 @@ function stCalc(cid,item){
   if(item.days>0&&lastDate){const d=Math.floor((Date.now()-lastDate.getTime())/86400000);timePct=d/item.days*100;daysLeft=item.days-d;}
   let kmPct=0,rem=null;
   if(n>0&&lk>0&&ck>0){rem=lk+n-ck;kmPct=Math.max(0,(ck-lk)/n*100);}
-  if(n>0&&!lk&&!lastDate)return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
+  if(n>0&&!lk&&!lastDate){
+    // No service record yet — but if we have current km, can estimate
+    // Pass rem=-(ck) as negative to signal "no baseline, use ck directly"
+    if(ck>0) return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null,noBaseline:true,ck:ck,n:n};
+    return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
+  }
   if(n===0&&item.days>0&&!lastDate)return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
   if(n>0&&lk>0&&!ck)return{s:'unknown',kmPct:0,timePct,rem:null,daysLeft};
   const mx=Math.max(timePct,kmPct);
@@ -1043,10 +1058,29 @@ function rTodo(el){
       if(calc.rem!==null){
         remKm=calc.rem; // has lastdone: exact remaining km
       } else if(item_n>0&&ck>0&&lk===0){
-        // No lastdone: estimate from current km toward first interval
-        // Assumption: car started at 0 (or unknown), so remaining = interval - current
-        // Only useful if ck < item_n (hasn't hit first service yet)
-        remKm=item_n>ck?item_n-ck:null;
+        // No lastdone: no baseline km known
+        // Best effort: show how far past the first interval milestone we are
+        // e.g. E-CVT 80,000km interval, current km=265,727 → overdue by 265,727-80,000 = 185,727
+        // OR if ck < interval → still X km until first service
+        if(ck<item_n){
+          remKm=item_n-ck; // not yet at first service
+        } else {
+          // Past the interval — show as overdue based on modulo
+          // How many km past the last "should have done" point
+          const overdue=ck%item_n; // km into current cycle with no service
+          remKm=item_n-overdue; // km until NEXT service from now
+          // Actually simpler: just show negative to indicate overdue
+          remKm=-(ck-item_n); // negative = overdue by this many km
+        }
+      }
+      // Convert negative remKm to negative days (overdue)
+      if(remKm!==null&&remKm<0){
+        const estDaysOverdue=kmToEstDays(Math.abs(remKm),cid);
+        if(estDaysOverdue!==null&&daysNum===null){
+          daysNum=-estDaysOverdue; isKmBased=true;
+          daysColor='var(--amber)'; // amber not red since it's a rough estimate
+        }
+        remKm=null; // handled above
       }
 
       if(remKm!==null&&remKm>0){
