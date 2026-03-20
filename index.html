@@ -1014,49 +1014,58 @@ function rTodo(el){
     const custBtn=item.customInterval?'<div style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span style="font-size:11px;color:var(--muted);">รอบเปลี่ยน:</span>'+[3000,5000,7000,10000].map(v=>'<button onclick="setOilN(\''+cid+'\','+v+');render()" style="padding:3px 10px;border-radius:20px;border:.5px solid '+(n===v?col:'var(--gb)')+';background:'+(n===v?col:'var(--gray-lt)')+';color:'+(n===v?'#fff':'var(--muted)')+';font-size:11px;font-family:inherit;cursor:pointer;font-weight:'+(n===v?'700':'400')+';">'+v.toLocaleString()+'</button>').join('')+'</div>':'';
 
     // Build days remaining display — large number on right
-    function buildDaysDisplay(calc, cid){
-      let daysNum=null, daysLabel='', daysColor='var(--muted)', isKmBased=false;
-      // Prefer time-based daysLeft if available
+    function buildDaysDisplay(calc, cid, item_n, lk, ck){
+      let daysNum=null, daysColor='var(--muted)', isKmBased=false;
+
+      // 1. Time-based daysLeft
       if(calc.daysLeft!==null){
         daysNum=calc.daysLeft;
         daysColor=daysNum<=0?'var(--red)':daysNum<=30?'var(--amber)':daysNum<=90?'var(--blue)':'var(--muted)';
-        daysLabel=daysNum<=0?'วัน (เกิน)':'วัน';
       }
-      // km-based estimate
-      if(calc.rem!==null&&calc.rem>0){
-        const estDays2=kmToEstDays(calc.rem,cid);
-        if(estDays2!==null){
+
+      // 2. km-based estimate — works with OR without lastdone
+      let remKm=null;
+      if(calc.rem!==null){
+        remKm=calc.rem; // has lastdone: exact remaining km
+      } else if(item_n>0&&ck>0&&lk===0){
+        // No lastdone: estimate from current km toward first interval
+        // Assumption: car started at 0 (or unknown), so remaining = interval - current
+        // Only useful if ck < item_n (hasn't hit first service yet)
+        remKm=item_n>ck?item_n-ck:null;
+      }
+
+      if(remKm!==null&&remKm>0){
+        const estDays=kmToEstDays(remKm,cid);
+        if(estDays!==null){
           if(daysNum===null){
-            // km only — use estimate
-            daysNum=estDays2;
-            isKmBased=true;
+            daysNum=estDays; isKmBased=true;
             daysColor=daysNum<=0?'var(--red)':daysNum<=30?'var(--amber)':daysNum<=90?'var(--blue)':'var(--muted)';
-            daysLabel='วัน (~km)';
+          } else if(estDays<daysNum){
+            // km estimate is more urgent — use it
+            daysNum=estDays; isKmBased=true;
+            daysColor=daysNum<=0?'var(--red)':daysNum<=30?'var(--amber)':daysNum<=90?'var(--blue)':'var(--muted)';
           }
         }
       }
+
       if(daysNum===null) return '';
+
       const abs=Math.abs(daysNum);
-      // Format: large number
-      // Always single-line: number + unit together
       let numStr='';
-      if(daysNum<=0){
-        const abs=Math.abs(daysNum);
-        numStr='เกิน '+(abs>=365?Math.round(abs/30.44)+'\u00a0เดือน':abs+'\u00a0วัน');
-      } else if(daysNum>=365){
-        numStr=Math.round(daysNum/30.44)+'\u00a0เดือน';
-      } else {
-        numStr=daysNum+'\u00a0วัน';
-      }
-      return '<div style="text-align:right;flex-shrink:0;"><span style="font-size:26px;font-weight:800;color:'+daysColor+';line-height:1.1;letter-spacing:-0.5px;white-space:nowrap;">'+numStr+'</span>'+
-             (isKmBased?'<div style="font-size:9px;color:var(--hint);margin-top:1px;white-space:nowrap;">ประมาณจาก km</div>':'')+'</div>';
+      if(daysNum<=0) numStr='เกิน\u00a0'+(abs>=365?Math.round(abs/30.44)+'\u00a0เดือน':abs+'\u00a0วัน');
+      else if(abs>=365) numStr=Math.round(abs/30.44)+'\u00a0เดือน';
+      else numStr=abs+'\u00a0วัน';
+
+      return '<div style="text-align:right;flex-shrink:0;">'+
+             '<span style="font-size:26px;font-weight:800;color:'+daysColor+';line-height:1.1;letter-spacing:-0.5px;white-space:nowrap;">'+numStr+'</span>'+
+             (isKmBased?'<div style="font-size:9px;color:var(--hint);margin-top:1px;white-space:nowrap;">ประมาณจาก\u00a0km</div>':'')+'</div>';
     }
 
     return '<div class="tdi"><div class="tda '+S+'"></div><div class="tdin">'+
       '<div class="tdr1" style="align-items:flex-start;"><div style="flex:1;min-width:0;"><div class="tdname">'+item.l+(item.customInterval?' <span style="font-size:10px;color:var(--blue);background:var(--blue-lt);padding:1px 6px;border-radius:10px;white-space:nowrap;">'+n.toLocaleString()+' กม.</span>':'')+'</div></div>'+
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;min-width:80px;">'+
       '<span class="badge '+SB[S]+'">'+SL[S]+'</span>'+
-      buildDaysDisplay(calc,cid)+
+      buildDaysDisplay(calc,cid,n,lk,ck)+
       '</div></div>'+
       '<div class="tdd">'+intStr+'</div>'+remLines+
       (P>0?'<div class="pw" style="margin-top:6px;"><div class="pb" style="width:'+P+'%;background:'+SC[S]+';"></div></div>':'')+
