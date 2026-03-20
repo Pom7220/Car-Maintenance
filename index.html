@@ -508,7 +508,7 @@ function buildScFromTemplate(brand, carType){
 const EMG=[{type:'ฉุกเฉิน',name:'กู้ชีพ/กู้ภัย',num:'1669'},{type:'ตำรวจ',name:'แจ้งเหตุ',num:'191'},{type:'ทางหลวง',name:'กรมทางหลวง',num:'1586'},{type:'ทางด่วน',name:'ศูนย์ควบคุม',num:'1543'},{type:'Toyota TH',name:'Toyota Customer',num:'02-386-2000'},{type:'Mazda TH',name:'Mazda Customer',num:'02-260-8000'}];
 
 // ══ STATE ══
-let sess=null,uName='',curCar='altis',curTab='dashboard',ALLOWED_CARS=null;
+let sess=null,uName='',curCar='altis',curTab='dashboard',ALLOWED_CARS=null,IS_ADMIN=false;
 let KM={altis:0,estima:0,cx5:0},KM_UPDATED={},KM_RATE={},LD={},LOGS=[],CONTACTS=[],DOCS={};
 let syncTimer=null,logFormReady=false;
 const photoQ={log:[],ql:[]};
@@ -708,16 +708,18 @@ async function initFaceIdUI(){
 async function loadAll(){
   syncBar(true);
   const tok=sess.access_token,uid=sess.user.id;
-  const [rk,rd,rl,rc,ra]=await Promise.all([
+  const [rk,rd,rl,rc,ra,radmin]=await Promise.all([
     sbFetch('/rest/v1/car_km?user_id=eq.'+uid+'&select=*','GET',null,tok),
     sbFetch('/rest/v1/car_lastdone?user_id=eq.'+uid+'&select=*','GET',null,tok),
     sbFetch('/rest/v1/car_logs?user_id=eq.'+uid+'&select=*&order=created_at.desc','GET',null,tok),
     sbFetch('/rest/v1/car_docs?user_id=eq.'+uid+'&select=*','GET',null,tok),
     sbFetch('/rest/v1/car_access?user_id=eq.'+uid+'&select=car_id,role','GET',null,tok),
+    sbFetch('/rest/v1/app_admins?user_id=eq.'+uid+'&select=user_id','GET',null,tok),
   ]);
   // Update allowed cars list
   if(ra.ok&&ra.d.length) ALLOWED_CARS=ra.d.map(r=>r.car_id);
   else ALLOWED_CARS=Object.keys(CARS); // fallback: see all built-in cars
+  IS_ADMIN=!!(radmin&&radmin.ok&&radmin.d&&radmin.d.length>0);
   if(rk.ok)rk.d.forEach(r=>{KM[r.car_id]=r.km;if(r.updated_at)KM_UPDATED[r.car_id]=new Date(r.updated_at);});
   if(rd.ok)rd.d.forEach(r=>LD[r.key]=r.km);
   if(rl.ok)LOGS=rl.d.map(r=>({id:r.id,carId:r.car_id,date:r.date,km:r.km,type:r.type,place:r.place,shop:r.shop,partCost:r.part_cost,laborCost:r.labor_cost,product:r.product,note:r.note,recordedBy:r.recorded_by,photos:r.photos||'[]',ts:new Date(r.created_at).getTime()}));
@@ -734,7 +736,8 @@ async function loadAll(){
   const ruc=await sbFetch('/rest/v1/user_cars?user_id=eq.'+uid+'&select=*','GET',null,tok);
   if(ruc.ok&&ruc.d.length){
     ruc.d.forEach(r=>{
-      if(!CARS[r.car_id]){
+      // Only show user car if this user has car_access for it
+      if(!CARS[r.car_id]&&ALLOWED_CARS&&ALLOWED_CARS.includes(r.car_id)){
         CARS[r.car_id]={
           id:r.car_id,
           name:r.brand+' '+r.model+' '+r.year,
@@ -1669,6 +1672,21 @@ async function saveDoc(){
 
 // ══ SETTINGS ══
 function rSettings(el){
+  // Show admin panel if admin
+  if(IS_ADMIN){
+    const adminBtn='<div class="sec">👑 Admin Panel</div>'+
+      '<div class="gc" style="padding:16px;">'+
+      '<div style="font-size:13px;color:var(--muted);margin-bottom:12px;">จัดการสิทธิ์การเข้าถึงรถของแต่ละ User</div>'+
+      '<button onclick="openAdminPanel()" style="width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">👑 เปิด Admin Panel</button>'+
+      '</div>';
+    el.innerHTML=adminBtn;
+    // Append the rest below
+    renderSettingsBody(el, true);
+    return;
+  }
+  renderSettingsBody(el);
+}
+function renderSettingsBody(el, append=false){
   const emH=EMG.map(c=>'<div class="ccard"><div><div class="ctype">'+c.type+'</div><div class="cname">'+c.name+'</div></div><a href="tel:'+c.num+'" class="cbtn">'+c.num+'</a></div>').join('');
 
   // Split contacts: insurance vs others
@@ -1683,7 +1701,8 @@ function rSettings(el){
   const insH=insContacts.length?insContacts.map(buildContactCard).join(''):'<div style="padding:14px;text-align:center;font-size:13px;color:var(--hint);">ยังไม่มีข้อมูลประกัน<br><span style="font-size:11px;">กดปุ่ม + เพิ่ม เพื่อบันทึกเบอร์ฉุกเฉินประกัน</span></div>';
   const shopH=otherContacts.length?otherContacts.map(buildContactCard).join(''):'<div class="empty" style="padding:20px;"><div class="et">ยังไม่มีรายชื่อร้านช่าง</div></div>';
 
-  el.innerHTML=
+  if(!append) el.innerHTML='';
+  el.innerHTML+=
     '<div class="sec">👤 โปรไฟล์ & ความปลอดภัย</div><div class="gc" style="padding:16px;">'+
     '<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;"><div style="width:52px;height:52px;border-radius:50%;background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div><div><div style="font-size:17px;font-weight:700;" id="profileNameDisplay">'+uName+'</div><div style="font-size:12px;color:var(--muted);">'+(sess?.user?.email||'')+'</div></div></div>'+
     '<div class="fs"><label class="fl">แก้ไขชื่อแสดง</label><input class="fi" id="newDisplayName" value="'+uName+'" placeholder="เช่น คุณปอม หรือ ภรรยา"></div>'+
@@ -1936,6 +1955,111 @@ async function saveNewCar(){
     msg.textContent='❌ '+e.message;
     btn.disabled=false;btn.textContent='➕ เพิ่มรถ';
   }
+}
+// ══ ADMIN PANEL ══
+async function openAdminPanel(){
+  let ov=document.getElementById('ovAdmin');
+  if(!ov){
+    ov=document.createElement('div');ov.id='ovAdmin';ov.className='ov';
+    ov.innerHTML=
+      '<div class="ovs" style="max-height:92vh;">'+
+      '<div class="ovh"></div>'+
+      '<div class="ovt">👑 Admin — จัดการสิทธิ์</div>'+
+      '<div id="adminContent"><div class="empty"><div class="ei">⏳</div><div class="et">กำลังโหลด...</div></div></div>'+
+      '<button class="cancelbtn" onclick="document.getElementById(\'ovAdmin\').classList.remove(\'on\')">ปิด</button>'+
+      '</div>';
+    ov.onclick=function(e){if(e.target===ov)ov.classList.remove('on');};
+    document.body.appendChild(ov);
+  }
+  ov.classList.add('on');
+  await loadAdminData();
+}
+
+async function loadAdminData(){
+  const tok=sess.access_token;
+  const [ru,ra,ruc]=await Promise.all([
+    sbFetch('/rest/v1/rpc/get_all_users','POST',{},tok),
+    sbFetch('/rest/v1/rpc/get_all_car_access','POST',{},tok),
+    sbFetch('/rest/v1/rpc/get_all_user_cars','POST',{},tok),
+  ]);
+
+  const users=ru.ok?ru.d:[];
+  const access=ra.ok?ra.d:[];
+  const userCarsData=ruc.ok?ruc.d:[];
+
+  // Build all cars list: built-in + user_cars
+  const allCars={};
+  Object.values(CARS).forEach(c=>allCars[c.id]={id:c.id,name:c.name,badge:''});
+  userCarsData.forEach(uc=>{
+    allCars[uc.car_id]={id:uc.car_id,name:uc.brand+' '+uc.model+' '+uc.year,badge:'👤 '+uc.owner_email.split('@')[0]};
+  });
+
+  // Build access map: user_id → [car_ids]
+  const accessMap={};
+  access.forEach(a=>{
+    if(!accessMap[a.user_id]) accessMap[a.user_id]=[];
+    accessMap[a.user_id].push({car_id:a.car_id,role:a.role});
+  });
+
+  let html='';
+  users.forEach(u=>{
+    const uAccess=accessMap[u.user_id]||[];
+    const uCarIds=uAccess.map(a=>a.car_id);
+    html+='<div style="margin-bottom:16px;padding:14px;background:var(--glass);border:.5px solid var(--gb);border-radius:var(--r);">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+    html+='<div style="width:36px;height:36px;border-radius:50%;background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:18px;">👤</div>';
+    html+='<div><div style="font-weight:700;font-size:15px;">'+(u.display_name||u.email.split('@')[0])+'</div><div style="font-size:11px;color:var(--muted);">'+u.email+'</div></div></div>';
+
+    // Current cars
+    html+='<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">รถที่เข้าถึงได้:</div>';
+    if(uAccess.length){
+      uAccess.forEach(a=>{
+        const car=allCars[a.car_id];
+        const carName=car?car.name:a.car_id;
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:var(--gray-lt);border-radius:8px;margin-bottom:4px;">';
+        html+='<span style="font-size:13px;">🚗 '+carName+' <span style="font-size:10px;color:var(--muted);">('+a.role+')</span></span>';
+        html+='<button onclick="adminRevokeCar(\''+u.user_id+'\',\''+a.car_id+'\')" style="padding:3px 10px;background:var(--red-lt);color:var(--red);border:none;border-radius:20px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;">ลบ</button>';
+        html+='</div>';
+      });
+    }else{
+      html+='<div style="font-size:12px;color:var(--hint);padding:6px 0;">ยังไม่มีสิทธิ์รถคันใด</div>';
+    }
+
+    // Add car dropdown
+    const availableCars=Object.values(allCars).filter(c=>!uCarIds.includes(c.id));
+    if(availableCars.length){
+      html+='<div style="display:flex;gap:6px;margin-top:8px;">';
+      html+='<select id="addcar_'+u.user_id+'" style="flex:1;padding:7px 10px;border:.5px solid var(--gb);border-radius:var(--rx);background:var(--bg);font-size:13px;font-family:inherit;">';
+      html+='<option value="">เพิ่มรถ...</option>';
+      availableCars.forEach(c=>{html+='<option value="'+c.id+'">'+c.name+(c.badge?' ('+c.badge+')':'')+'</option>';});
+      html+='</select>';
+      html+='<select id="addrole_'+u.user_id+'" style="padding:7px 8px;border:.5px solid var(--gb);border-radius:var(--rx);background:var(--bg);font-size:12px;font-family:inherit;">';
+      html+='<option value="viewer">viewer</option><option value="owner">owner</option>';
+      html+='</select>';
+      html+='<button onclick="adminGrantCar(\''+u.user_id+'\')" style="padding:7px 12px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">เพิ่ม</button>';
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+
+  document.getElementById('adminContent').innerHTML=html||'<div class="empty"><div class="et">ไม่พบข้อมูล</div></div>';
+}
+
+async function adminGrantCar(uid){
+  const sel=document.getElementById('addcar_'+uid);
+  const roleSel=document.getElementById('addrole_'+uid);
+  const carId=sel?sel.value:'';
+  const role=roleSel?roleSel.value:'viewer';
+  if(!carId){return;}
+  const tok=sess.access_token;
+  await sbFetch('/rest/v1/rpc/admin_grant_car','POST',{p_user_id:uid,p_car_id:carId,p_role:role},tok);
+  await loadAdminData(); // reload
+}
+async function adminRevokeCar(uid,carId){
+  if(!confirm('ลบสิทธิ์รถนี้?'))return;
+  const tok=sess.access_token;
+  await sbFetch('/rest/v1/rpc/admin_revoke_car','POST',{p_user_id:uid,p_car_id:carId},tok);
+  await loadAdminData();
 }
 function resetFaceId(){
   if(!confirm('รีเซ็ต Face ID? ระบบจะถามตั้งค่าใหม่ในครั้ง login ถัดไป'))return;
