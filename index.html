@@ -1040,13 +1040,13 @@ function rTodo(el){
       // Format: large number
       let numStr=abs>=365?Math.round(abs/30.44)+' เดือน':abs+' วัน';
       if(daysNum<=0) numStr='เกิน '+abs+(abs>=365?' เดือน':' วัน');
-      return '<div style="text-align:right;"><div style="font-size:28px;font-weight:800;color:'+daysColor+';line-height:1;letter-spacing:-1px;">'+numStr+'</div>'+
+      return '<div style="text-align:right;white-space:nowrap;"><div style="font-size:28px;font-weight:800;color:'+daysColor+';line-height:1.1;letter-spacing:-1px;">'+numStr+'</div>'+
              (isKmBased?'<div style="font-size:9px;color:var(--hint);margin-top:1px;">ประมาณจากอัตราการใช้รถ</div>':'')+'</div>';
     }
 
     return '<div class="tdi"><div class="tda '+S+'"></div><div class="tdin">'+
-      '<div class="tdr1"><div class="tdname">'+item.l+(item.customInterval?' <span style="font-size:10px;color:var(--blue);background:var(--blue-lt);padding:1px 6px;border-radius:10px;">'+n.toLocaleString()+' กม.</span>':'')+'</div>'+
-      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">'+
+      '<div class="tdr1" style="align-items:flex-start;"><div style="flex:1;min-width:0;"><div class="tdname">'+item.l+(item.customInterval?' <span style="font-size:10px;color:var(--blue);background:var(--blue-lt);padding:1px 6px;border-radius:10px;white-space:nowrap;">'+n.toLocaleString()+' กม.</span>':'')+'</div></div>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;min-width:80px;">'+
       '<span class="badge '+SB[S]+'">'+SL[S]+'</span>'+
       buildDaysDisplay(calc,cid)+
       '</div></div>'+
