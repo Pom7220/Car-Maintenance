@@ -430,7 +430,7 @@ const EMG=[{type:'ฉุกเฉิน',name:'กู้ชีพ/กู้ภ�
 
 // ══ STATE ══
 let sess=null,uName='',curCar='altis',curTab='dashboard';
-let KM={altis:0,estima:0,cx5:0},KM_UPDATED={},LD={},LOGS=[],CONTACTS=[],DOCS={};
+let KM={altis:0,estima:0,cx5:0},KM_UPDATED={},KM_RATE={},LD={},LOGS=[],CONTACTS=[],DOCS={};
 let syncTimer=null,logFormReady=false;
 const photoQ={log:[],ql:[]};
 const BIOMETRIC_KEY='cc_bio';
@@ -638,7 +638,14 @@ async function loadAll(){
   if(rk.ok)rk.d.forEach(r=>{KM[r.car_id]=r.km;if(r.updated_at)KM_UPDATED[r.car_id]=new Date(r.updated_at);});
   if(rd.ok)rd.d.forEach(r=>LD[r.item_key]=r.km);
   if(rl.ok)LOGS=rl.d.map(r=>({id:r.id,carId:r.car_id,date:r.date,km:r.km,type:r.type,place:r.place,shop:r.shop,partCost:r.part_cost,laborCost:r.labor_cost,product:r.product,note:r.note,recordedBy:r.recorded_by,photos:r.photos||'[]',ts:new Date(r.created_at).getTime()}));
-  if(rc.ok)rc.d.forEach(r=>DOCS[r.doc_key]={expiry:r.expiry,note:r.note});
+  if(rc.ok)rc.d.forEach(r=>{
+    if(r.doc_key.endsWith('_kmrate')){
+      const cid=r.doc_key.replace('_kmrate','');
+      KM_RATE[cid]=parseInt(r.note)||null;
+    }else{
+      DOCS[r.doc_key]={expiry:r.expiry,note:r.note};
+    }
+  });
   CONTACTS=JSON.parse(localStorage.getItem('cc_contacts')||'[]');
   syncBar(false);
 }
@@ -682,8 +689,7 @@ function calcKmpmAuto(cid){
   return null; // truly no data (0 or 1 log only)
 }
 function getKmPerMonth(cid){
-  const override=localStorage.getItem('cc_kmpm_'+cid);
-  if(override) return parseInt(override);
+  if(KM_RATE[cid]) return KM_RATE[cid];
   const r=calcKmpmAuto(cid);
   return r?r.rate:null;
 }
@@ -695,8 +701,17 @@ function getKmpmInfo(cid){
   if(r) return{...r,isOverride:false};
   return null;
 }
-function setKmPerMonth(cid,v){localStorage.setItem('cc_kmpm_'+cid,v);}
-function clearKmPerMonth(cid){localStorage.removeItem('cc_kmpm_'+cid);}
+async function setKmPerMonth(cid,v){
+  KM_RATE[cid]=v;
+  const uid=sess.user.id,tok=sess.access_token,key=cid+'_kmrate';
+  await upsert('car_docs',{user_id:uid,doc_key:key,expiry:'',note:String(v)},tok);
+}
+async function doResetKmpm(cid){await clearKmPerMonth(cid);render();}
+async function clearKmPerMonth(cid){
+  KM_RATE[cid]=null;
+  const uid=sess.user.id,tok=sess.access_token,key=cid+'_kmrate';
+  await sbDelete('/rest/v1/car_docs?user_id=eq.'+uid+'&doc_key=eq.'+key,tok);
+}
 
 function kmToEstDays(remKm,cid){
   if(remKm<=0)return 0;
@@ -993,7 +1008,7 @@ function rTodo(el){
       }else{
         const estDays=kmToEstDays(rem,cid);
         const kmpm=getKmPerMonth(cid);
-        const isOverride=!!localStorage.getItem('cc_kmpm_'+cid);
+        const isOverride=!!(KM_RATE[cid]);
         remLines+='<div style="font-size:13px;font-weight:700;color:'+rc2+';margin-top:2px;">ครั้งถัดไป: '+nk.toLocaleString()+' กม. (เหลืออีก '+rem.toLocaleString()+' กม.)</div>';
         // Only show days estimate if we have rate data
         if(estDays!==null){
@@ -1122,12 +1137,16 @@ function rTodo(el){
     '</div>'+
     '<div style="display:flex;gap:6px;">'+
     '<button onclick="promptKmpm(\''+cid+'\')" style="padding:6px 12px;background:var(--blue-lt);color:var(--blue);border:none;border-radius:var(--rx);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;">✎ ปรับ</button>'+
-    (isOverride?'<button onclick="clearKmPerMonth(\''+cid+'\');render()" style="padding:6px 10px;background:var(--gray-lt);color:var(--muted);border:none;border-radius:var(--rx);font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0;" title="รีเซ็ตกลับอัตโนมัติ">↺</button>':'')+
+    (isOverride?'<button id="kmpmResetBtn" style="padding:6px 10px;background:var(--gray-lt);color:var(--muted);border:none;border-radius:var(--rx);font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0;" title="รีเซ็ตกลับอัตโนมัติ">↺</button>':'')+
     '</div></div></div>'+
     (car.type==='hybrid'?'<div class="alert hybrid">⚡ Hybrid อายุ 18+ ปี — เข้าศูนย์โตโยต้าเท่านั้น</div>':'')+
     '<div class="srow" style="grid-template-columns:1fr 1fr 1fr 1fr;"><div class="sc r"><div class="sn">'+u+'</div><div class="sl">ถึงกำหนด</div></div><div class="sc a"><div class="sn">'+s+'</div><div class="sl">ใกล้ถึง</div></div><div class="sc g"><div class="sn">'+o+'</div><div class="sl">ปกติ</div></div><div class="sc" style="background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);box-shadow:var(--sh);"><div class="sn" style="font-size:22px;color:var(--muted);">'+unk+'</div><div class="sl">ไม่มีข้อมูล</div></div></div>'+
     '<div id="todoDocSection"></div>'+
     '<div class="sec" style="display:flex;justify-content:space-between;"><span>รายการซ่อมบำรุง — '+car.name+'</span><span style="font-size:11px;color:var(--hint);">เรียงตามความเร่งด่วน ↓</span></div>'+items;
+
+  // Attach reset button onclick (DOM API — avoids onclick string escaping)
+  const resetBtn=document.getElementById('kmpmResetBtn');
+  if(resetBtn)(function(c){resetBtn.onclick=function(){doResetKmpm(c);};})(cid);
 
   // Build doc expiry cards (ทะเบียน/พรบ/ประกัน)
   const docSection=document.getElementById('todoDocSection');
@@ -1176,7 +1195,7 @@ function rTodo(el){
 function promptKmpm(cid){
   // Use overlay instead of prompt() — prompt() is blocked in iOS PWA
   const cur=getKmPerMonth(cid);
-  const curVal=localStorage.getItem('cc_kmpm_'+cid)||'';
+  const curVal=KM_RATE[cid]?String(KM_RATE[cid]):'';
   let ov=document.getElementById('ovKmpm');
   if(!ov){
     ov=document.createElement('div');ov.id='ovKmpm';ov.className='ov';
@@ -1211,17 +1230,17 @@ function promptKmpm(cid){
   setTimeout(()=>{const inp=document.getElementById('kmpmInput');if(inp)inp.focus();},300);
 }
 function closeKmpm(){const ov=document.getElementById("ovKmpm");if(ov)ov.classList.remove("on");}
-function saveKmpm(){
+async function saveKmpm(){
   const ov=document.getElementById('ovKmpm');
   const cid=ov._cid;
   const val=document.getElementById('kmpmInput').value.trim();
-  if(val===''){clearKmPerMonth(cid);ov.classList.remove('on');render();return;}
+  if(val===''){await clearKmPerMonth(cid);ov.classList.remove('on');render();return;}
   const v=parseInt(val);
   if(isNaN(v)||v<=0||v>9999){
     document.getElementById('kmpmInput').style.borderColor='var(--red)';
     return;
   }
-  setKmPerMonth(cid,v);ov.classList.remove('on');render();
+  await setKmPerMonth(cid,v);ov.classList.remove('on');render();
 }
 async function updKm(){
   const v=parseInt(document.getElementById('kmInput').value);
