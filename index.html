@@ -937,12 +937,12 @@ function rDash(el){
     const kms=logs.map(l=>l.km);
     return{min:Math.min(...kms),max:Math.max(...kms)};
   }
-  const cyTotal=Object.keys(CARS).reduce((s,c)=>s+carYearCost(c,thisYear),0);
-  const lyTotal=Object.keys(CARS).reduce((s,c)=>s+carYearCost(c,lastYear),0);
+  const cyTotal=Object.keys(CARS).filter(c=>!ALLOWED_CARS||ALLOWED_CARS.includes(c)).reduce((s,c)=>s+carYearCost(c,thisYear),0);
+  const lyTotal=Object.keys(CARS).filter(c=>!ALLOWED_CARS||ALLOWED_CARS.includes(c)).reduce((s,c)=>s+carYearCost(c,lastYear),0);
 
   // Build cost breakdown per car
   let costRows='';
-  Object.values(CARS).forEach(function(car){
+  Object.values(CARS).filter(c=>!ALLOWED_CARS||ALLOWED_CARS.includes(c.id)).forEach(function(car){
     const cy2=carYearCost(car.id,thisYear);
     const ly2=carYearCost(car.id,lastYear);
     const col=CAR_COLOR[car.id];
@@ -958,7 +958,7 @@ function rDash(el){
 
   // Build km breakdown per car
   let kmRows='';
-  Object.values(CARS).forEach(function(car){
+  Object.values(CARS).filter(c=>!ALLOWED_CARS||ALLOWED_CARS.includes(c.id)).forEach(function(car){
     const k=carYearKm(car.id,thisYear);
     const col=CAR_COLOR[car.id];
     const km=k?(k.max-k.min):0;
@@ -975,7 +975,7 @@ function rDash(el){
 
   // Upcoming items
   const upcoming=[];
-  Object.values(CARS).forEach(function(car){
+  Object.values(CARS).filter(c=>!ALLOWED_CARS||ALLOWED_CARS.includes(c.id)).forEach(function(car){
     car.sc.forEach(function(item){
       const calc=stCalc(car.id,item);
       if(calc.s==='urgent'||calc.s==='soon'||calc.s==='unknown') upcoming.push({car,item,calc});
@@ -985,7 +985,7 @@ function rDash(el){
 
   // Legend
   let legend='';
-  Object.values(CARS).forEach(function(car){
+  Object.values(CARS).filter(c=>!ALLOWED_CARS||ALLOWED_CARS.includes(c.id)).forEach(function(car){
     legend+='<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:11px;color:var(--muted);">'+
       '<span style="width:8px;height:8px;border-radius:50%;background:'+CAR_COLOR[car.id]+';display:inline-block;"></span>'+
       car.name.replace('Toyota ','').replace('Mazda ','')+'</span>';
@@ -1051,7 +1051,7 @@ function rDash(el){
 
   // Build last service cards
   const lastList=document.getElementById('lastServiceList');
-  Object.values(CARS).forEach(function(car){
+  Object.values(CARS).filter(c=>!ALLOWED_CARS||ALLOWED_CARS.includes(c.id)).forEach(function(car){
     const cl=LOGS.filter(l=>l.carId===car.id).sort((a,b)=>b.ts-a.ts),last=cl[0];
     const col=CAR_COLOR[car.id],lt=CAR_COLOR_LT[car.id];
     const card=document.createElement('div');
@@ -1486,7 +1486,7 @@ function rLog(el){
   const today=new Date().toISOString().split('T')[0];
   const cid=curCar;
   const oilN=getOilN(cid);
-  const copts=Object.values(CARS).map(c=>'<option value="'+c.id+'"'+(c.id===cid?' selected':'')+'>'+c.name+' ('+c.plate+')</option>').join('');
+  const copts=Object.values(CARS).filter(c=>!ALLOWED_CARS||ALLOWED_CARS.includes(c.id)).map(c=>'<option value="'+c.id+'"'+(c.id===cid?' selected':'')+'>'+c.name+' ('+c.plate+')</option>').join('');
   const oilBtns=[3000,5000,7000,10000].map(v=>'<button type="button" onclick="setOilN(document.getElementById(\'logCar\').value,'+v+');document.getElementById(\'oilIntervalDisplay\').textContent=\'รอบปัจจุบัน: '+v.toLocaleString()+' กม.\';document.querySelectorAll(\'.oilbtn\').forEach(b=>b.style.background=b.dataset.v==\''+v+'\'?\'var(--blue)\':\'var(--gray-lt)\');document.querySelectorAll(\'.oilbtn\').forEach(b=>b.style.color=b.dataset.v==\''+v+'\'?\'#fff\':\'var(--muted)\');" class="oilbtn" data-v="'+v+'" style="padding:5px 12px;border-radius:20px;border:.5px solid var(--gb);background:'+(oilN===v?'var(--blue)':'var(--gray-lt)')+';color:'+(oilN===v?'#fff':'var(--muted)')+';font-size:12px;font-family:inherit;cursor:pointer;font-weight:'+(oilN===v?'700':'400')+';">'+v.toLocaleString()+'</button>').join('');
   el.innerHTML='<div class="sec">บันทึกการซ่อมบำรุง</div><div class="gc"><div class="gcb" style="padding-top:14px;"><div class="fs"><label class="fl">รถ</label><select class="fi" id="logCar" onchange="updateLogCarInterval()">'+copts+'</select></div><div class="fr2"><div class="fs"><label class="fl">วันที่</label><input class="fi" type="date" id="logDate" value="'+today+'"></div><div class="fs"><label class="fl">เลขไมล์ (กม.)</label><input class="fi" type="number" id="logKm" placeholder="85000"></div></div><div class="fs"><label class="fl">บันทึกโดย</label><input class="fi" id="logBy" value="'+uName+'"></div><div class="fs"><label class="fl">ประเภทงาน</label><select class="fi" id="logType"><option>เปลี่ยนน้ำมันเครื่อง + ไส้กรอง</option><option>ไส้กรองอากาศ</option><option>ไส้กรองแอร์ (Cabin)</option><option>หัวเทียน</option><option>Timing Belt/Chain</option><option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option><option>น้ำหล่อเย็น</option><option>ผ้าเบรก</option><option>ยาง/สลับยาง</option><option>เปลี่ยนยางใหม่</option><option>แบตเตอรี่</option><option>ระบบแอร์</option><option>ช่วงล่าง</option><option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option></select></div>'+
     '<div id="logOilInterval" style="background:var(--blue-lt);border-radius:var(--rx);padding:12px 14px;margin-bottom:14px;"><div style="font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">รอบเปลี่ยนน้ำมันเครื่อง</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">'+oilBtns+'</div><div id="oilIntervalDisplay" style="font-size:12px;color:var(--blue);font-weight:500;">รอบปัจจุบัน: '+oilN.toLocaleString()+' กม.</div></div>'+
