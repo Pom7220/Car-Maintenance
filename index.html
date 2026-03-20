@@ -658,20 +658,42 @@ function getLastSvcDate(cid,item){const log=LOGS.filter(l=>l.carId===cid&&l.type
 
 // ── km/month calculation ──
 function calcKmpmAuto(cid){
+  // Use ALL available logs — best effort even if less than 6 months
   const sixMonthsAgo=new Date();sixMonthsAgo.setMonth(sixMonthsAgo.getMonth()-6);
-  const logs=LOGS.filter(l=>l.carId===cid&&l.km>0&&new Date(l.date)>=sixMonthsAgo)
-                 .sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const allLogs=LOGS.filter(l=>l.carId===cid&&l.km>0).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const recentLogs=allLogs.filter(l=>new Date(l.date)>=sixMonthsAgo);
+
+  // Prefer recent 6 months, fallback to all available data
+  const logs=recentLogs.length>=2?recentLogs:allLogs;
   if(logs.length>=2){
     const minKm=logs[0].km,maxKm=logs[logs.length-1].km;
-    const months=(new Date(logs[logs.length-1].date)-new Date(logs[0].date))/(1000*60*60*24*30.44);
-    if(months>=0.5){const rate=Math.round((maxKm-minKm)/months);if(rate>0&&rate<10000)return rate;}
+    const minDate=new Date(logs[0].date),maxDate=new Date(logs[logs.length-1].date);
+    const months=(maxDate-minDate)/(1000*60*60*24*30.44);
+    if(months>=0.25){ // at least 1 week of data
+      const rate=Math.round((maxKm-minKm)/months);
+      if(rate>0&&rate<10000){
+        // How many months of data we have vs 6 month target
+        const dataMonths=Math.round(months*10)/10;
+        const missingMonths=Math.max(0,Math.round((6-dataMonths)*10)/10);
+        return{rate,dataMonths,missingMonths,isPartial:missingMonths>0};
+      }
+    }
   }
-  return null;
+  return null; // truly no data (0 or 1 log only)
 }
 function getKmPerMonth(cid){
   const override=localStorage.getItem('cc_kmpm_'+cid);
   if(override) return parseInt(override);
-  return calcKmpmAuto(cid);
+  const r=calcKmpmAuto(cid);
+  return r?r.rate:null;
+}
+function getKmpmInfo(cid){
+  // Returns full info object for display
+  const override=localStorage.getItem('cc_kmpm_'+cid);
+  if(override) return{rate:parseInt(override),isOverride:true,isPartial:false,dataMonths:null,missingMonths:0};
+  const r=calcKmpmAuto(cid);
+  if(r) return{...r,isOverride:false};
+  return null;
 }
 function setKmPerMonth(cid,v){localStorage.setItem('cc_kmpm_'+cid,v);}
 function clearKmPerMonth(cid){localStorage.removeItem('cc_kmpm_'+cid);}
@@ -991,33 +1013,68 @@ function rTodo(el){
 
     const custBtn=item.customInterval?'<div style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span style="font-size:11px;color:var(--muted);">รอบเปลี่ยน:</span>'+[3000,5000,7000,10000].map(v=>'<button onclick="setOilN(\''+cid+'\','+v+');render()" style="padding:3px 10px;border-radius:20px;border:.5px solid '+(n===v?col:'var(--gb)')+';background:'+(n===v?col:'var(--gray-lt)')+';color:'+(n===v?'#fff':'var(--muted)')+';font-size:11px;font-family:inherit;cursor:pointer;font-weight:'+(n===v?'700':'400')+';">'+v.toLocaleString()+'</button>').join('')+'</div>':'';
 
-    return '<div class="tdi"><div class="tda '+S+'"></div><div class="tdin"><div class="tdr1"><div class="tdname">'+item.l+(item.customInterval?' <span style="font-size:10px;color:var(--blue);background:var(--blue-lt);padding:1px 6px;border-radius:10px;">'+n.toLocaleString()+' กม.</span>':'')+'</div><span class="badge '+SB[S]+'">'+SL[S]+'</span></div><div class="tdd">'+intStr+'</div>'+remLines+(P>0?'<div class="pw" style="margin-top:6px;"><div class="pb" style="width:'+P+'%;background:'+SC[S]+';"></div></div>'+
-      (()=>{
-        // Show remaining days count below bar for all timed items
-        let dayInfo='';
-        if(calc.daysLeft!==null){
-          const dc=calc.daysLeft<=0?'var(--red)':calc.daysLeft<30?'var(--amber)':'var(--muted)';
-          dayInfo+='<span style="color:'+dc+';font-weight:'+(calc.daysLeft<=30?'700':'400')+';">'+(calc.daysLeft<=0?'เกินกำหนด '+Math.abs(calc.daysLeft)+' วัน':'เหลือ '+calc.daysLeft+' วัน')+'</span>';
-        }
-        // Add km→days estimate for km-based items
-        if(calc.rem!==null&&calc.rem>0){
-          const estDays2=kmToEstDays(calc.rem,cid);
-          if(estDays2!==null){
-            const dc2=estDays2<=0?'var(--red)':estDays2<30?'var(--amber)':'var(--muted)';
-            if(dayInfo) dayInfo+=' <span style="color:var(--hint);">·</span> ';
-            dayInfo+='<span style="color:'+dc2+';font-weight:'+(estDays2<=30?'700':'400')+';">~'+estDays2+' วัน (km)</span>';
+    // Build days remaining display — large number on right
+    function buildDaysDisplay(calc, cid){
+      let daysNum=null, daysLabel='', daysColor='var(--muted)', isKmBased=false;
+      // Prefer time-based daysLeft if available
+      if(calc.daysLeft!==null){
+        daysNum=calc.daysLeft;
+        daysColor=daysNum<=0?'var(--red)':daysNum<=30?'var(--amber)':daysNum<=90?'var(--blue)':'var(--muted)';
+        daysLabel=daysNum<=0?'วัน (เกิน)':'วัน';
+      }
+      // km-based estimate
+      if(calc.rem!==null&&calc.rem>0){
+        const estDays2=kmToEstDays(calc.rem,cid);
+        if(estDays2!==null){
+          if(daysNum===null){
+            // km only — use estimate
+            daysNum=estDays2;
+            isKmBased=true;
+            daysColor=daysNum<=0?'var(--red)':daysNum<=30?'var(--amber)':daysNum<=90?'var(--blue)':'var(--muted)';
+            daysLabel='วัน (~km)';
           }
         }
-        return dayInfo?'<div style="font-size:11px;margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;">'+dayInfo+'</div>':'';
-      })()+
-      '':'')+custBtn+'<div class="tdn" style="margin-top:6px;">'+item.note+'</div>'+(item.cm>0?'<span class="tdc">฿'+item.cm.toLocaleString()+'–'+item.cx.toLocaleString()+'</span>':'')+photoRow+'</div><div style="display:flex;border-top:.5px solid var(--gb);"><button style="flex:1;padding:11px 6px;background:var(--green-lt);border:none;border-right:.5px solid var(--gb);font-size:12px;color:var(--green);cursor:pointer;font-family:inherit;font-weight:600;" onclick="openQL(\''+cid+'\',\''+item.id+'\',\''+item.l+'\')">📝 บันทึกงานนี้</button><button style="flex:1;padding:11px 6px;background:var(--gray-lt);border:none;font-size:12px;color:'+(canMark?'var(--muted)':'var(--hint)')+';cursor:pointer;font-family:inherit;font-weight:500;" onclick="markDone(\''+cid+'\',\''+item.id+'\')" '+(canMark?'':'disabled')+'>'+(canMark?'✓ ทำแล้ว @'+ck.toLocaleString()+' กม.':'ใส่ไมล์ก่อน')+'</button>'+(lk||getLastSvcDate(cid,item)?'<button style="padding:11px 8px;background:var(--red-lt);border:none;border-left:.5px solid var(--gb);font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;font-weight:600;" onclick="resetTodo(\''+cid+'\',\''+item.id+'\')" title="รีเซ็ต">↺</button>':'')+'</div></div>';
+      }
+      if(daysNum===null) return '';
+      const abs=Math.abs(daysNum);
+      // Format: large number
+      let numStr=abs>=365?Math.round(abs/30.44)+' เดือน':abs+' วัน';
+      if(daysNum<=0) numStr='เกิน '+abs+(abs>=365?' เดือน':' วัน');
+      return '<div style="text-align:right;"><div style="font-size:28px;font-weight:800;color:'+daysColor+';line-height:1;letter-spacing:-1px;">'+numStr+'</div>'+
+             (isKmBased?'<div style="font-size:9px;color:var(--hint);margin-top:1px;">ประมาณจากอัตราการใช้รถ</div>':'')+'</div>';
+    }
+
+    return '<div class="tdi"><div class="tda '+S+'"></div><div class="tdin">'+
+      '<div class="tdr1"><div class="tdname">'+item.l+(item.customInterval?' <span style="font-size:10px;color:var(--blue);background:var(--blue-lt);padding:1px 6px;border-radius:10px;">'+n.toLocaleString()+' กม.</span>':'')+'</div>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">'+
+      '<span class="badge '+SB[S]+'">'+SL[S]+'</span>'+
+      buildDaysDisplay(calc,cid)+
+      '</div></div>'+
+      '<div class="tdd">'+intStr+'</div>'+remLines+
+      (P>0?'<div class="pw" style="margin-top:6px;"><div class="pb" style="width:'+P+'%;background:'+SC[S]+';"></div></div>':'')+
+      custBtn+'<div class="tdn" style="margin-top:6px;">'+item.note+'</div>'+(item.cm>0?'<span class="tdc">฿'+item.cm.toLocaleString()+'–'+item.cx.toLocaleString()+'</span>':'')+photoRow+
+      '</div><div style="display:flex;border-top:.5px solid var(--gb);">'+
+      '<button style="flex:1;padding:11px 6px;background:var(--green-lt);border:none;border-right:.5px solid var(--gb);font-size:12px;color:var(--green);cursor:pointer;font-family:inherit;font-weight:600;" onclick="openQL(\''+cid+'\',\''+item.id+'\',\''+item.l+'\')">📝 บันทึกงานนี้</button>'+
+      '<button style="flex:1;padding:11px 6px;background:var(--gray-lt);border:none;font-size:12px;color:'+(canMark?'var(--muted)':'var(--hint)')+';cursor:pointer;font-family:inherit;font-weight:500;" onclick="markDone(\''+cid+'\',\''+item.id+'\')" '+(canMark?'':'disabled')+'>'+(canMark?'✓ ทำแล้ว @'+ck.toLocaleString()+' กม.':'ใส่ไมล์ก่อน')+'</button>'+
+      (lk||getLastSvcDate(cid,item)?'<button style="padding:11px 8px;background:var(--red-lt);border:none;border-left:.5px solid var(--gb);font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;font-weight:600;" onclick="resetTodo(\''+cid+'\',\''+item.id+'\')" title="รีเซ็ต">↺</button>':'')+
+      '</div></div>';
   }).join('');
 
-  const kmpm=getKmPerMonth(cid);
-  const isOverride=!!localStorage.getItem('cc_kmpm_'+cid);
-  const kmpmLabel=kmpm!==null
-    ? kmpm.toLocaleString()+' กม./เดือน'+(isOverride?' (กำหนดเอง)':' (6 เดือนล่าสุด)')
-    : 'ยังไม่มีข้อมูลพอคำนวณ';
+  const kmpmInfo=getKmpmInfo(cid);
+  const isOverride=!!(kmpmInfo&&kmpmInfo.isOverride);
+  let kmpmLabel,kmpmWarning='';
+  if(!kmpmInfo){
+    kmpmLabel='ยังไม่มีข้อมูล (ต้องมีอย่างน้อย 2 บันทึก)';
+  } else if(kmpmInfo.isOverride){
+    kmpmLabel=kmpmInfo.rate.toLocaleString()+' กม./เดือน (กำหนดเอง)';
+  } else {
+    kmpmLabel=kmpmInfo.rate.toLocaleString()+' กม./เดือน';
+    if(kmpmInfo.isPartial&&kmpmInfo.missingMonths>0){
+      kmpmWarning='⚠ ข้อมูลแค่ '+kmpmInfo.dataMonths+' เดือน (ขาดอีก '+kmpmInfo.missingMonths+' เดือนจาก 6 เดือน)';
+    }else{
+      kmpmWarning='จากประวัติ '+kmpmInfo.dataMonths+' เดือน';
+    }
+  }
 
   // km update timestamp
   const kmUpd=KM_UPDATED[cid];
@@ -1040,13 +1097,16 @@ function rTodo(el){
     '</div>' +
     '<input type="number" id="kmInput" value="'+(ck||'')+'" placeholder="เช่น 85000" style="'+(kmNeedsUpdate?'border-color:var(--amber);':'')+'">' +
     '<button onclick="updKm()" style="'+(kmNeedsUpdate?'background:var(--amber);':'')+'">อัพเดต</button></div>'+
-    '<div style="background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;box-shadow:var(--sh);">'+
+    '<div style="background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid '+(kmpmInfo&&kmpmInfo.isPartial?'var(--amber)':'var(--gb)')+';border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;box-shadow:var(--sh);">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'+
     '<div><div style="font-size:11px;color:var(--muted);margin-bottom:1px;">อัตราการใช้รถ</div>'+
-    '<div style="font-size:15px;font-weight:700;color:'+(kmpm?'var(--blue)':'var(--hint)')+';">'+kmpmLabel+'</div></div>'+
+    '<div style="font-size:15px;font-weight:700;color:'+(kmpmInfo?'var(--blue)':'var(--hint)')+';">'+kmpmLabel+'</div>'+
+    (kmpmWarning?'<div style="font-size:10px;color:'+(kmpmInfo&&kmpmInfo.isPartial?'var(--amber)':'var(--muted)')+';margin-top:2px;">'+kmpmWarning+'</div>':'')+
+    '</div>'+
     '<div style="display:flex;gap:6px;">'+
-    '<button onclick="promptKmpm(\''+cid+'\')" style="padding:6px 12px;background:var(--blue-lt);color:var(--blue);border:none;border-radius:var(--rx);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">✎ ปรับ</button>'+
-    (isOverride?'<button onclick="clearKmPerMonth(\''+cid+'\');render()" style="padding:6px 10px;background:var(--gray-lt);color:var(--muted);border:none;border-radius:var(--rx);font-size:12px;cursor:pointer;font-family:inherit;" title="รีเซ็ตกลับอัตโนมัติ">↺</button>':'')+
-    '</div></div>'+
+    '<button onclick="promptKmpm(\''+cid+'\')" style="padding:6px 12px;background:var(--blue-lt);color:var(--blue);border:none;border-radius:var(--rx);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;">✎ ปรับ</button>'+
+    (isOverride?'<button onclick="clearKmPerMonth(\''+cid+'\');render()" style="padding:6px 10px;background:var(--gray-lt);color:var(--muted);border:none;border-radius:var(--rx);font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0;" title="รีเซ็ตกลับอัตโนมัติ">↺</button>':'')+
+    '</div></div></div>'+
     (car.type==='hybrid'?'<div class="alert hybrid">⚡ Hybrid อายุ 18+ ปี — เข้าศูนย์โตโยต้าเท่านั้น</div>':'')+
     '<div class="srow" style="grid-template-columns:1fr 1fr 1fr 1fr;"><div class="sc r"><div class="sn">'+u+'</div><div class="sl">ถึงกำหนด</div></div><div class="sc a"><div class="sn">'+s+'</div><div class="sl">ใกล้ถึง</div></div><div class="sc g"><div class="sn">'+o+'</div><div class="sl">ปกติ</div></div><div class="sc" style="background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--gb);box-shadow:var(--sh);"><div class="sn" style="font-size:22px;color:var(--muted);">'+unk+'</div><div class="sl">ไม่มีข้อมูล</div></div></div>'+
     '<div id="todoDocSection"></div>'+
@@ -1118,7 +1178,17 @@ function promptKmpm(cid){
   document.getElementById('kmpmInput').value=curVal;
   const autoRate=calcKmpmAuto(cid);
   const autoEl=document.getElementById('kmpmAuto');
-  if(autoEl) autoEl.textContent=autoRate?'อัตราอัตโนมัติ (6 เดือนล่าสุด): '+autoRate.toLocaleString()+' กม./เดือน':'ยังไม่มีข้อมูลพอคำนวณอัตโนมัติ';
+  if(autoEl){
+    if(autoRate){
+      const info=calcKmpmAuto(cid);
+      let txt=autoRate.toLocaleString()+' กม./เดือน';
+      if(info&&info.isPartial) txt+=' ⚠ (ข้อมูลแค่ '+info.dataMonths+' เดือน ขาดอีก '+info.missingMonths+' เดือน)';
+      else if(info) txt+=' ('+info.dataMonths+' เดือน)';
+      autoEl.textContent='อัตราอัตโนมัติ: '+txt;
+    }else{
+      autoEl.textContent='ยังไม่มีข้อมูลพอคำนวณ (ต้องมีอย่างน้อย 2 บันทึก)';
+    }
+  }
   ov._cid=cid;
   ov.classList.add('on');
   setTimeout(()=>{const inp=document.getElementById('kmpmInput');if(inp)inp.focus();},300);
