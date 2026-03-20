@@ -657,25 +657,21 @@ async function startApp(){
 function getLastSvcDate(cid,item){const log=LOGS.filter(l=>l.carId===cid&&l.type===item.l).sort((a,b)=>b.ts-a.ts)[0];return log?new Date(log.date):null;}
 
 // ── km/month calculation ──
-function getKmPerMonth(cid){
-  // 1. User override
-  const override=localStorage.getItem('cc_kmpm_'+cid);
-  if(override) return parseInt(override);
-  // 2. Calculate from last 6 months of logs only
+function calcKmpmAuto(cid){
   const sixMonthsAgo=new Date();sixMonthsAgo.setMonth(sixMonthsAgo.getMonth()-6);
   const logs=LOGS.filter(l=>l.carId===cid&&l.km>0&&new Date(l.date)>=sixMonthsAgo)
                  .sort((a,b)=>new Date(a.date)-new Date(b.date));
   if(logs.length>=2){
-    const minKm=logs[0].km, maxKm=logs[logs.length-1].km;
-    const minDate=new Date(logs[0].date), maxDate=new Date(logs[logs.length-1].date);
-    const months=(maxDate-minDate)/(1000*60*60*24*30.44);
-    if(months>=0.5){ // need at least 2 weeks span
-      const rate=Math.round((maxKm-minKm)/months);
-      if(rate>0&&rate<10000) return rate;
-    }
+    const minKm=logs[0].km,maxKm=logs[logs.length-1].km;
+    const months=(new Date(logs[logs.length-1].date)-new Date(logs[0].date))/(1000*60*60*24*30.44);
+    if(months>=0.5){const rate=Math.round((maxKm-minKm)/months);if(rate>0&&rate<10000)return rate;}
   }
-  // 3. No sufficient data — return null (caller handles this)
   return null;
+}
+function getKmPerMonth(cid){
+  const override=localStorage.getItem('cc_kmpm_'+cid);
+  if(override) return parseInt(override);
+  return calcKmpmAuto(cid);
 }
 function setKmPerMonth(cid,v){localStorage.setItem('cc_kmpm_'+cid,v);}
 function clearKmPerMonth(cid){localStorage.removeItem('cc_kmpm_'+cid);}
@@ -1101,13 +1097,44 @@ function rTodo(el){
 }
 
 function promptKmpm(cid){
+  // Use overlay instead of prompt() — prompt() is blocked in iOS PWA
   const cur=getKmPerMonth(cid);
-  const val=prompt('กำหนดอัตราการใช้รถ กม./เดือน\n(ปัจจุบัน: '+cur.toLocaleString()+' กม./เดือน)\n\nเว้นว่างเพื่อใช้การคำนวณอัตโนมัติจากประวัติ:','');
-  if(val===null)return; // cancel
-  if(val.trim()===''){clearKmPerMonth(cid);render();return;}
+  const curVal=localStorage.getItem('cc_kmpm_'+cid)||'';
+  let ov=document.getElementById('ovKmpm');
+  if(!ov){
+    ov=document.createElement('div');ov.id='ovKmpm';ov.className='ov';
+    ov.innerHTML='<div class="ovs"><div class="ovh"></div>'+
+      '<div class="ovt">📏 อัตราการใช้รถ</div>'+
+      '<div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;">ระบบใช้ค่านี้คำนวณว่า <strong>เหลืออีกกี่วัน</strong> ก่อนถึงรอบซ่อม<br>เว้นว่างเพื่อให้คำนวณอัตโนมัติจากประวัติ 6 เดือน</div>'+
+      '<div class="fs"><label class="fl">กม. ต่อเดือน</label>'+
+      '<input class="fi" type="number" id="kmpmInput" placeholder="เช่น 2000" inputmode="numeric"></div>'+
+      '<div id="kmpmAuto" style="font-size:12px;color:var(--blue);margin:-8px 0 14px;"></div>'+
+      '<button class="fbtn" onclick="saveKmpm()">💾 บันทึก</button>'+
+      '<button class="cancelbtn" onclick="closeKmpm()">ยกเลิก</button>'+
+      '</div>';
+    ov.onclick=function(e){if(e.target===ov)ov.classList.remove('on');};
+    document.body.appendChild(ov);
+  }
+  document.getElementById('kmpmInput').value=curVal;
+  const autoRate=calcKmpmAuto(cid);
+  const autoEl=document.getElementById('kmpmAuto');
+  if(autoEl) autoEl.textContent=autoRate?'อัตราอัตโนมัติ (6 เดือนล่าสุด): '+autoRate.toLocaleString()+' กม./เดือน':'ยังไม่มีข้อมูลพอคำนวณอัตโนมัติ';
+  ov._cid=cid;
+  ov.classList.add('on');
+  setTimeout(()=>{const inp=document.getElementById('kmpmInput');if(inp)inp.focus();},300);
+}
+function closeKmpm(){const ov=document.getElementById("ovKmpm");if(ov)ov.classList.remove("on");}
+function saveKmpm(){
+  const ov=document.getElementById('ovKmpm');
+  const cid=ov._cid;
+  const val=document.getElementById('kmpmInput').value.trim();
+  if(val===''){clearKmPerMonth(cid);ov.classList.remove('on');render();return;}
   const v=parseInt(val);
-  if(isNaN(v)||v<=0||v>9999){alert('กรุณาใส่ตัวเลข 1-9,999 กม./เดือน');return;}
-  setKmPerMonth(cid,v);render();
+  if(isNaN(v)||v<=0||v>9999){
+    document.getElementById('kmpmInput').style.borderColor='var(--red)';
+    return;
+  }
+  setKmPerMonth(cid,v);ov.classList.remove('on');render();
 }
 async function updKm(){
   const v=parseInt(document.getElementById('kmInput').value);
