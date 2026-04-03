@@ -1858,7 +1858,12 @@ async function saveDoc(){
   const photosJson=JSON.stringify(allPhotos);
   DOCS[key]={expiry:expiry,note:note,photos:photosJson};
   syncBar(true);
-  await upsert('car_docs',{user_id:uid,doc_key:key,expiry:expiry,note:note,photos:photosJson},tok);
+    const rpDoc=await fetch(SBURL+'/rest/v1/car_docs?user_id=eq.'+uid+'&doc_key=eq.'+encodeURIComponent(key),{method:'PATCH',headers:{...BH,Authorization:'Bearer '+tok,Prefer:'return=representation'},body:JSON.stringify({expiry:expiry,note:note,photos:photosJson})});
+  const patchedDoc=await rpDoc.json().catch(()=>[]);
+  if(!Array.isArray(patchedDoc)||patchedDoc.length===0){
+    await sbPost('/rest/v1/car_docs',{user_id:uid,doc_key:key,expiry:expiry,note:note,photos:photosJson},tok,{Prefer:'return=minimal'});
+  }
+
   syncBar(false);
   msg.textContent='✅ บันทึกสำเร็จ!';msg.style.color='var(--green)';
  setTimeout(function(){closeOv('ovDoc');render();},600);
