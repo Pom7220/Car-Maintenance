@@ -994,9 +994,18 @@ function rDash(el){
       return;
     }
     const tot=(+last.partCost||0)+(+last.laborCost||0);
-    const urg=car.sc.filter(i=>st(car.id,i)==='urgent').length;
-    const sn2=car.sc.filter(i=>st(car.id,i)==='soon').length;
+  let urg=car.sc.filter(i=>st(car.id,i)==='urgent').length;
+  let sn2=car.sc.filter(i=>st(car.id,i)==='soon').length;
     const unk=car.sc.filter(i=>st(car.id,i)==='unknown').length;
+        const _dashToday=new Date();_dashToday.setHours(0,0,0,0);
+    ['ทะเบียนรถ','พ.ร.บ.','ประกันภัยชั้น 1','ประกันภัยชั้น 2/3'].forEach(function(t){
+      const d=DOCS[car.id+'_'+t]||{};
+      if(!d.expiry)return;
+      const e=new Date(d.expiry);e.setHours(0,0,0,0);
+      const dl=Math.floor((e-_dashToday)/86400000);
+      if(dl<=30)urg++;else if(dl<=90)sn2++;
+    });
+
     const badge=urg?'<span class="badge bu">'+urg+' ถึงกำหนด</span>':sn2?'<span class="badge bs">'+sn2+' ใกล้ถึง</span>':unk?'<span class="badge bk">'+unk+' ไม่มีข้อมูล</span>':'<span class="badge bo">ปกติ</span>';
     card.style.cursor='pointer';
     card.innerHTML='<div class="car-stripe" style="background:'+col+'"></div>'+
@@ -1852,7 +1861,7 @@ async function saveDoc(){
   await upsert('car_docs',{user_id:uid,doc_key:key,expiry:expiry,note:note,photos:photosJson},tok);
   syncBar(false);
   msg.textContent='✅ บันทึกสำเร็จ!';msg.style.color='var(--green)';
-  setTimeout(function(){closeOv('ovDoc');rHist(document.getElementById('mainC'));},600);
+ setTimeout(function(){closeOv('ovDoc');render();},600);
 }
 
 // ══ SETTINGS ══
