@@ -1050,7 +1050,6 @@ function rDash(el){
 // ══ TODO ══
 function rTodo(el){
   const car=CARS[curCar],cid=curCar,ck=KM[cid];
-  const oilN=getOilN(cid);
   const sorted=[...car.sc].sort((a,b)=>SORT_ORDER[st(cid,a)]-SORT_ORDER[st(cid,b)]);
 
   // Count maintenance items - must be let (not const) to allow increment
