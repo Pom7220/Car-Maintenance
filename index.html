@@ -287,7 +287,8 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
     <div class="fs"><label class="fl">วันที่</label><input class="fi" type="date" id="elDate"></div>
     <div class="fs"><label class="fl">เลขไมล์</label><input class="fi" type="number" id="elKm"></div>
   </div>
-  <div class="fs"><label class="fl">ประเภทงาน</label><select class="fi" id="elType"><option>เปลี่ยนน้ำมันเครื่อง + ไส้กรอง</option><option>ไส้กรองอากาศ</option><option>ไส้กรองแอร์ (Cabin)</option><option>หัวเทียน</option><option>Timing Belt/Chain</option><option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option><option>น้ำหล่อเย็น</option><option>ผ้าเบรก</option><option>ยาง/สลับยาง</option><option>เปลี่ยนยางใหม่</option><option>แบตเตอรี่</option><option>ระบบแอร์</option><option>ช่วงล่าง</option><option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option></select></div>
+  <div class="fs"><label class="fl">ประเภทงาน</label><select class="fi" id="elType" onchange="toggleElOilInterval()"><option>เปลี่ยนน้ำมันเครื่อง + ไส้กรอง</option><option>ไส้กรองอากาศ</option><option>ไส้กรองแอร์ (Cabin)</option><option>หัวเทียน</option><option>Timing Belt/Chain</option><option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option><option>น้ำหล่อเย็น</option><option>ผ้าเบรก</option><option>ยาง/สลับยาง</option><option>เปลี่ยนยางใหม่</option><option>แบตเตอรี่</option><option>ระบบแอร์</option><option>ช่วงล่าง</option><option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option></select></div>
+    <div id="elOilInterval" style="background:var(--blue-lt);border-radius:var(--rx);padding:12px 14px;margin-bottom:14px;display:none;"><div style="font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">ไมล์เปลี่ยนถัดไป</div><input class="fi" id="elNextKm" type="number" placeholder="เช่น 201000" style="margin-bottom:0;"></div>
   <div class="fr2">
     <div class="fs"><label class="fl">สถานที่</label><select class="fi" id="elPlace"><option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option><option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option></select></div>
     <div class="fs"><label class="fl">ชื่อร้าน</label><input class="fi" id="elShop"></div>
@@ -1466,7 +1467,13 @@ function rLog(el){
     if(nk) nk.value=OIL_NEXT[cid]||'';
   }
 }
-function toggleLogOilInterval(){
+function toggleElOilInterval(){
+  const type=document.getElementById('elType')?.value||'';
+  const box=document.getElementById('elOilInterval');
+  if(box) box.style.display=type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง'?'block':'none';
+}
+
+  function toggleLogOilInterval(){
   const type=document.getElementById('logType')?.value||'';
   const box=document.getElementById('logOilInterval');
   if(box) box.style.display=type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง'?'block':'none';
@@ -1552,7 +1559,8 @@ async function saveQL(){
       if(!r.ok){msg.textContent='❌ แก้ไขไม่สำเร็จ';msg.style.color='var(--red)';return;}
       // Update local LOGS array
       const idx=LOGS.findIndex(l=>l.id===editId);
-      if(idx>=0) LOGS[idx]=Object.assign({},LOGS[idx],{date:date,km:kv,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,recordedBy:body.recorded_by});
+            if(idx>=0) LOGS[idx]=Object.assign({},LOGS[idx],{date:date,km:kv,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,recordedBy:body.recorded_by});
+      if(label==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง'){const nk=parseInt(document.getElementById('qlNextKm')?.value);if(nk>0) await setOilNext(cid,nk);}
       msg.textContent='✅ แก้ไขสำเร็จ!';msg.style.color='var(--green)';
     }else{
       // ── CREATE mode: POST new record ──
@@ -1766,7 +1774,10 @@ function openEditLog(id){
   document.getElementById('elId').value=id;document.getElementById('elCar').value=l.carId;document.getElementById('elDate').value=l.date;document.getElementById('elKm').value=l.km;
   const setOpt=(sid,val)=>{const sel=document.getElementById(sid);const opt=Array.from(sel.options).find(o=>o.value===val||o.text===val);if(opt)sel.value=opt.value||opt.text;else{const o=document.createElement('option');o.value=val;o.text=val;sel.add(o);sel.value=val;}};
   setOpt('elType',l.type||'');setOpt('elPlace',l.place||'ศูนย์โตโยต้า');
-  document.getElementById('elShop').value=l.shop||'';document.getElementById('elPart').value=l.partCost||'';document.getElementById('elLabor').value=l.laborCost||'';document.getElementById('elProduct').value=l.product||'';document.getElementById('elNote').value=l.note||'';
+    document.getElementById('elShop').value=l.shop||'';document.getElementById('elPart').value=l.partCost||'';document.getElementById('elLabor').value=l.laborCost||'';document.getElementById('elProduct').value=l.product||'';document.getElementById('elNote').value=l.note||'';
+  const isOil=l.type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง';
+  const elOil=document.getElementById('elOilInterval');if(elOil)elOil.style.display=isOil?'block':'none';
+  const elNk=document.getElementById('elNextKm');if(elNk)elNk.value=isOil?(OIL_NEXT[l.carId]||''):'';
   document.getElementById('ovEditLog').classList.add('on');
 }
 function openQLEdit(logId){
@@ -1788,7 +1799,9 @@ function openQLEdit(logId){
   document.getElementById('qlLabor').value=log.laborCost||'';
   document.getElementById('qlProduct').value=log.product||'';
   document.getElementById('qlNote').value=log.note||'';
-  document.getElementById('qlOilInterval').style.display='none';
+  const isOilEdit=log.type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง';
+  const oilBoxEdit=document.getElementById('qlOilInterval');
+  if(oilBoxEdit){oilBoxEdit.style.display=isOilEdit?'block':'none';if(isOilEdit){const nk=document.getElementById('qlNextKm');if(nk)nk.value=OIL_NEXT[log.carId]||'';}}
   document.getElementById('qlMsg').textContent='';
   photoQ.ql=[];renderPhotoPreview('ql');
   document.getElementById('ovQL').classList.add('on');
@@ -1798,8 +1811,9 @@ async function saveEditLog(){
   const id=document.getElementById('elId').value,kv=parseInt(document.getElementById('elKm').value),date=document.getElementById('elDate').value;
   if(!date||!kv){alert('กรุณากรอกวันที่และเลขไมล์');return;}
   const body={car_id:document.getElementById('elCar').value,date,km:kv,type:document.getElementById('elType').value,place:document.getElementById('elPlace').value,shop:document.getElementById('elShop').value,part_cost:document.getElementById('elPart').value||null,labor_cost:document.getElementById('elLabor').value||null,product:document.getElementById('elProduct').value,note:document.getElementById('elNote').value};
-  syncBar(true);await sbPatch('/rest/v1/car_logs?id=eq.'+id,body,sess.access_token);
+    syncBar(true);await sbPatch('/rest/v1/car_logs?id=eq.'+id,body,sess.access_token);
   const i=LOGS.findIndex(l=>l.id===id);if(i>=0)LOGS[i]={...LOGS[i],carId:body.car_id,date,km:kv,type:body.type,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note};
+  if(body.type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง'){const nk=parseInt(document.getElementById('elNextKm')?.value);if(nk>0) await setOilNext(body.car_id,nk);}
   syncBar(false);closeOv('ovEditLog');rHist(document.getElementById('mainC'));
 }
 
