@@ -798,7 +798,7 @@ function stCalc(cid,item){
   const ck=KM[cid]||0,lk=LD[''+cid+'_'+item.id]||0;
   const lastDate=getLastSvcDate(cid,item);
   let timePct=0,daysLeft=null;
-  if(item.days>0&&lastDate){const d=Math.floor((Date.now()-lastDate.getTime())/86400000);timePct=d/item.days*100;daysLeft=item.days-d;}
+if(item.days>0&&lastDate){const d=Math.floor((Date.now()-lastDate.getTime())/86400000);if(d>=0){timePct=d/item.days*100;daysLeft=item.days-d;}}
   let kmPct=0,rem=null;
   if(item.customInterval){
     // Oil: use stored next-exchange mileage directly
@@ -1129,7 +1129,7 @@ function rTodo(el){
     const custBtn='';
 
     // Build days remaining display — large number on right
-    function buildDaysDisplay(calc, cid, item_n, lk, ck){
+    function buildDaysDisplay(calc, cid, item_n, lk, ck, itemDays){
       let daysNum=null, daysColor='var(--muted)', isKmBased=false;
 
       // 1. Time-based daysLeft
@@ -1182,6 +1182,11 @@ function rTodo(el){
         }
       }
 
+           // Cap km-based estimate at time-based interval limit (e.g. oil: max 12 months)
+      if(isKmBased&&itemDays>0&&daysNum!==null&&daysNum>itemDays){
+        daysNum=itemDays;
+        daysColor=daysNum<=30?'var(--amber)':daysNum<=90?'var(--blue)':'var(--muted)';
+      }
       if(daysNum===null) return '';
 
       const abs=Math.abs(daysNum);
@@ -1199,7 +1204,8 @@ function rTodo(el){
       '<div class="tdr1" style="align-items:flex-start;"><div style="flex:1;min-width:0;"><div class="tdname">'+item.l+'</div></div>'+
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;min-width:80px;">'+
       '<span class="badge '+SB[S]+'">'+SL[S]+'</span>'+
-      buildDaysDisplay(calc,cid,n,lk,ck)+
+      buildDaysDisplay(calc,cid,n,lk,ck,item.days||0)+
+
       '</div></div>'+
       '<div class="tdd">'+intStr+'</div>'+remLines+
       (P>0?'<div class="pw" style="margin-top:6px;"><div class="pb" style="width:'+P+'%;background:'+SC[S]+';"></div></div>':'')+
