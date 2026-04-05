@@ -521,7 +521,16 @@ let histSearch='';
 const photoQ={log:[],ql:[],doc:[]};
 
 let OIL_NEXT={};
-function getN(cid,item){return item.customInterval?0:item.n;}
+let SC_OVERRIDES={};
+function getN(cid,item){
+  if(item.customInterval)return 0;
+  const ov=(SC_OVERRIDES[cid]||{})[item.id];
+  return(ov&&ov.n!==undefined)?ov.n:item.n;
+}
+function getItemDays(cid,item){
+  const ov=(SC_OVERRIDES[cid]||{})[item.id];
+  return(ov&&ov.days!==undefined)?ov.days:item.days;
+}
 async function setOilNext(cid,v){
   OIL_NEXT[cid]=v;
   const uid=sess.user.id,tok=sess.access_token,key=cid+'_oil_next';
@@ -660,6 +669,9 @@ async function loadAll(){
     }else if(r.doc_key.endsWith('_oil_next')){
       const cid=r.doc_key.replace('_oil_next','');
       OIL_NEXT[cid]=parseInt(r.note)||0;
+    }else if(r.doc_key.endsWith('_sc_overrides')){
+      const cid=r.doc_key.replace('_sc_overrides','');
+      try{SC_OVERRIDES[cid]=JSON.parse(r.note||'{}');}catch(e){SC_OVERRIDES[cid]={};}
     }else{
       DOCS[r.doc_key]={expiry:r.expiry,note:r.note,photos:r.photos||'[]'};
     }
@@ -794,11 +806,12 @@ function fmtDaysEst(days){
 
 function stCalc(cid,item){
   const n=getN(cid,item);
-  if(n===0&&(!item.days||item.days===0)&&!item.customInterval)return{s:'info',kmPct:0,timePct:0,rem:null,daysLeft:null};
+  const idays=getItemDays(cid,item);
+  if(n===0&&(!idays||idays===0)&&!item.customInterval)return{s:'info',kmPct:0,timePct:0,rem:null,daysLeft:null};
   const ck=KM[cid]||0,lk=LD[''+cid+'_'+item.id]||0;
   const lastDate=getLastSvcDate(cid,item);
   let timePct=0,daysLeft=null;
-if(item.days>0&&lastDate){const d=Math.floor((Date.now()-lastDate.getTime())/86400000);if(d>=0){timePct=d/item.days*100;daysLeft=item.days-d;}}
+  if(idays>0&&lastDate){const d=Math.floor((Date.now()-lastDate.getTime())/86400000);if(d>=0){timePct=d/idays*100;daysLeft=idays-d;}}
   let kmPct=0,rem=null;
   if(item.customInterval){
     // Oil: use stored next-exchange mileage directly
@@ -814,7 +827,7 @@ if(item.days>0&&lastDate){const d=Math.floor((Date.now()-lastDate.getTime())/864
       if(ck>0) return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null,noBaseline:true,ck:ck,n:n};
       return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
     }
-    if(n===0&&item.days>0&&!lastDate)return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
+      if(n===0&&idays>0&&!lastDate)return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
     if(n>0&&lk>0&&!ck)return{s:'unknown',kmPct:0,timePct,rem:null,daysLeft};
   }
   const mx=Math.max(timePct,kmPct);
@@ -1079,6 +1092,7 @@ function rTodo(el){
     const calc=stCalc(cid,item);
     const S=calc.s,P=pct(cid,item);
     const n=getN(cid,item);
+    const idays=getItemDays(cid,item);
     const lk=LD[''+cid+'_'+item.id]||0;
     const lastLog=LOGS.filter(l=>l.carId===cid&&l.type===item.l).sort((a,b)=>b.ts-a.ts)[0];
     const photos=lastLog?JSON.parse(lastLog.photos||'[]'):[];
@@ -1117,10 +1131,10 @@ function rTodo(el){
       }
     }
     else if(!lk&&!getLastSvcDate(cid,item)){remLines+='<div class="tdd" style="color:var(--amber);font-weight:600;">ยังไม่มีข้อมูลครั้งล่าสุด</div>';}
-    if(item.days>0&&calc.daysLeft!==null){const dColor=calc.daysLeft<=0?'var(--red)':calc.daysLeft<item.days*.25?'var(--amber)':'var(--muted)';const ld=getLastSvcDate(cid,item);remLines+='<div style="font-size:12px;color:'+dColor+';margin-top:2px;">⏱ '+(calc.daysLeft<=0?'เกินกำหนด '+Math.abs(calc.daysLeft)+' วัน':'อีก '+calc.daysLeft+' วัน')+(ld?' ('+ld.toLocaleDateString('th-TH')+')':'')+'</div>';}
-    else if(item.days>0&&!getLastSvcDate(cid,item)){remLines+='<div style="font-size:12px;color:var(--amber);margin-top:2px;">⏱ ไม่มีข้อมูลวันที่บริการ</div>';}
+    if(idays>0&&calc.daysLeft!==null){const dColor=calc.daysLeft<=0?'var(--red)':calc.daysLeft<idays*.25?'var(--amber)':'var(--muted)';const ld=getLastSvcDate(cid,item);remLines+='<div style="font-size:12px;color:'+dColor+';margin-top:2px;">⏱ '+(calc.daysLeft<=0?'เกินกำหนด '+Math.abs(calc.daysLeft)+' วัน':'อีก '+calc.daysLeft+' วัน')+(ld?' ('+ld.toLocaleDateString('th-TH')+')':'')+'</div>';}
+    else if(idays>0&&!getLastSvcDate(cid,item)){remLines+='<div style="font-size:12px;color:var(--amber);margin-top:2px;">⏱ ไม่มีข้อมูลวันที่บริการ</div>';}
 
-    const intStr=item.customInterval?'เปลี่ยนน้ำมัน · '+item.p:n>0&&item.days>0?'ทุก '+n.toLocaleString()+' กม. หรือ '+(item.days>=365?Math.round(item.days/365)+' ปี':item.days+' วัน')+' · '+item.p:n>0?'ทุก '+n.toLocaleString()+' กม. · '+item.p:item.days>0?'ทุก '+(item.days>=365?Math.round(item.days/365)+' ปี':item.days+' วัน')+' · '+item.p:'';
+    const intStr=item.customInterval?'เปลี่ยนน้ำมัน · '+item.p:n>0&&idays>0?'ทุก '+n.toLocaleString()+' กม. หรือ '+(idays>=365?Math.round(idays/365)+' ปี':idays+' วัน')+' · '+item.p:n>0?'ทุก '+n.toLocaleString()+' กม. · '+item.p:idays>0?'ทุก '+(idays>=365?Math.round(idays/365)+' ปี':idays+' วัน')+' · '+item.p:'';
     const canMark=ck>0;
     const isInfo=S==='info';
 
@@ -1187,6 +1201,7 @@ function rTodo(el){
         daysNum=itemDays;
         daysColor=daysNum<=30?'var(--amber)':daysNum<=90?'var(--blue)':'var(--muted)';
       }
+           if(isKmBased&&itemDays>0&&daysNum!==null&&daysNum>itemDays){daysNum=itemDays;daysColor=daysNum<=30?'var(--amber)':daysNum<=90?'var(--blue)':'var(--muted)';}
       if(daysNum===null) return '';
 
       const abs=Math.abs(daysNum);
@@ -1204,7 +1219,7 @@ function rTodo(el){
       '<div class="tdr1" style="align-items:flex-start;"><div style="flex:1;min-width:0;"><div class="tdname">'+item.l+'</div></div>'+
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;min-width:80px;">'+
       '<span class="badge '+SB[S]+'">'+SL[S]+'</span>'+
-      buildDaysDisplay(calc,cid,n,lk,ck,item.days||0)+
+   buildDaysDisplay(calc,cid,n,lk,ck,idays)+
 
       '</div></div>'+
       '<div class="tdd">'+intStr+'</div>'+remLines+
@@ -1975,7 +1990,11 @@ function renderSettingsBody(el, append=false){
       '<span>🔧 ศูนย์บริการ / ร้านช่าง</span>'+
       '<button onclick="openAddContact(\'ศูนย์บริการ\')" style="font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">+ เพิ่ม</button>'+
     '</div>'+shopH+
-
+    '<div class="sec">🔧 ตารางบำรุงรักษา</div>'+
+    '<div class="gc" style="padding:16px;">'+
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">ปรับรอบบำรุงรักษาสำหรับแต่ละรถ — บันทึกแล้วระบบจะคำนวณ To-Do ใหม่ทันที<br>น้ำมันเครื่อง: ตั้งไมล์ถัดไปจากหน้า To-Do</div>'+
+    ((ALLOWED_CARS||Object.keys(CARS)).map(function(cid){const car=CARS[cid];if(!car)return'';const rows=car.sc.map(function(item){const ov=SC_OVERRIDES[cid]||{};const nVal=ov[item.id]&&ov[item.id].n!==undefined?ov[item.id].n:item.n;const dVal=ov[item.id]&&ov[item.id].days!==undefined?ov[item.id].days:item.days;return'<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;align-items:center;padding:8px 0;border-bottom:.5px solid var(--gb);"><div style="font-size:12px;">'+item.l+'</div>'+(item.customInterval?'<div style="font-size:10px;color:var(--hint);text-align:center;">To-Do</div>':'<input id="sced_'+cid+'_'+item.id+'_n" type="number" value="'+(nVal||0)+'" min="0" style="padding:4px;border:.5px solid var(--gb);border-radius:6px;font-size:12px;width:100%;text-align:center;background:var(--bg);">')+'<input id="sced_'+cid+'_'+item.id+'_d" type="number" value="'+(dVal||0)+'" min="0" style="padding:4px;border:.5px solid var(--gb);border-radius:6px;font-size:12px;width:100%;text-align:center;background:var(--bg);"></div>';}).join('');return'<div style="margin-bottom:16px;padding-bottom:12px;border-bottom:.5px solid var(--gb);"><div style="font-size:14px;font-weight:700;color:'+CAR_COLOR[cid]+';margin-bottom:8px;">'+car.name+'</div><div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;margin-bottom:4px;"><div style="font-size:10px;color:var(--hint);">รายการ</div><div style="font-size:10px;color:var(--hint);text-align:center;">กม.</div><div style="font-size:10px;color:var(--hint);text-align:center;">วัน</div></div>'+rows+'<div id="sced_msg_'+cid+'" style="font-size:12px;text-align:center;min-height:14px;margin-top:6px;"></div><button onclick="saveSched(\''+cid+'\')" style="width:100%;margin-top:8px;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">💾 บันทึก '+car.name+'</button></div>';}).join(''))+
+    '</div>'+
     '<div style="margin-top:24px;">'+
     '<button onclick="doLogout()" style="width:100%;padding:14px;background:var(--red-lt);color:var(--red);border:.5px solid rgba(255,69,58,.3);border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">🚪 ออกจากระบบ</button></div>';
 }
