@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -197,7 +196,7 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
   <div class="a-logo">🚗</div>
   <div class="a-title">Car Care</div>
   <div class="a-sub">ระบบบำรุงรักษารถยนต์</div>
-  <div style="text-align:center;font-size:11px;color:var(--hint);margin-top:-20px;margin-bottom:20px;font-weight:500;letter-spacing:.03em;">v2.6.0 · 27 Mar 2026</div>
+  <div style="text-align:center;font-size:11px;color:var(--hint);margin-top:-20px;margin-bottom:20px;font-weight:500;letter-spacing:.03em;">v2.6.1 · 27 Mar 2026</div>
   
   <div id="authForms">
     <div class="a-tabs"><div class="a-tab on" id="tabL" onclick="authTab('login')">เข้าสู่ระบบ</div><div class="a-tab" id="tabS" onclick="authTab('signup')">สมัครสมาชิก</div></div>
@@ -287,8 +286,7 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
     <div class="fs"><label class="fl">วันที่</label><input class="fi" type="date" id="elDate"></div>
     <div class="fs"><label class="fl">เลขไมล์</label><input class="fi" type="number" id="elKm"></div>
   </div>
-  <div class="fs"><label class="fl">ประเภทงาน</label><select class="fi" id="elType" onchange="toggleElOilInterval()"><option>เปลี่ยนน้ำมันเครื่อง + ไส้กรอง</option><option>ไส้กรองอากาศ</option><option>ไส้กรองแอร์ (Cabin)</option><option>หัวเทียน</option><option>Timing Belt/Chain</option><option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option><option>น้ำหล่อเย็น</option><option>ผ้าเบรก</option><option>ยาง/สลับยาง</option><option>เปลี่ยนยางใหม่</option><option>แบตเตอรี่</option><option>ระบบแอร์</option><option>ช่วงล่าง</option><option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option></select></div>
-    <div id="elOilInterval" style="background:var(--blue-lt);border-radius:var(--rx);padding:12px 14px;margin-bottom:14px;display:none;"><div style="font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">ไมล์เปลี่ยนถัดไป</div><input class="fi" id="elNextKm" type="number" placeholder="เช่น 201000" style="margin-bottom:0;"></div>
+  <div class="fs"><label class="fl">ประเภทงาน</label><select class="fi" id="elType"><option>เปลี่ยนน้ำมันเครื่อง + ไส้กรอง</option><option>ไส้กรองอากาศ</option><option>ไส้กรองแอร์ (Cabin)</option><option>หัวเทียน</option><option>Timing Belt/Chain</option><option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option><option>น้ำหล่อเย็น</option><option>ผ้าเบรก</option><option>ยาง/สลับยาง</option><option>เปลี่ยนยางใหม่</option><option>แบตเตอรี่</option><option>ระบบแอร์</option><option>ช่วงล่าง</option><option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option></select></div>
   <div class="fr2">
     <div class="fs"><label class="fl">สถานที่</label><select class="fi" id="elPlace"><option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option><option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option></select></div>
     <div class="fs"><label class="fl">ชื่อร้าน</label><input class="fi" id="elShop"></div>
@@ -313,10 +311,11 @@ a.cbtn{padding:9px 16px;background:var(--blue-lt);color:var(--blue);border-radiu
     <div class="fs"><label class="fl">เลขไมล์</label><input class="fi" type="number" id="qlKm" placeholder="85000"></div>
   </div>
   <div class="fs"><label class="fl">บันทึกโดย</label><input class="fi" id="qlBy"></div>
-  <!-- Next oil exchange mileage — shown only for oil type -->
+  <!-- Oil interval selector — shown only for oil type -->
   <div id="qlOilInterval" style="display:none;background:var(--blue-lt);border-radius:var(--rx);padding:12px 14px;margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">ไมล์เปลี่ยนถัดไป</div>
-    <input class="fi" id="qlNextKm" type="number" placeholder="เช่น 201000" style="margin-bottom:0;">
+    <div style="font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">รอบเปลี่ยนน้ำมันเครื่อง</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;" id="qlOilBtns"></div>
+    <div id="qlOilDisplay" style="font-size:12px;color:var(--blue);font-weight:500;"></div>
   </div>
   <div class="fr2">
     <div class="fs"><label class="fl">สถานที่</label><select class="fi" id="qlPlace"><option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option><option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option></select></div>
@@ -520,24 +519,10 @@ let histView='item';
 let histSearch='';
 const photoQ={log:[],ql:[],doc:[]};
 
-let OIL_NEXT={};
-let SC_OVERRIDES={};
-function getN(cid,item){
-  if(item.customInterval)return 0;
-  const ov=(SC_OVERRIDES[cid]||{})[item.id];
-  return(ov&&ov.n!==undefined)?ov.n:item.n;
-}
-function getItemDays(cid,item){
-  const ov=(SC_OVERRIDES[cid]||{})[item.id];
-  return(ov&&ov.days!==undefined)?ov.days:item.days;
-}
-async function setOilNext(cid,v){
-  OIL_NEXT[cid]=v;
-  const uid=sess.user.id,tok=sess.access_token,key=cid+'_oil_next';
-  const rp=await fetch(SBURL+'/rest/v1/car_docs?user_id=eq.'+uid+'&doc_key=eq.'+key,{method:'PATCH',headers:{...BH,Authorization:'Bearer '+tok,Prefer:'return=representation'},body:JSON.stringify({note:String(v)})});
-  const patched=await rp.json().catch(()=>[]);
-  if(!Array.isArray(patched)||patched.length===0){await sbPost('/rest/v1/car_docs',{user_id:uid,doc_key:key,expiry:null,note:String(v)},tok,{Prefer:'return=minimal'});}
-}
+const OIL_DEF={altis:5000,estima:10000,cx5:10000};
+function getOilN(cid){const s=localStorage.getItem('cc_oil_'+cid);return s?parseInt(s):OIL_DEF[cid];}
+function setOilN(cid,v){localStorage.setItem('cc_oil_'+cid,v);}
+function getN(cid,item){return item.customInterval?getOilN(cid):item.n;}
 function syncBar(v){document.getElementById('syncBar').style.display=v?'block':'none';}
 
 // ══ AUTH ══
@@ -646,13 +631,14 @@ async function doLogout(){
 async function loadAll(){
   syncBar(true);
   const tok=sess.access_token,uid=sess.user.id;
-  const [rk,rd,rl,rc,ra,radmin]=await Promise.all([
+  const [rk,rd,rl,rc,ra,radmin,rcontacts]=await Promise.all([
     sbFetch('/rest/v1/car_km?user_id=eq.'+uid+'&select=*','GET',null,tok),
     sbFetch('/rest/v1/car_lastdone?user_id=eq.'+uid+'&select=*','GET',null,tok),
     sbFetch('/rest/v1/car_logs?user_id=eq.'+uid+'&select=*&order=created_at.desc','GET',null,tok),
     sbFetch('/rest/v1/car_docs?user_id=eq.'+uid+'&select=*','GET',null,tok),
     sbFetch('/rest/v1/car_access?user_id=eq.'+uid+'&select=car_id,role','GET',null,tok),
     sbFetch('/rest/v1/app_admins?user_id=eq.'+uid+'&select=user_id','GET',null,tok),
+    sbFetch('/rest/v1/car_contacts?user_id=eq.'+uid+'&select=*&order=created_at.asc','GET',null,tok),
   ]);
   // Update allowed cars list
   if(ra.ok&&ra.d.length) ALLOWED_CARS=ra.d.map(r=>r.car_id);
@@ -666,17 +652,40 @@ async function loadAll(){
     if(r.doc_key.endsWith('_kmrate')){
       const cid=r.doc_key.replace('_kmrate','');
       KM_RATE[cid]=parseInt(r.note)||null;
-    }else if(r.doc_key.endsWith('_oil_next')){
-      const cid=r.doc_key.replace('_oil_next','');
-      OIL_NEXT[cid]=parseInt(r.note)||0;
-    }else if(r.doc_key.endsWith('_sc_overrides')){
-      const cid=r.doc_key.replace('_sc_overrides','');
-      try{SC_OVERRIDES[cid]=JSON.parse(r.note||'{}');}catch(e){SC_OVERRIDES[cid]={};}
     }else{
       DOCS[r.doc_key]={expiry:r.expiry,note:r.note,photos:r.photos||'[]'};
     }
   });
-  CONTACTS=JSON.parse(localStorage.getItem('cc_contacts')||'[]');
+  // Load contacts from Supabase (cross-device)
+  if(rcontacts.ok&&rcontacts.d.length){
+    CONTACTS=rcontacts.d.map(function(r){return {id:r.id,type:r.type,name:r.name,phone:r.phone,note:r.note||''};});
+    // Migrate old localStorage contacts to Supabase if any
+    var legacy=[];try{legacy=JSON.parse(localStorage.getItem('cc_contacts')||'[]');}catch(e){}
+    if(legacy.length){
+      var existing=new Set(CONTACTS.map(function(c){return c.name;}));
+      var toMigrate=legacy.filter(function(c){return !existing.has(c.name);});
+      for(var mi=0;mi<toMigrate.length;mi++){
+        var mc=toMigrate[mi];
+        var mr=await sbFetch('/rest/v1/car_contacts','POST',
+          {user_id:uid,type:mc.type||'อื่นๆ',name:mc.name,phone:mc.phone||'',note:mc.note||''},
+          tok);
+        if(mr.ok) CONTACTS.push(mc);
+      }
+      if(toMigrate.length) localStorage.removeItem('cc_contacts'); // clear after migrate
+    }
+  }else{
+    // No DB contacts yet — load from localStorage and migrate
+    var legacy=[];try{legacy=JSON.parse(localStorage.getItem('cc_contacts')||'[]');}catch(e){}
+    CONTACTS=[];
+    for(var mi=0;mi<legacy.length;mi++){
+      var mc=legacy[mi];
+      var mr=await sbFetch('/rest/v1/car_contacts','POST',
+        {user_id:uid,type:mc.type||'อื่นๆ',name:mc.name,phone:mc.phone||'',note:mc.note||''},
+        tok);
+      if(mr.ok) CONTACTS.push({type:mc.type,name:mc.name,phone:mc.phone,note:mc.note||''});
+    }
+    if(legacy.length) localStorage.removeItem('cc_contacts'); // clear after migrate
+  }
   // Load user-added cars from DB
   const ruc=await sbFetch('/rest/v1/user_cars?user_id=eq.'+uid+'&select=*','GET',null,tok);
   if(ruc.ok&&ruc.d.length){
@@ -806,30 +815,21 @@ function fmtDaysEst(days){
 
 function stCalc(cid,item){
   const n=getN(cid,item);
-  const idays=getItemDays(cid,item);
-  if(n===0&&(!idays||idays===0)&&!item.customInterval)return{s:'info',kmPct:0,timePct:0,rem:null,daysLeft:null};
+  if(n===0&&(!item.days||item.days===0))return{s:'info',kmPct:0,timePct:0,rem:null,daysLeft:null};
   const ck=KM[cid]||0,lk=LD[''+cid+'_'+item.id]||0;
   const lastDate=getLastSvcDate(cid,item);
   let timePct=0,daysLeft=null;
-  if(idays>0&&lastDate){const d=Math.floor((Date.now()-lastDate.getTime())/86400000);if(d>=0){timePct=d/idays*100;daysLeft=idays-d;}}
+  if(item.days>0&&lastDate){const d=Math.floor((Date.now()-lastDate.getTime())/86400000);timePct=d/item.days*100;daysLeft=item.days-d;}
   let kmPct=0,rem=null;
-  if(item.customInterval){
-    // Oil: use stored next-exchange mileage directly
-    const nextKm=OIL_NEXT[cid]||0;
-    if(nextKm>0&&ck>0){
-      rem=nextKm-ck;
-      kmPct=lk>0&&nextKm>lk?Math.max(0,(ck-lk)/(nextKm-lk)*100):0;
-    }
-    if(!nextKm&&!lastDate)return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
-  }else{
-    if(n>0&&lk>0&&ck>0){rem=lk+n-ck;kmPct=Math.max(0,(ck-lk)/n*100);}
-    if(n>0&&!lk&&!lastDate){
-      if(ck>0) return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null,noBaseline:true,ck:ck,n:n};
-      return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
-    }
-      if(n===0&&idays>0&&!lastDate)return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
-    if(n>0&&lk>0&&!ck)return{s:'unknown',kmPct:0,timePct,rem:null,daysLeft};
+  if(n>0&&lk>0&&ck>0){rem=lk+n-ck;kmPct=Math.max(0,(ck-lk)/n*100);}
+  if(n>0&&!lk&&!lastDate){
+    // No service record yet — but if we have current km, can estimate
+    // Pass rem=-(ck) as negative to signal "no baseline, use ck directly"
+    if(ck>0) return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null,noBaseline:true,ck:ck,n:n};
+    return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
   }
+  if(n===0&&item.days>0&&!lastDate)return{s:'unknown',kmPct:0,timePct:0,rem:null,daysLeft:null};
+  if(n>0&&lk>0&&!ck)return{s:'unknown',kmPct:0,timePct,rem:null,daysLeft};
   const mx=Math.max(timePct,kmPct);
   const s=mx>=95?'urgent':mx>=75?'soon':'ok';
   return{s,kmPct,timePct,rem,daysLeft};
@@ -1023,18 +1023,9 @@ function rDash(el){
       return;
     }
     const tot=(+last.partCost||0)+(+last.laborCost||0);
-    let urg=car.sc.filter(i=>st(car.id,i)==='urgent').length;
-    let sn2=car.sc.filter(i=>st(car.id,i)==='soon').length;
+    const urg=car.sc.filter(i=>st(car.id,i)==='urgent').length;
+    const sn2=car.sc.filter(i=>st(car.id,i)==='soon').length;
     const unk=car.sc.filter(i=>st(car.id,i)==='unknown').length;
-    // Also count document expiry in badge
-    const _dashToday=new Date();_dashToday.setHours(0,0,0,0);
-    ['ทะเบียนรถ','พ.ร.บ.','ประกันภัยชั้น 1','ประกันภัยชั้น 2/3'].forEach(function(t){
-      const d=DOCS[car.id+'_'+t]||{};
-      if(!d.expiry)return;
-      const e=new Date(d.expiry);e.setHours(0,0,0,0);
-      const dl=Math.floor((e-_dashToday)/86400000);
-      if(dl<=30)urg++;else if(dl<=90)sn2++;
-    });
     const badge=urg?'<span class="badge bu">'+urg+' ถึงกำหนด</span>':sn2?'<span class="badge bs">'+sn2+' ใกล้ถึง</span>':unk?'<span class="badge bk">'+unk+' ไม่มีข้อมูล</span>':'<span class="badge bo">ปกติ</span>';
     card.style.cursor='pointer';
     card.innerHTML='<div class="car-stripe" style="background:'+col+'"></div>'+
@@ -1064,6 +1055,7 @@ function rDash(el){
 // ══ TODO ══
 function rTodo(el){
   const car=CARS[curCar],cid=curCar,ck=KM[cid];
+  const oilN=getOilN(cid);
   const sorted=[...car.sc].sort((a,b)=>SORT_ORDER[st(cid,a)]-SORT_ORDER[st(cid,b)]);
 
   // Count maintenance items - must be let (not const) to allow increment
@@ -1092,31 +1084,13 @@ function rTodo(el){
     const calc=stCalc(cid,item);
     const S=calc.s,P=pct(cid,item);
     const n=getN(cid,item);
-    const idays=getItemDays(cid,item);
     const lk=LD[''+cid+'_'+item.id]||0;
     const lastLog=LOGS.filter(l=>l.carId===cid&&l.type===item.l).sort((a,b)=>b.ts-a.ts)[0];
     const photos=lastLog?JSON.parse(lastLog.photos||'[]'):[];
     const photoRow=photos.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 2px;">'+(photos.map((_,i)=>'<div id="tdph_'+lastLog.id+'_'+i+'" style="width:56px;height:56px;background:var(--gray-lt);border-radius:8px;overflow:hidden;flex-shrink:0;">⏳</div>').join(''))+'</div>':'';
 
     let remLines='';
-    if(item.customInterval){
-      // Oil: use OIL_NEXT directly
-      const nextKm=OIL_NEXT[cid]||0;
-      if(lk>0) remLines+='<div class="tdd">ล่าสุด: '+lk.toLocaleString()+' กม.</div>';
-      if(nextKm>0&&ck>0){
-        const rem=nextKm-ck;
-        const rc2=rem<=0?'var(--red)':rem<500?'var(--amber)':'var(--text)';
-        if(rem<=0){
-          remLines+='<div style="font-size:13px;font-weight:700;color:var(--red);margin-top:2px;">ครั้งถัดไป: '+nextKm.toLocaleString()+' กม. (เกินกำหนด '+Math.abs(rem).toLocaleString()+' กม.)</div>';
-        }else{
-          const estDays=kmToEstDays(rem,cid);
-          const kmpm=getKmPerMonth(cid);
-          const isOverride=!!(KM_RATE[cid]);
-          remLines+='<div style="font-size:13px;font-weight:700;color:'+rc2+';margin-top:2px;">ครั้งถัดไป: '+nextKm.toLocaleString()+' กม. (เหลืออีก '+rem.toLocaleString()+' กม.)</div>';
-          if(estDays!==null){remLines+='<div style="font-size:12px;color:var(--blue);margin-top:3px;">🗓 '+fmtDaysEst(estDays)+' <span style="font-size:10px;color:var(--hint);">('+kmpm.toLocaleString()+' กม./เดือน'+(isOverride?' ✎':' auto')+')</span></div>';}
-        }
-      }else if(!nextKm){remLines+='<div class="tdd" style="color:var(--amber);font-weight:600;">ยังไม่ได้ตั้งไมล์เปลี่ยนครั้งถัดไป</div>';}
-    }else if(lk>0&&ck>0&&n>0){
+    if(lk>0&&ck>0&&n>0){
       const nk=lk+n,rem=nk-ck;
       const rc2=rem<=0?'var(--red)':rem<n*.25?'var(--amber)':'var(--text)';
       remLines+='<div class="tdd">ล่าสุด: '+lk.toLocaleString()+' กม.</div>';
@@ -1127,23 +1101,26 @@ function rTodo(el){
         const kmpm=getKmPerMonth(cid);
         const isOverride=!!(KM_RATE[cid]);
         remLines+='<div style="font-size:13px;font-weight:700;color:'+rc2+';margin-top:2px;">ครั้งถัดไป: '+nk.toLocaleString()+' กม. (เหลืออีก '+rem.toLocaleString()+' กม.)</div>';
-        if(estDays!==null){remLines+='<div style="font-size:12px;color:var(--blue);margin-top:3px;">🗓 '+fmtDaysEst(estDays)+' <span style="font-size:10px;color:var(--hint);">('+kmpm.toLocaleString()+' กม./เดือน'+(isOverride?' ✎':' auto')+')</span></div>';}
+        // Only show days estimate if we have rate data
+        if(estDays!==null){
+          remLines+='<div style="font-size:12px;color:var(--blue);margin-top:3px;">🗓 '+fmtDaysEst(estDays)+' <span style="font-size:10px;color:var(--hint);">('+kmpm.toLocaleString()+' กม./เดือน'+(isOverride?' ✎':' auto')+')</span></div>';
+        }
       }
     }
     else if(!lk&&!getLastSvcDate(cid,item)){remLines+='<div class="tdd" style="color:var(--amber);font-weight:600;">ยังไม่มีข้อมูลครั้งล่าสุด</div>';}
-    if(idays>0&&calc.daysLeft!==null){const dColor=calc.daysLeft<=0?'var(--red)':calc.daysLeft<idays*.25?'var(--amber)':'var(--muted)';const ld=getLastSvcDate(cid,item);remLines+='<div style="font-size:12px;color:'+dColor+';margin-top:2px;">⏱ '+(calc.daysLeft<=0?'เกินกำหนด '+Math.abs(calc.daysLeft)+' วัน':'อีก '+calc.daysLeft+' วัน')+(ld?' ('+ld.toLocaleDateString('th-TH')+')':'')+'</div>';}
-    else if(idays>0&&!getLastSvcDate(cid,item)){remLines+='<div style="font-size:12px;color:var(--amber);margin-top:2px;">⏱ ไม่มีข้อมูลวันที่บริการ</div>';}
+    if(item.days>0&&calc.daysLeft!==null){const dColor=calc.daysLeft<=0?'var(--red)':calc.daysLeft<item.days*.25?'var(--amber)':'var(--muted)';const ld=getLastSvcDate(cid,item);remLines+='<div style="font-size:12px;color:'+dColor+';margin-top:2px;">⏱ '+(calc.daysLeft<=0?'เกินกำหนด '+Math.abs(calc.daysLeft)+' วัน':'อีก '+calc.daysLeft+' วัน')+(ld?' ('+ld.toLocaleDateString('th-TH')+')':'')+'</div>';}
+    else if(item.days>0&&!getLastSvcDate(cid,item)){remLines+='<div style="font-size:12px;color:var(--amber);margin-top:2px;">⏱ ไม่มีข้อมูลวันที่บริการ</div>';}
 
-    const intStr=item.customInterval?'เปลี่ยนน้ำมัน · '+item.p:n>0&&idays>0?'ทุก '+n.toLocaleString()+' กม. หรือ '+(idays>=365?Math.round(idays/365)+' ปี':idays+' วัน')+' · '+item.p:n>0?'ทุก '+n.toLocaleString()+' กม. · '+item.p:idays>0?'ทุก '+(idays>=365?Math.round(idays/365)+' ปี':idays+' วัน')+' · '+item.p:'';
+    const intStr=n>0&&item.days>0?'ทุก '+n.toLocaleString()+' กม. หรือ '+(item.days>=365?Math.round(item.days/365)+' ปี':item.days+' วัน')+' · '+item.p:n>0?'ทุก '+n.toLocaleString()+' กม. · '+item.p:item.days>0?'ทุก '+(item.days>=365?Math.round(item.days/365)+' ปี':item.days+' วัน')+' · '+item.p:'';
     const canMark=ck>0;
     const isInfo=S==='info';
 
     if(isInfo)return '<div class="tdi"><div class="tda info"></div><div class="tdin"><div class="tdr1"><div class="tdname">'+item.l+'</div><span class="badge bi">ไม่ต้องเปลี่ยน</span></div><div class="tdn">'+item.note+'</div>'+(item.cm>0?'<span class="tdc">฿'+item.cm.toLocaleString()+'–'+item.cx.toLocaleString()+'</span>':'')+photoRow+'</div></div>';
 
-    const custBtn='';
+    const custBtn=item.customInterval?'<div style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span style="font-size:11px;color:var(--muted);">รอบเปลี่ยน:</span>'+[3000,5000,7000,10000].map(v=>'<button onclick="setOilN(\''+cid+'\','+v+');render()" style="padding:3px 10px;border-radius:20px;border:.5px solid '+(n===v?col:'var(--gb)')+';background:'+(n===v?col:'var(--gray-lt)')+';color:'+(n===v?'#fff':'var(--muted)')+';font-size:11px;font-family:inherit;cursor:pointer;font-weight:'+(n===v?'700':'400')+';">'+v.toLocaleString()+'</button>').join('')+'</div>':'';
 
     // Build days remaining display — large number on right
-    function buildDaysDisplay(calc, cid, item_n, lk, ck, itemDays){
+    function buildDaysDisplay(calc, cid, item_n, lk, ck){
       let daysNum=null, daysColor='var(--muted)', isKmBased=false;
 
       // 1. Time-based daysLeft
@@ -1196,12 +1173,6 @@ function rTodo(el){
         }
       }
 
-           // Cap km-based estimate at time-based interval limit (e.g. oil: max 12 months)
-      if(isKmBased&&itemDays>0&&daysNum!==null&&daysNum>itemDays){
-        daysNum=itemDays;
-        daysColor=daysNum<=30?'var(--amber)':daysNum<=90?'var(--blue)':'var(--muted)';
-      }
-           if(isKmBased&&itemDays>0&&daysNum!==null&&daysNum>itemDays){daysNum=itemDays;daysColor=daysNum<=30?'var(--amber)':daysNum<=90?'var(--blue)':'var(--muted)';}
       if(daysNum===null) return '';
 
       const abs=Math.abs(daysNum);
@@ -1216,11 +1187,10 @@ function rTodo(el){
     }
 
     return '<div class="tdi"><div class="tda '+S+'"></div><div class="tdin">'+
-      '<div class="tdr1" style="align-items:flex-start;"><div style="flex:1;min-width:0;"><div class="tdname">'+item.l+'</div></div>'+
+      '<div class="tdr1" style="align-items:flex-start;"><div style="flex:1;min-width:0;"><div class="tdname">'+item.l+(item.customInterval?' <span style="font-size:10px;color:var(--blue);background:var(--blue-lt);padding:1px 6px;border-radius:10px;white-space:nowrap;">'+n.toLocaleString()+' กม.</span>':'')+'</div></div>'+
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;min-width:80px;">'+
       '<span class="badge '+SB[S]+'">'+SL[S]+'</span>'+
-   buildDaysDisplay(calc,cid,n,lk,ck,idays)+
-
+      buildDaysDisplay(calc,cid,n,lk,ck)+
       '</div></div>'+
       '<div class="tdd">'+intStr+'</div>'+remLines+
       (P>0?'<div class="pw" style="margin-top:6px;"><div class="pb" style="width:'+P+'%;background:'+SC[S]+';"></div></div>':'')+
@@ -1476,25 +1446,20 @@ async function autoLoadThumb(elId,path){
 function rLog(el){
   const today=new Date().toISOString().split('T')[0];
   const cid=curCar;
+  const oilN=getOilN(cid);
   const copts=Object.values(CARS).filter(c=>!ALLOWED_CARS||ALLOWED_CARS.includes(c.id)).map(c=>'<option value="'+c.id+'"'+(c.id===cid?' selected':'')+'>'+c.name+' ('+c.plate+')</option>').join('');
+  const oilBtns=[3000,5000,7000,10000].map(v=>'<button type="button" onclick="setOilN(document.getElementById(\'logCar\').value,'+v+');document.getElementById(\'oilIntervalDisplay\').textContent=\'รอบปัจจุบัน: '+v.toLocaleString()+' กม.\';document.querySelectorAll(\'.oilbtn\').forEach(b=>b.style.background=b.dataset.v==\''+v+'\'?\'var(--blue)\':\'var(--gray-lt)\');document.querySelectorAll(\'.oilbtn\').forEach(b=>b.style.color=b.dataset.v==\''+v+'\'?\'#fff\':\'var(--muted)\');" class="oilbtn" data-v="'+v+'" style="padding:5px 12px;border-radius:20px;border:.5px solid var(--gb);background:'+(oilN===v?'var(--blue)':'var(--gray-lt)')+';color:'+(oilN===v?'#fff':'var(--muted)')+';font-size:12px;font-family:inherit;cursor:pointer;font-weight:'+(oilN===v?'700':'400')+';">'+v.toLocaleString()+'</button>').join('');
   el.innerHTML='<div class="sec">บันทึกการซ่อมบำรุง</div><div class="gc"><div class="gcb" style="padding-top:14px;"><div class="fs"><label class="fl">รถ</label><select class="fi" id="logCar" onchange="updateLogCarInterval()">'+copts+'</select></div><div class="fr2"><div class="fs"><label class="fl">วันที่</label><input class="fi" type="date" id="logDate" value="'+today+'"></div><div class="fs"><label class="fl">เลขไมล์ (กม.)</label><input class="fi" type="number" id="logKm" placeholder="85000"></div></div><div class="fs"><label class="fl">บันทึกโดย</label><input class="fi" id="logBy" value="'+uName+'"></div><div class="fs"><label class="fl">ประเภทงาน</label><select class="fi" id="logType"><option>เปลี่ยนน้ำมันเครื่อง + ไส้กรอง</option><option>ไส้กรองอากาศ</option><option>ไส้กรองแอร์ (Cabin)</option><option>หัวเทียน</option><option>Timing Belt/Chain</option><option>น้ำมันเกียร์</option><option>น้ำมันเบรก</option><option>น้ำหล่อเย็น</option><option>ผ้าเบรก</option><option>ยาง/สลับยาง</option><option>เปลี่ยนยางใหม่</option><option>แบตเตอรี่</option><option>ระบบแอร์</option><option>ช่วงล่าง</option><option>ตรวจเช็คทั่วไป</option><option>อื่นๆ</option></select></div>'+
-    '<div id="logOilInterval" style="background:var(--blue-lt);border-radius:var(--rx);padding:12px 14px;margin-bottom:14px;"><div style="font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">ไมล์เปลี่ยนถัดไป</div><input class="fi" id="logNextKm" type="number" placeholder="เช่น 201000" style="margin-bottom:0;"></div>'+
+    '<div id="logOilInterval" style="background:var(--blue-lt);border-radius:var(--rx);padding:12px 14px;margin-bottom:14px;"><div style="font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">รอบเปลี่ยนน้ำมันเครื่อง</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">'+oilBtns+'</div><div id="oilIntervalDisplay" style="font-size:12px;color:var(--blue);font-weight:500;">รอบปัจจุบัน: '+oilN.toLocaleString()+' กม.</div></div>'+
     '<div class="fr2"><div class="fs"><label class="fl">สถานที่</label><select class="fi" id="logPlace"><option>ศูนย์โตโยต้า</option><option>ศูนย์มาสด้า</option><option>ร้านช่างทั่วไป</option><option>ปั๊มน้ำมัน</option><option>อื่นๆ</option></select></div><div class="fs"><label class="fl">ชื่อร้าน</label><input class="fi" id="logShop" placeholder="สาขา..."></div></div><div class="fr2"><div class="fs"><label class="fl">ค่าอะไหล่ (฿)</label><input class="fi" type="number" id="logPart" placeholder="0"></div><div class="fs"><label class="fl">ค่าแรง (฿)</label><input class="fi" type="number" id="logLabor" placeholder="0"></div></div><div class="fs"><label class="fl">ยี่ห้อ/เกรดน้ำมัน</label><textarea class="fi" id="logProduct" style="min-height:70px;" placeholder="เช่น Mobil 1 5W-30 Fully Synthetic"></textarea></div><div class="fs"><label class="fl">หมายเหตุ</label><textarea class="fi" id="logNote" style="min-height:80px;"></textarea></div><div class="fs"><label class="fl">รูปภาพ</label><div id="logPhotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;"></div><label class="photo-add">📷 แตะเพื่อเพิ่มรูป<input type="file" accept="image/*" multiple id="logPhotoInput" style="display:none;" onchange="handlePhotos(\'log\',event)"></label><div style="font-size:11px;color:var(--hint);margin-top:4px;">รูปจะถูก resize เป็น 800px อัตโนมัติ</div></div><div id="logMsg" style="font-size:13px;color:var(--green);text-align:center;min-height:18px;margin-bottom:4px;"></div><button class="fbtn" id="logSaveBtn" onclick="saveLog()">💾 บันทึก</button></div></div>';
+  // After innerHTML is set, attach event listener directly (more reliable than inline onchange)
   const logTypeEl=document.getElementById('logType');
   if(logTypeEl){
     logTypeEl.onchange=toggleLogOilInterval;
-    // Pre-fill next km from stored OIL_NEXT
-    const nk=document.getElementById('logNextKm');
-    if(nk) nk.value=OIL_NEXT[cid]||'';
+    // Initial state: first option is oil, so box is visible by default (correct)
   }
 }
-function toggleElOilInterval(){
-  const type=document.getElementById('elType')?.value||'';
-  const box=document.getElementById('elOilInterval');
-  if(box) box.style.display=type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง'?'block':'none';
-}
-
-  function toggleLogOilInterval(){
+function toggleLogOilInterval(){
   const type=document.getElementById('logType')?.value||'';
   const box=document.getElementById('logOilInterval');
   if(box) box.style.display=type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง'?'block':'none';
@@ -1502,11 +1467,19 @@ function toggleElOilInterval(){
 function updateLogCarInterval(){
   const cid=document.getElementById('logCar').value;
   curCar=cid;
+  // Update car pills
   document.querySelectorAll('.cpill').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.cpill[data-c="'+cid+'"]').forEach(p=>p.classList.add('on'));
-  // Pre-fill next km for this car
-  const nk=document.getElementById('logNextKm');
-  if(nk) nk.value=OIL_NEXT[cid]||'';
+  // Update oil interval display
+  const n=getOilN(cid);
+  const disp=document.getElementById('oilIntervalDisplay');
+  if(disp)disp.textContent='รอบปัจจุบัน: '+n.toLocaleString()+' กม.';
+  document.querySelectorAll('.oilbtn').forEach(b=>{
+    const active=parseInt(b.dataset.v)===n;
+    b.style.background=active?'var(--blue)':'var(--gray-lt)';
+    b.style.color=active?'#fff':'var(--muted)';
+    b.style.fontWeight=active?'700':'400';
+  });
 }
 async function saveLog(){
   const cid=document.getElementById('logCar').value;
@@ -1524,11 +1497,6 @@ async function saveLog(){
     if(photoQ.log.length){msg.textContent='⟳ กำลัง upload รูป...';await uploadPhotos('log',newId);}
     LOGS.unshift({id:newId,carId:cid,date,km:kv,type:body.type,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,recordedBy:body.recorded_by,ts:Date.now(),photos:'[]'});
     if(!KM[cid]||kv>KM[cid]){KM[cid]=kv;await upsert('car_km',{user_id:uid,car_id:cid,km:kv},tok);}
-    // Save next oil exchange mileage if oil type
-    if(body.type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง'){
-      const nk=parseInt(document.getElementById('logNextKm')?.value);
-      if(nk>0) await setOilNext(cid,nk);
-    }
     msg.textContent='✅ บันทึกเรียบร้อย!';msg.style.color='var(--green)';
     setTimeout(()=>{['logKm','logShop','logPart','logLabor','logProduct','logNote'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});document.getElementById('logDate').value=new Date().toISOString().split('T')[0];photoQ.log=[];const pp=document.getElementById('logPhotoPreview');if(pp)pp.innerHTML='';msg.textContent='';if(btn)btn.disabled=false;},1200);
   }catch(e){msg.textContent='❌ '+e.message;msg.style.color='var(--red)';if(btn)btn.disabled=false;}
@@ -1554,7 +1522,16 @@ function openQL(cid,iid,label){
   const oilBox=document.getElementById('qlOilInterval');
   if(isOil){
     oilBox.style.display='block';
-    document.getElementById('qlNextKm').value=OIL_NEXT[cid]||'';
+    const n=getOilN(cid);
+    const btnsEl=document.getElementById('qlOilBtns');
+    btnsEl.innerHTML='';
+    [3000,5000,7000,10000].forEach(function(v){
+      const b=document.createElement('button');b.type='button';b.textContent=v.toLocaleString();
+      b.style.cssText='padding:5px 14px;border-radius:20px;border:.5px solid var(--gb);font-size:12px;font-family:inherit;cursor:pointer;font-weight:'+(n===v?'700':'400')+';background:'+(n===v?'var(--blue)':'var(--gray-lt)')+';color:'+(n===v?'#fff':'var(--muted)');
+      b.onclick=function(){setOilN(cid,v);document.getElementById('qlOilDisplay').textContent='รอบปัจจุบัน: '+v.toLocaleString()+' กม.';btnsEl.querySelectorAll('button').forEach(function(btn){const active=parseInt(btn.textContent.replace(',',''))===v;btn.style.background=active?'var(--blue)':'var(--gray-lt)';btn.style.color=active?'#fff':'var(--muted)';btn.style.fontWeight=active?'700':'400';});};
+      btnsEl.appendChild(b);
+    });
+    document.getElementById('qlOilDisplay').textContent='รอบปัจจุบัน: '+n.toLocaleString()+' กม.';
   }else{oilBox.style.display='none';}
   photoQ.ql=[];renderPhotoPreview('ql');
   document.getElementById('ovQL').classList.add('on');
@@ -1580,8 +1557,7 @@ async function saveQL(){
       if(!r.ok){msg.textContent='❌ แก้ไขไม่สำเร็จ';msg.style.color='var(--red)';return;}
       // Update local LOGS array
       const idx=LOGS.findIndex(l=>l.id===editId);
-            if(idx>=0) LOGS[idx]=Object.assign({},LOGS[idx],{date:date,km:kv,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,recordedBy:body.recorded_by});
-      if(label==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง'){const nk=parseInt(document.getElementById('qlNextKm')?.value);if(nk>0) await setOilNext(cid,nk);}
+      if(idx>=0) LOGS[idx]=Object.assign({},LOGS[idx],{date:date,km:kv,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,recordedBy:body.recorded_by});
       msg.textContent='✅ แก้ไขสำเร็จ!';msg.style.color='var(--green)';
     }else{
       // ── CREATE mode: POST new record ──
@@ -1593,13 +1569,8 @@ async function saveQL(){
         partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note,
         recordedBy:body.recorded_by,ts:Date.now(),photos:'[]'});
       if(!KM[cid]||kv>KM[cid]){KM[cid]=kv;await upsert('car_km',{user_id:uid,car_id:cid,km:kv},tok);}
-      const itemObj=CARS[cid].sc.find(function(i){return i.l===label;});
-      if(itemObj){const key=cid+'_'+itemObj.id;LD[key]=kv;await upsert('car_lastdone',{user_id:uid,key:key,km:kv},tok);}
-      // Save next oil exchange mileage if oil item
-      if(itemObj&&itemObj.customInterval){
-        const nk=parseInt(document.getElementById('qlNextKm').value);
-        if(nk>0) await setOilNext(cid,nk);
-      }
+      const itemId=CARS[cid].sc.find(function(i){return i.l===label;});
+      if(itemId){const key=cid+'_'+itemId;LD[key]=kv;await upsert('car_lastdone',{user_id:uid,key:key,km:kv},tok);}
       msg.textContent='✅ บันทึกสำเร็จ!';msg.style.color='var(--green)';
     }
     setTimeout(()=>{closeOv('ovQL');render();},800);
@@ -1795,10 +1766,7 @@ function openEditLog(id){
   document.getElementById('elId').value=id;document.getElementById('elCar').value=l.carId;document.getElementById('elDate').value=l.date;document.getElementById('elKm').value=l.km;
   const setOpt=(sid,val)=>{const sel=document.getElementById(sid);const opt=Array.from(sel.options).find(o=>o.value===val||o.text===val);if(opt)sel.value=opt.value||opt.text;else{const o=document.createElement('option');o.value=val;o.text=val;sel.add(o);sel.value=val;}};
   setOpt('elType',l.type||'');setOpt('elPlace',l.place||'ศูนย์โตโยต้า');
-    document.getElementById('elShop').value=l.shop||'';document.getElementById('elPart').value=l.partCost||'';document.getElementById('elLabor').value=l.laborCost||'';document.getElementById('elProduct').value=l.product||'';document.getElementById('elNote').value=l.note||'';
-  const isOil=l.type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง';
-  const elOil=document.getElementById('elOilInterval');if(elOil)elOil.style.display=isOil?'block':'none';
-  const elNk=document.getElementById('elNextKm');if(elNk)elNk.value=isOil?(OIL_NEXT[l.carId]||''):'';
+  document.getElementById('elShop').value=l.shop||'';document.getElementById('elPart').value=l.partCost||'';document.getElementById('elLabor').value=l.laborCost||'';document.getElementById('elProduct').value=l.product||'';document.getElementById('elNote').value=l.note||'';
   document.getElementById('ovEditLog').classList.add('on');
 }
 function openQLEdit(logId){
@@ -1820,9 +1788,7 @@ function openQLEdit(logId){
   document.getElementById('qlLabor').value=log.laborCost||'';
   document.getElementById('qlProduct').value=log.product||'';
   document.getElementById('qlNote').value=log.note||'';
-  const isOilEdit=log.type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง';
-  const oilBoxEdit=document.getElementById('qlOilInterval');
-  if(oilBoxEdit){oilBoxEdit.style.display=isOilEdit?'block':'none';if(isOilEdit){const nk=document.getElementById('qlNextKm');if(nk)nk.value=OIL_NEXT[log.carId]||'';}}
+  document.getElementById('qlOilInterval').style.display='none';
   document.getElementById('qlMsg').textContent='';
   photoQ.ql=[];renderPhotoPreview('ql');
   document.getElementById('ovQL').classList.add('on');
@@ -1832,9 +1798,8 @@ async function saveEditLog(){
   const id=document.getElementById('elId').value,kv=parseInt(document.getElementById('elKm').value),date=document.getElementById('elDate').value;
   if(!date||!kv){alert('กรุณากรอกวันที่และเลขไมล์');return;}
   const body={car_id:document.getElementById('elCar').value,date,km:kv,type:document.getElementById('elType').value,place:document.getElementById('elPlace').value,shop:document.getElementById('elShop').value,part_cost:document.getElementById('elPart').value||null,labor_cost:document.getElementById('elLabor').value||null,product:document.getElementById('elProduct').value,note:document.getElementById('elNote').value};
-    syncBar(true);await sbPatch('/rest/v1/car_logs?id=eq.'+id,body,sess.access_token);
+  syncBar(true);await sbPatch('/rest/v1/car_logs?id=eq.'+id,body,sess.access_token);
   const i=LOGS.findIndex(l=>l.id===id);if(i>=0)LOGS[i]={...LOGS[i],carId:body.car_id,date,km:kv,type:body.type,place:body.place,shop:body.shop,partCost:body.part_cost,laborCost:body.labor_cost,product:body.product,note:body.note};
-  if(body.type==='เปลี่ยนน้ำมันเครื่อง + ไส้กรอง'){const nk=parseInt(document.getElementById('elNextKm')?.value);if(nk>0) await setOilNext(body.car_id,nk);}
   syncBar(false);closeOv('ovEditLog');rHist(document.getElementById('mainC'));
 }
 
@@ -1913,14 +1878,10 @@ async function saveDoc(){
   const photosJson=JSON.stringify(allPhotos);
   DOCS[key]={expiry:expiry,note:note,photos:photosJson};
   syncBar(true);
-  const rpDoc=await fetch(SBURL+'/rest/v1/car_docs?user_id=eq.'+uid+'&doc_key=eq.'+encodeURIComponent(key),{method:'PATCH',headers:{...BH,Authorization:'Bearer '+tok,Prefer:'return=representation'},body:JSON.stringify({expiry:expiry,note:note,photos:photosJson})});
-  const patchedDoc=await rpDoc.json().catch(()=>[]);
-  if(!Array.isArray(patchedDoc)||patchedDoc.length===0){
-    await sbPost('/rest/v1/car_docs',{user_id:uid,doc_key:key,expiry:expiry,note:note,photos:photosJson},tok,{Prefer:'return=minimal'});
-  }
+  await upsert('car_docs',{user_id:uid,doc_key:key,expiry:expiry,note:note,photos:photosJson},tok);
   syncBar(false);
   msg.textContent='✅ บันทึกสำเร็จ!';msg.style.color='var(--green)';
-  setTimeout(function(){closeOv('ovDoc');render();},600);
+  setTimeout(function(){closeOv('ovDoc');rHist(document.getElementById('mainC'));},600);
 }
 
 // ══ SETTINGS ══
@@ -1990,11 +1951,7 @@ function renderSettingsBody(el, append=false){
       '<span>🔧 ศูนย์บริการ / ร้านช่าง</span>'+
       '<button onclick="openAddContact(\'ศูนย์บริการ\')" style="font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">+ เพิ่ม</button>'+
     '</div>'+shopH+
-    '<div class="sec">🔧 ตารางบำรุงรักษา</div>'+
-    '<div class="gc" style="padding:16px;">'+
-    '<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">ปรับรอบบำรุงรักษาสำหรับแต่ละรถ — บันทึกแล้วระบบจะคำนวณ To-Do ใหม่ทันที<br>น้ำมันเครื่อง: ตั้งไมล์ถัดไปจากหน้า To-Do</div>'+
-    ((ALLOWED_CARS||Object.keys(CARS)).map(function(cid){const car=CARS[cid];if(!car)return'';const rows=car.sc.map(function(item){const ov=SC_OVERRIDES[cid]||{};const nVal=ov[item.id]&&ov[item.id].n!==undefined?ov[item.id].n:item.n;const dVal=ov[item.id]&&ov[item.id].days!==undefined?ov[item.id].days:item.days;return'<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;align-items:center;padding:8px 0;border-bottom:.5px solid var(--gb);"><div style="font-size:12px;">'+item.l+'</div>'+(item.customInterval?'<div style="font-size:10px;color:var(--hint);text-align:center;">To-Do</div>':'<input id="sced_'+cid+'_'+item.id+'_n" type="number" value="'+(nVal||0)+'" min="0" style="padding:4px;border:.5px solid var(--gb);border-radius:6px;font-size:12px;width:100%;text-align:center;background:var(--bg);">')+'<input id="sced_'+cid+'_'+item.id+'_d" type="number" value="'+(dVal||0)+'" min="0" style="padding:4px;border:.5px solid var(--gb);border-radius:6px;font-size:12px;width:100%;text-align:center;background:var(--bg);"></div>';}).join('');return'<div style="margin-bottom:16px;padding-bottom:12px;border-bottom:.5px solid var(--gb);"><div style="font-size:14px;font-weight:700;color:'+CAR_COLOR[cid]+';margin-bottom:8px;">'+car.name+'</div><div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;margin-bottom:4px;"><div style="font-size:10px;color:var(--hint);">รายการ</div><div style="font-size:10px;color:var(--hint);text-align:center;">กม.</div><div style="font-size:10px;color:var(--hint);text-align:center;">วัน</div></div>'+rows+'<div id="sced_msg_'+cid+'" style="font-size:12px;text-align:center;min-height:14px;margin-top:6px;"></div><button onclick="saveSched(\''+cid+'\')" style="width:100%;margin-top:8px;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:var(--rx);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">💾 บันทึก '+car.name+'</button></div>';}).join(''))+
-    '</div>'+
+
     '<div style="margin-top:24px;">'+
     '<button onclick="doLogout()" style="width:100%;padding:14px;background:var(--red-lt);color:var(--red);border:.5px solid rgba(255,69,58,.3);border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">🚪 ออกจากระบบ</button></div>';
 }
@@ -2323,15 +2280,36 @@ async function adminRevokeCar(uid,carId){
   await loadAdminData();
 }
 
-function saveContact(){
-  const name=document.getElementById('ctName').value.trim(),phone=document.getElementById('ctPhone').value.trim();
+async function saveContact(){
+  const name=document.getElementById('ctName').value.trim();
+  const phone=document.getElementById('ctPhone').value.trim();
+  const type=document.getElementById('ctType').value;
+  const note=document.getElementById('ctNote').value;
   if(!name||!phone){alert('กรุณากรอกชื่อและเบอร์');return;}
-  CONTACTS.push({type:document.getElementById('ctType').value,name,phone,note:document.getElementById('ctNote').value});
-  localStorage.setItem('cc_contacts',JSON.stringify(CONTACTS));
-  closeOv('ovContact');
+  const btn=document.querySelector('#ovContact .fbtn');
+  if(btn){btn.disabled=true;btn.textContent='⟳ กำลังบันทึก...';}
+  const r=await sbFetch('/rest/v1/car_contacts','POST',
+    {user_id:sess.user.id,type:type,name:name,phone:phone,note:note},
+    sess.access_token);
+  if(btn){btn.disabled=false;btn.textContent='บันทึก';}
+  if(r.ok){
+    CONTACTS.push({type:type,name:name,phone:phone,note:note});
+    closeOv('ovContact');
+    rSettings(document.getElementById('mainC'));
+  }else{
+    alert('บันทึกไม่สำเร็จ กรุณาลองใหม่');
+  }
+}
+async function delContact(i){
+  if(!confirm('ลบรายการนี้?'))return;
+  const c=CONTACTS[i];
+  if(c&&c.id){
+    await sbFetch('/rest/v1/car_contacts?id=eq.'+c.id+'&user_id=eq.'+sess.user.id,
+      'DELETE',null,sess.access_token);
+  }
+  CONTACTS.splice(i,1);
   rSettings(document.getElementById('mainC'));
 }
-function delContact(i){CONTACTS.splice(i,1);localStorage.setItem('cc_contacts',JSON.stringify(CONTACTS));rSettings(document.getElementById('mainC'));}
 
 // ══ BACKUP / RESTORE ══
 async function doBackup(){
